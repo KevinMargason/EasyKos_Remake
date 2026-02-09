@@ -1,3 +1,13 @@
+import type {
+  User,
+  Room,
+  Tenant,
+  Payment,
+  Achievement,
+  Reward,
+  AuthResponse,
+} from './types';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 interface RequestOptions extends RequestInit {
@@ -40,101 +50,137 @@ class ApiClient {
   }
 
   // Auth methods
-  async login(email: string, password: string) {
-    return this.request<{ access_token: string; user: any }>('/login', {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   }
 
-  async register(name: string, email: string, password: string, password_confirmation: string) {
-    return this.request<{ access_token: string; user: any }>('/register', {
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    password_confirmation: string
+  ): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password, password_confirmation }),
     });
   }
 
-  async logout(token: string) {
+  async logout(token: string): Promise<{ message: string }> {
     return this.request('/logout', {
       method: 'POST',
       token,
     });
   }
 
-  async getUser(token: string) {
-    return this.request<any>('/me', { token });
+  async getUser(token: string): Promise<User> {
+    return this.request<User>('/me', { token });
   }
 
   // Rooms methods
-  async getRooms(token?: string) {
-    return this.request<any[]>('/rooms', { token });
+  async getRooms(token?: string): Promise<Room[]> {
+    return this.request<Room[]>('/rooms', { token });
   }
 
-  async getRoom(id: string, token?: string) {
-    return this.request<any>(`/rooms/${id}`, { token });
+  async getRoom(id: string, token?: string): Promise<Room> {
+    return this.request<Room>(`/rooms/${id}`, { token });
   }
 
-  async createRoom(data: any, token: string) {
-    return this.request<any>('/rooms', {
+  async createRoom(data: Partial<Room>, token: string): Promise<Room> {
+    return this.request<Room>('/rooms', {
       method: 'POST',
       body: JSON.stringify(data),
       token,
     });
   }
 
-  async updateRoom(id: string, data: any, token: string) {
-    return this.request<any>(`/rooms/${id}`, {
+  async updateRoom(id: string, data: Partial<Room>, token: string): Promise<Room> {
+    return this.request<Room>(`/rooms/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
       token,
     });
   }
 
-  async deleteRoom(id: string, token: string) {
-    return this.request<any>(`/rooms/${id}`, {
+  async deleteRoom(id: string, token: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/rooms/${id}`, {
       method: 'DELETE',
       token,
     });
   }
 
   // Tenants methods
-  async getTenants(token?: string) {
-    return this.request<any[]>('/tenants', { token });
+  async getTenants(token?: string): Promise<Tenant[]> {
+    return this.request<Tenant[]>('/tenants', { token });
   }
 
-  async createTenant(data: any, token: string) {
-    return this.request<any>('/tenants', {
+  async getTenant(id: string, token?: string): Promise<Tenant> {
+    return this.request<Tenant>(`/tenants/${id}`, { token });
+  }
+
+  async createTenant(data: Partial<Tenant>, token: string): Promise<Tenant> {
+    return this.request<Tenant>('/tenants', {
       method: 'POST',
       body: JSON.stringify(data),
       token,
     });
   }
 
-  // Payments methods
-  async getPayments(token?: string) {
-    return this.request<any[]>('/payments', { token });
+  async updateTenant(id: string, data: Partial<Tenant>, token: string): Promise<Tenant> {
+    return this.request<Tenant>(`/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      token,
+    });
   }
 
-  async createPayment(data: any, token: string) {
-    return this.request<any>('/payments', {
+  async deleteTenant(id: string, token: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/tenants/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Payments methods
+  async getPayments(token?: string): Promise<Payment[]> {
+    return this.request<Payment[]>('/payments', { token });
+  }
+
+  async getPayment(id: string, token?: string): Promise<Payment> {
+    return this.request<Payment>(`/payments/${id}`, { token });
+  }
+
+  async createPayment(data: Partial<Payment>, token: string): Promise<Payment> {
+    return this.request<Payment>('/payments', {
       method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async updatePayment(id: string, data: Partial<Payment>, token: string): Promise<Payment> {
+    return this.request<Payment>(`/payments/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
       token,
     });
   }
 
   // Achievements methods
-  async getAchievements(token: string) {
-    return this.request<any[]>('/achievements', { token });
+  async getAchievements(token: string): Promise<Achievement[]> {
+    return this.request<Achievement[]>('/achievements', { token });
   }
 
   // Rewards methods
-  async getRewards(token: string) {
-    return this.request<any[]>('/rewards', { token });
+  async getRewards(token: string): Promise<Reward[]> {
+    return this.request<Reward[]>('/rewards', { token });
   }
 
-  async claimReward(id: string, token: string) {
-    return this.request<any>(`/rewards/${id}/claim`, {
+  async claimReward(id: string, token: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/rewards/${id}/claim`, {
       method: 'POST',
       token,
     });
