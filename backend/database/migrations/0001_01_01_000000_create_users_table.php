@@ -11,30 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-        });
-
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
-        });
+        // Note: Migration not used with MongoDB, schema is flexible
+        // This file is kept for reference only
+        // Users collection structure:
+        // {
+        //   _id: ObjectId,
+        //   nama: String (required, 3-100 chars),
+        //   no_hp: String (required, unique, 10-20 chars),
+        //   pin: String (required, hashed, 6 digits),
+        //   email: String (optional),
+        //   role: String (owner|tenant|admin, default: owner),
+        //   created_at: DateTime,
+        //   updated_at: DateTime
+        // }
     }
 
     /**
@@ -42,8 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        // MongoDB: Collections are dropped manually if needed
     }
 };
