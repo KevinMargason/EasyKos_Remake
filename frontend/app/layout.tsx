@@ -1,7 +1,14 @@
 import Providers from "@/core/store/Providers";
+import ThemeProvider from "@/component/ThemeProvider";
 import type { Metadata } from "next";
-//import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -25,10 +32,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      <body>
-        {/* Bungkus children dengan Providers */}
-        <Providers>{children}</Providers>
+    <html lang="id" className={inter.variable} suppressHydrationWarning>
+      {/* Anti-FOUC: apply stored theme before paint */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('ek-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className="font-sans antialiased">
+        <ThemeProvider>
+          {/* Bungkus children dengan Providers */}
+          <Providers>{children}</Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

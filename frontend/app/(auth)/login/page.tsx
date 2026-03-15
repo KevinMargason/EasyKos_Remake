@@ -2,31 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { setToken } from "@/core/feature/token/tokenSlice";
 import { setUser } from "@/core/feature/user/userSlice";
 import { setRole } from "@/core/feature/role/roleSlice";
 import { auth } from "@/core/services/api";
 
-const logoPath = "/Asset/logo.png";
-
-
 const loginSchema = Yup.object({
-  no_hp: Yup.string()
-    .matches(/^[0-9]+$/, "Hanya boleh angka")
-    .min(10, "Minimal 10 digit")
-    .max(15, "Maksimal 15 digit")
-    .required("Nomor HP harus diisi"),
+  no_hp: Yup.string().required("E-mail address harus diisi"),
   pin: Yup.string()
-    .matches(/^[0-9]+$/, "PIN harus angka")
-    .length(6, "PIN harus 6 digit")
-    .required("PIN harus diisi"),
+    .min(6, "Password minimal 6 karakter")
+    .required("Password harus diisi"),
 });
 
 export default function LoginPage() {
@@ -111,121 +102,91 @@ export default function LoginPage() {
   } = formik;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e6f7f6] to-[#d1f2f0]">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
-        {/* Header Logo */}
-        <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <Image
-              src={logoPath}
-              alt="EasyKos Logo"
-              width={280}
-              height={100}
-              priority
-              className="object-contain"
-            />
-          </div>
-          <p className="mt-2 text-center text-base text-gray-600 font-medium">
-            Selamat Datang Kembali
-          </p>
-        </div>
+    <div className="min-h-screen bg-[linear-gradient(225deg,#f5c9c2_0%,#fae4e1_30%,#fdf3f1_65%,#ffffff_95%)] px-4 py-10 dark:bg-[linear-gradient(225deg,#2d1512_0%,#1e1a2e_40%,#111827_70%,#0f172a_100%)] sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[980px] items-center justify-center">
+        <div className="glass-card animate-fade-in-up w-full max-w-[570px] rounded-[20px] px-7 py-8 sm:px-10 sm:py-9">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
+          >
+            <ArrowLeft size={16} />
+            Kembali ke beranda
+          </Link>
+          <h1 className="mt-3 text-[50px] font-bold leading-none text-[#BA6054] sm:text-[52px]">Login</h1>
 
-        {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            {/* Input No HP */}
+          <form className="mt-5" onSubmit={handleSubmit}>
             <div>
-              <label
-                htmlFor="no_hp"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Nomor HP
+              <label htmlFor="no_hp" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
+                E-mail address
               </label>
               <input
                 id="no_hp"
                 name="no_hp"
-                type="tel"
-                placeholder="08123456789"
-                className={`appearance-none relative block w-full px-3 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#17A39D] focus:border-[#17A39D] text-base 
-                  ${touched.no_hp && errors.no_hp ? "border-red-500" : "border-gray-300"}`}
+                type="text"
+                placeholder="Enter Email"
+                className={`mt-1 w-full border-0 border-b bg-transparent pb-2 text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 ${
+                  touched.no_hp && errors.no_hp ? "border-[#BA6054]" : "border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
+                }`}
                 value={values.no_hp}
-                onChange={(e) => {
-                  // Hanya izinkan angka saat mengetik
-                  const val = e.target.value.replace(/[^0-9]/g, "");
-                  formik.setFieldValue("no_hp", val);
-                }}
+                onChange={handleChange}
                 onBlur={handleBlur}
               />
               {touched.no_hp && errors.no_hp && (
-                <p className="text-red-500 text-xs mt-1">{errors.no_hp}</p>
+                <p className="mt-1 text-xs text-[#db6c64]">{errors.no_hp}</p>
               )}
             </div>
 
-            {/* Input PIN */}
-            <div>
-              <label
-                htmlFor="pin"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                PIN (6 digit)
+            <div className="mt-4">
+              <label htmlFor="pin" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
+                Password
               </label>
-              <div className="relative">
+              <div className={`mt-1 flex items-center border-0 border-b pb-2 ${touched.pin && errors.pin ? "border-[#BA6054]" : "border-[#b9b9b9] dark:border-slate-600"}`}>
                 <input
                   id="pin"
                   name="pin"
                   type={showPin ? "text" : "password"}
-                  placeholder="000000"
-                  maxLength={6}
-                  className={`appearance-none relative block w-full px-3 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#17A39D] focus:border-[#17A39D] text-base
-                    ${touched.pin && errors.pin ? "border-red-500" : "border-gray-300"}`}
+                  placeholder="Enter Password"
+                  className="w-full bg-transparent text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                   value={values.pin}
-                  onChange={(e) => {
-                    // Hanya izinkan angka dan max 6 digit
-                    const val = e.target.value
-                      .replace(/[^0-9]/g, "")
-                      .slice(0, 6);
-                    formik.setFieldValue("pin", val);
-                  }}
+                  onChange={handleChange}
                   onBlur={handleBlur}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPin(!showPin)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                  aria-label="Show password"
+                  onClick={() => setShowPin((prev) => !prev)}
+                  className="text-[#101827] dark:text-slate-400"
                 >
-                  {showPin ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPin ? <Eye size={30} /> : <EyeOff size={30} />}
                 </button>
               </div>
               {touched.pin && errors.pin && (
-                <p className="text-red-500 text-xs mt-1">{errors.pin}</p>
+                <p className="mt-1 text-xs text-[#db6c64]">{errors.pin}</p>
               )}
             </div>
-          </div>
 
-          {/* Tombol Submit */}
-          <div>
+            <div className="mt-2 text-right">
+              <button type="button" className="text-[16px] text-[#BA6054] hover:opacity-75">
+                Forgot Password?
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-medium rounded-md text-white bg-[#17A39D] hover:bg-[#138780] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#17A39D] disabled:opacity-70 disabled:cursor-not-allowed transition-all active:scale-95 shadow-md"
+              className="mt-7 h-[61px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-[42px] font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? "Memproses..." : "Masuk"}
+              {isSubmitting ? "Loading..." : "Login"}
             </button>
-          </div>
 
-          {/* Link Daftar */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Belum punya akun?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-[#17A39D] hover:text-[#138780] transition-colors"
-              >
-                Daftar di sini
+            <div className="mt-7 text-center text-[17px] text-[#244454] dark:text-slate-400">
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
+                Sign Up
               </Link>
-            </p>
+            </div>
+          </form>
           </div>
-        </form>
       </div>
     </div>
   );
