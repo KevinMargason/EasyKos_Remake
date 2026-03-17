@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import Link from 'next/link';
-import { Eye, EyeOff, Home, House, Search, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 type RoleType = 'owner' | 'tenant';
 
@@ -108,7 +109,7 @@ export default function RegisterPage() {
                 className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
               >
                 <ArrowLeft size={16} />
-                Kembali ke beranda
+                Back to homepage
               </Link>
               <div className="mx-auto mt-4 grid max-w-[500px] grid-cols-2 gap-4 sm:gap-6">
                 <button
@@ -116,8 +117,8 @@ export default function RegisterPage() {
                   onClick={() => handleRoleSelect('tenant')}
                   className="group transition hover:scale-105 active:scale-100"
                 >
-                  <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] text-[#BA6054] transition group-hover:opacity-85 dark:bg-[#3d2820] dark:text-[#e07b6d] sm:h-[92px] sm:w-[92px]">
-                    <Search size={44} strokeWidth={1.5} className="sm:h-[58px] sm:w-[58px]" />
+                  <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
+                    <Image src="/Asset/landing/icon-search-home.svg" alt="Cari Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
                   <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
                     Cari Kos
@@ -129,8 +130,8 @@ export default function RegisterPage() {
                   onClick={() => handleRoleSelect('owner')}
                   className="group transition hover:scale-105 active:scale-100"
                 >
-                  <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] text-[#BA6054] transition group-hover:opacity-85 dark:bg-[#3d2820] dark:text-[#e07b6d] sm:h-[92px] sm:w-[92px]">
-                    <Home size={44} strokeWidth={1.5} className="sm:h-[58px] sm:w-[58px]" />
+                  <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
+                    <Image src="/Asset/landing/icon-house.svg" alt="Pemilik Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
                   <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
                     Pemilik Kos
@@ -306,8 +307,7 @@ export default function RegisterPage() {
                   onClick={() => setStep('role')}
                   className="mt-4 inline-flex items-center gap-2 text-sm text-[#7e6a66] hover:text-[#5c4b48] dark:text-slate-400 dark:hover:text-slate-200"
                 >
-                  <House size={14} />
-                  Kembali ke pilihan role
+                  Back to role selection
                 </button>
               </form>
             </div>

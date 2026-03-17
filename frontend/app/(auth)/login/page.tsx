@@ -110,7 +110,7 @@ export default function LoginPage() {
             className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
           >
             <ArrowLeft size={16} />
-            Kembali ke beranda
+            Back to homepage
           </Link>
           <h1 className="mt-3 text-[34px] font-bold leading-none text-[#BA6054] sm:text-[44px] md:text-[52px]">Login</h1>
 

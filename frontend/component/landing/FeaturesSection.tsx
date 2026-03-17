@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 
 const features = [
   {
-    icon: '/Asset/landing/icon-house.svg',
+    icon: '/Asset/landing/icon-house-search.svg',
     title: 'Room Booking & Rent',
     description: 'Easily browse, select, and book your dream room with just a few taps.',
   },
@@ -81,7 +81,7 @@ export default function FeaturesSection() {
               key={title}
               className={`reveal delay-${i + 1} glass-card group relative mt-5 rounded-[22px] p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(186,96,84,0.22)] dark:hover:shadow-[0_18px_42px_rgba(2,6,23,0.65)] lg:min-h-[258px]`}
             >
-              <span className="absolute left-3 -top-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/70 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-800 sm:-left-6 sm:-top-6 sm:h-16 sm:w-16">
+              <span className="glass-card absolute left-3 -top-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/70 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-800 sm:-left-6 sm:-top-6 sm:h-16 sm:w-16">
                 <Image src={icon} alt={`${title} icon`} width={30} height={30} className="h-[30px] w-[30px] object-contain sm:h-[34px] sm:w-[34px]" />
               </span>
               <h3 className="mt-8 text-lg font-extrabold text-slate-900 dark:text-slate-100">{title}</h3>
