@@ -1,38 +1,38 @@
 'use client';
 
-import { Building2, Camera, ChartNoAxesColumn, CreditCard, MessageCircleMore, Squirrel } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useRef } from 'react';
 
 const features = [
   {
-    icon: Building2,
-    title: 'Room Discovery',
-    description: 'Browse curated room listings complete with photos, prices, and real facilities.',
+    icon: '/Asset/landing/icon-house.svg',
+    title: 'Room Booking & Rent',
+    description: 'Easily browse, select, and book your dream room with just a few taps.',
   },
   {
-    icon: ChartNoAxesColumn,
+    icon: '/Asset/landing/icon-chart.svg',
     title: 'Owner Dashboard',
-    description: 'Manage room occupancy, monitor tenant activity, and update listings in one panel.',
+    description: 'Comprehensive management tools for boarding house owners.',
   },
   {
-    icon: CreditCard,
-    title: 'Secure Payment',
-    description: 'Pay rent and booking fees safely with integrated and encrypted payment options.',
+    icon: '/Asset/landing/icon-shield.svg',
+    title: 'Secure Payments',
+    description: '100% safe transactions integrated with leading payment gateways.',
   },
   {
-    icon: MessageCircleMore,
-    title: 'In-App Chat',
-    description: 'Communicate directly with property owners before booking and during your stay.',
+    icon: '/Asset/landing/icon-chat.svg',
+    title: 'In-App Direct Chat',
+    description: 'Communicate directly with property owners securely within the app.',
   },
   {
-    icon: Camera,
-    title: 'Video Feed',
-    description: 'Explore room tours and neighborhood highlights in a short video experience.',
+    icon: '/Asset/landing/icon-play.svg',
+    title: 'Video Content Feed',
+    description: 'Watch property tours and tips in a scrollable video feed format.',
   },
   {
-    icon: Squirrel,
-    title: 'Virtual Squirrel',
-    description: 'Complete missions, keep streaks, and unlock mascot moods while using EasyKos.',
+    icon: '/Asset/landing/icon-squirrel.svg',
+    title: 'Virtual Pet Game',
+    description: 'Care for your digital squirrel by completing app milestones!',
   },
 ];
 
@@ -76,15 +76,15 @@ export default function FeaturesSection() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 gap-6 sm:mt-14 sm:grid-cols-2 lg:gap-7 lg:grid-cols-3">
-          {features.map(({ icon: Icon, title, description }, i) => (
+          {features.map(({ icon, title, description }, i) => (
             <article
               key={title}
-              className={`reveal delay-${i + 1} glass-card group rounded-[22px] p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(186,96,84,0.22)] dark:hover:shadow-[0_18px_42px_rgba(2,6,23,0.65)] lg:min-h-[258px]`}
+              className={`reveal delay-${i + 1} glass-card group relative mt-5 rounded-[22px] p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(186,96,84,0.22)] dark:hover:shadow-[0_18px_42px_rgba(2,6,23,0.65)] lg:min-h-[258px]`}
             >
-              <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1e7] text-[#BA6054] transition group-hover:scale-110 dark:bg-[#3d2820] dark:text-[#e07b6d]">
-                <Icon size={22} />
+              <span className="absolute left-3 -top-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/70 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-800 sm:-left-6 sm:-top-6 sm:h-16 sm:w-16">
+                <Image src={icon} alt={`${title} icon`} width={30} height={30} className="h-[30px] w-[30px] object-contain sm:h-[34px] sm:w-[34px]" />
               </span>
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{title}</h3>
+              <h3 className="mt-8 text-lg font-extrabold text-slate-900 dark:text-slate-100">{title}</h3>
               <p className="mt-2 text-sm leading-7 text-slate-500 dark:text-slate-400">{description}</p>
             </article>
           ))}

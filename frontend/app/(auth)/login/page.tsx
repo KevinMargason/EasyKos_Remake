@@ -112,7 +112,7 @@ export default function LoginPage() {
             <ArrowLeft size={16} />
             Kembali ke beranda
           </Link>
-          <h1 className="mt-3 text-[50px] font-bold leading-none text-[#BA6054] sm:text-[52px]">Login</h1>
+          <h1 className="mt-3 text-[34px] font-bold leading-none text-[#BA6054] sm:text-[44px] md:text-[52px]">Login</h1>
 
           <form className="mt-5" onSubmit={handleSubmit}>
             <div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
                 name="no_hp"
                 type="text"
                 placeholder="Enter Email"
-                className={`mt-1 w-full border-0 border-b bg-transparent pb-2 text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 ${
+                className={`mt-1 w-full border-0 border-b bg-transparent pb-2 text-[24px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[30px] md:text-[34px] ${
                   touched.no_hp && errors.no_hp ? "border-[#BA6054]" : "border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
                 }`}
                 value={values.no_hp}
@@ -146,7 +146,7 @@ export default function LoginPage() {
                   name="pin"
                   type={showPin ? "text" : "password"}
                   placeholder="Enter Password"
-                  className="w-full bg-transparent text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+                  className="w-full bg-transparent text-[24px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[30px] md:text-[34px]"
                   value={values.pin}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -157,7 +157,7 @@ export default function LoginPage() {
                   onClick={() => setShowPin((prev) => !prev)}
                   className="text-[#101827] dark:text-slate-400"
                 >
-                  {showPin ? <Eye size={30} /> : <EyeOff size={30} />}
+                  {showPin ? <Eye size={26} /> : <EyeOff size={26} />}
                 </button>
               </div>
               {touched.pin && errors.pin && (
@@ -174,7 +174,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-7 h-[61px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-[42px] font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-7 h-[54px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-[26px] font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:h-[61px] sm:text-[36px] md:text-[42px]"
             >
               {isSubmitting ? "Loading..." : "Login"}
             </button>

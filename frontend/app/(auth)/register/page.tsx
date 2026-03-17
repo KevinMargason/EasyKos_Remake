@@ -110,16 +110,16 @@ export default function RegisterPage() {
                 <ArrowLeft size={16} />
                 Kembali ke beranda
               </Link>
-              <div className="mx-auto mt-4 grid max-w-[500px] grid-cols-2 gap-6">
+              <div className="mx-auto mt-4 grid max-w-[500px] grid-cols-2 gap-4 sm:gap-6">
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('tenant')}
                   className="group transition hover:scale-105 active:scale-100"
                 >
-                  <div className="mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[#F8EFEE] text-[#BA6054] transition group-hover:opacity-85 dark:bg-[#3d2820] dark:text-[#e07b6d]">
-                    <Search size={58} strokeWidth={1.5} />
+                  <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] text-[#BA6054] transition group-hover:opacity-85 dark:bg-[#3d2820] dark:text-[#e07b6d] sm:h-[92px] sm:w-[92px]">
+                    <Search size={44} strokeWidth={1.5} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
-                  <div className="glass-role-option mt-3 flex h-[66px] w-full items-center justify-center rounded-[20px] text-[42px] font-medium text-[#BA6054] dark:text-[#f5d1cb]">
+                  <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
                     Cari Kos
                   </div>
                 </button>
@@ -129,10 +129,10 @@ export default function RegisterPage() {
                   onClick={() => handleRoleSelect('owner')}
                   className="group transition hover:scale-105 active:scale-100"
                 >
-                  <div className="mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[#F8EFEE] text-[#BA6054] transition group-hover:opacity-85 dark:bg-[#3d2820] dark:text-[#e07b6d]">
-                    <Home size={58} strokeWidth={1.5} />
+                  <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] text-[#BA6054] transition group-hover:opacity-85 dark:bg-[#3d2820] dark:text-[#e07b6d] sm:h-[92px] sm:w-[92px]">
+                    <Home size={44} strokeWidth={1.5} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
-                  <div className="glass-role-option mt-3 flex h-[66px] w-full items-center justify-center rounded-[20px] text-[42px] font-medium text-[#BA6054] dark:text-[#f5d1cb]">
+                  <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
                     Pemilik Kos
                   </div>
                 </button>
@@ -152,25 +152,25 @@ export default function RegisterPage() {
               <div className="relative mb-4 grid grid-cols-2 border-b border-[#d8b1ab] text-center dark:border-slate-600">
                 <span
                   aria-hidden="true"
-                  className={`pointer-events-none absolute bottom-0 z-0 h-[61px] w-1/2 rounded-t-[16px] bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] shadow-[0_8px_16px_rgba(0,0,0,0.2)] transition-transform duration-300 ease-out ${isOwner ? 'translate-x-full' : 'translate-x-0'}`}
+                  className={`pointer-events-none absolute bottom-0 z-0 h-[50px] w-1/2 rounded-t-[16px] bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] shadow-[0_8px_16px_rgba(0,0,0,0.2)] transition-transform duration-300 ease-out sm:h-[58px] ${isOwner ? 'translate-x-full' : 'translate-x-0'}`}
                 />
                 <button
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, role: 'tenant' }))}
-                  className={`relative z-10 h-[61px] rounded-t-[16px] text-[42px] font-medium transition-colors duration-300 ${!isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
+                  className={`relative z-10 h-[50px] rounded-t-[16px] px-2 text-base font-medium transition-colors duration-300 sm:h-[58px] sm:text-xl md:text-2xl ${!isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
                 >
                   Cari Kos
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, role: 'owner' }))}
-                  className={`relative z-10 h-[61px] rounded-t-[16px] text-[42px] font-medium transition-colors duration-300 ${isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
+                  className={`relative z-10 h-[50px] rounded-t-[16px] px-2 text-base font-medium transition-colors duration-300 sm:h-[58px] sm:text-xl md:text-2xl ${isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
                 >
                   Pemilik Kos
                 </button>
               </div>
 
-              <h1 className="text-[52px] font-bold leading-none text-[#BA6054]">Sign Up</h1>
+              <h1 className="text-3xl font-bold leading-none text-[#BA6054] sm:text-4xl md:text-5xl">Sign Up</h1>
 
               <form className="mt-3" onSubmit={handleSubmit}>
                 {error && (
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                     name="nama"
                     type="text"
                     placeholder="Enter Full name"
-                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d]"
+                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
                     value={formData.nama}
                     onChange={handleChange}
                     required
@@ -210,7 +210,7 @@ export default function RegisterPage() {
                     name="no_hp"
                     type="text"
                     placeholder="Enter Phone Number"
-                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d]"
+                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
                     value={formData.no_hp}
                     onChange={handleChange}
                     required
@@ -226,7 +226,7 @@ export default function RegisterPage() {
                     name="email"
                     type="email"
                     placeholder="Enter Email"
-                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d]"
+                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
                     value={formData.email}
                     onChange={handleChange}
                   />
@@ -243,7 +243,7 @@ export default function RegisterPage() {
                         name="pin"
                         type={showPin ? 'text' : 'password'}
                         placeholder="Enter Password"
-                        className="w-full bg-transparent text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="w-full bg-transparent text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl md:text-2xl"
                         value={formData.pin}
                         onChange={handleChange}
                         required
@@ -269,7 +269,7 @@ export default function RegisterPage() {
                         name="confirmPin"
                         type={showConfirmPin ? 'text' : 'password'}
                         placeholder="Enter Password"
-                        className="w-full bg-transparent text-[34px] text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="w-full bg-transparent text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl md:text-2xl"
                         value={formData.confirmPin}
                         onChange={handleChange}
                         required
@@ -289,7 +289,7 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-7 h-[61px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-[42px] font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-7 h-[52px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-2xl font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:h-[58px] sm:text-3xl md:text-4xl"
                 >
                   {loading ? 'Loading...' : 'Sign Up'}
                 </button>

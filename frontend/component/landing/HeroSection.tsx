@@ -5,11 +5,22 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
-const mascots = [
-  { src: '/Asset/squirrel-normal.svg',    alt: 'Squirrel normal',    className: 'top-4 right-1 rotate-[7deg]',   delay: '0s'    },
-  { src: '/Asset/squirrel-happy.svg',     alt: 'Squirrel happy',     className: 'top-34 -left-3 -rotate-6',      delay: '1.2s'  },
-  { src: '/Asset/squirrel-exhausted.svg', alt: 'Squirrel exhausted', className: 'bottom-28 right-4 -rotate-3',   delay: '0.6s'  },
-  { src: '/Asset/squirrel-hungry.svg',    alt: 'Squirrel hungry',    className: 'bottom-4 left-4 rotate-6',      delay: '1.8s'  },
+const roomPreviews = [
+  {
+    src: '/Asset/landing/kamar1.svg',
+    alt: 'Preview kamar 1',
+    className: 'top-4 right-[22%] h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px]',
+  },
+  {
+    src: '/Asset/landing/kamar2.svg',
+    alt: 'Preview kamar 2',
+    className: 'top-[132px] -right-6 h-[280px] w-[280px] sm:top-[168px] sm:-right-7 sm:h-[330px] sm:w-[330px] lg:top-[192px] lg:-right-42 lg:h-[390px] lg:w-[390px]',
+  },
+  {
+    src: '/Asset/landing/kamar3.svg',
+    alt: 'Preview kamar 3',
+    className: 'bottom-0 right-[12%] h-[250px] w-[250px] sm:h-[300px] sm:w-[300px] lg:h-[340px] lg:w-[340px]',
+  },
 ];
 
 export default function HeroSection() {
@@ -52,7 +63,7 @@ export default function HeroSection() {
 
           <p className="reveal delay-2 mt-6 max-w-[560px] text-[15px] leading-[1.95] text-slate-500 dark:text-slate-400 sm:text-base">
             Discover verified rooms, compare facilities, and book your ideal place in minutes.
-            EasyKos combines secure payments with a playful squirrel experience.
+            EasyKos combines secure payments with a playful digital experience.
           </p>
 
           <div className="reveal delay-3 mt-11 flex flex-wrap items-center gap-4">
@@ -65,46 +76,22 @@ export default function HeroSection() {
             </Link>
             <Link
               href="#features"
-              className="inline-flex items-center gap-2 rounded-full border border-[#EAD1C7] bg-white/70 px-7 py-3.5 text-sm font-semibold text-[#BA6054] transition hover:scale-[1.04] hover:border-[#BA6054] dark:border-slate-700 dark:bg-slate-800/70 dark:text-[#e07b6d] dark:hover:border-[#e07b6d]"
+              className="glass-card inline-flex items-center gap-2 rounded-full border border-[#EAD1C7] bg-white/70 px-7 py-3.5 text-sm font-semibold text-[#BA6054] transition hover:scale-[1.04] hover:border-[#BA6054] dark:border-slate-700 dark:bg-slate-800/70 dark:text-[#e07b6d] dark:hover:border-[#e07b6d]"
             >
               Learn More
             </Link>
           </div>
         </div>
 
-        {/* ── Right: card ── */}
+        {/* ── Right: room collage ── */}
         <div className="reveal delay-2 relative mx-auto h-[560px] w-full max-w-[560px] sm:h-[610px] sm:max-w-[620px] lg:h-[660px] lg:max-w-[624px]">
-          <div className="absolute inset-x-8 inset-y-12 rounded-[34px] bg-gradient-to-b from-[#fff4ea] to-[#ffd8ba] shadow-[0_35px_80px_rgba(186,96,84,0.23)] dark:from-[#2d1f1a] dark:to-[#3d2820] lg:inset-x-10 lg:inset-y-14" />
-          <div className="absolute left-1/2 top-1/2 w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-[30px] border border-[#f8d7c0] bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-xs font-semibold tracking-[0.18em] text-[#BA6054] dark:text-[#e07b6d]">EASYKOS VIRTUAL PET</p>
-              <span className="rounded-full bg-[#fff1e7] px-3 py-1 text-[11px] font-semibold text-[#BA6054] dark:bg-[#3d2820] dark:text-[#e07b6d]">ACTIVE</span>
-            </div>
-            <h3 className="text-[24px] font-extrabold leading-tight text-slate-900 dark:text-slate-50 sm:text-[26px]">One App, Four Moods.</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
-              Your squirrel evolves with daily actions, reminders, and rewards.
-            </p>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {mascots.map((mascot) => (
-                <div key={mascot.src} className="rounded-2xl border border-slate-100 bg-[#faf7f5] p-2.5 dark:border-slate-700 dark:bg-slate-700/50">
-                  <div className="relative h-20 w-full overflow-hidden rounded-xl bg-white dark:bg-slate-600/30">
-                    <Image src={mascot.src} alt={mascot.alt} fill className="object-contain p-1.5" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Floating mascard cards */}
-          {mascots.map((mascot) => (
+          {roomPreviews.map((room, index) => (
             <div
-              key={`${mascot.src}-floating`}
-              className={`animate-float absolute hidden ${mascot.className} w-[136px] rounded-[24px] border border-white bg-white p-3 shadow-[0_20px_38px_rgba(15,23,42,0.14)] dark:border-slate-700 dark:bg-slate-800 xl:block`}
-              style={{ animationDelay: mascot.delay }}
+              key={room.src}
+              className={`absolute ${room.className}`}
+              style={{ zIndex: index + 1 }}
             >
-              <div className="relative h-[110px] w-full">
-                <Image src={mascot.src} alt={mascot.alt} fill className="object-contain" sizes="136px" />
-              </div>
+              <Image src={room.src} alt={room.alt} fill className="object-contain" sizes="(max-width: 1024px) 50vw, 420px" />
             </div>
           ))}
         </div>

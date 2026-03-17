@@ -17,7 +17,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
-  const { theme, toggle } = useTheme();
+  const { toggle } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -91,7 +91,8 @@ export default function Header() {
             onClick={toggle}
             className="hidden h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-[#BA6054] hover:text-[#BA6054] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-[#e07b6d] dark:hover:text-[#e07b6d] md:flex"
           >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            <Sun size={17} className="hidden dark:block" />
+            <Moon size={17} className="block dark:hidden" />
           </button>
 
           <Link
@@ -108,7 +109,8 @@ export default function Header() {
             onClick={toggle}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400 md:hidden"
           >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            <Sun size={15} className="hidden dark:block" />
+            <Moon size={15} className="block dark:hidden" />
           </button>
 
           <button
