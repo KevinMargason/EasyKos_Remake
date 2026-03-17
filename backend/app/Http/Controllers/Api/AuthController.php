@@ -17,7 +17,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string|min:3|max:100',
             'no_hp' => 'required|string|min:10|max:20|unique:users,no_hp',
-            'pin' => 'required|string|size:6|regex:/^[0-9]+$/',
+            'password' => 'required|string|size:6|regex:/^[0-9]+$/',
             'email' => 'nullable|email|max:255',
             'role' => 'required|in:owner,tenant,admin',
         ]);
@@ -26,7 +26,7 @@ class AuthController extends Controller
             $user = User::create([
                 'nama' => $validated['nama'],
                 'no_hp' => $validated['no_hp'],
-                'pin' => Hash::make($validated['pin']),
+                'password' => Hash::make($validated['password']),
                 'email' => $validated['email'] ?? null,
                 'role' => $validated['role'],
             ]);
@@ -62,17 +62,17 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'no_hp' => 'required|string',
-            'pin' => 'required|string',
+            'password' => 'required|string',
         ]);
 
         // Find user by phone number
         $user = User::where('no_hp', $validated['no_hp'])->first();
 
-        // Verify PIN using Hash::check()
-        if (!$user || !Hash::check($validated['pin'], $user->pin)) {
+        // Verify password using Hash::check()
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid phone number or PIN'
+                'message' => 'Invalid phone number or password'
             ], 401);
         }
 
