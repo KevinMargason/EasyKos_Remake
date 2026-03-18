@@ -39,7 +39,7 @@ export const useRoleGuard = ({
             return;
         }
 
-        setIsChecking(false);
+        queueMicrotask(() => setIsChecking(false));
     }, [allowedRoles, fallbackWhenNoRole, pathname, roleFromStore, roleHome, router]);
 
     return { isChecking };

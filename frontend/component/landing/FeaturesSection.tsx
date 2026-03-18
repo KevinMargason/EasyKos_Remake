@@ -5,32 +5,32 @@ import { useEffect, useRef } from 'react';
 
 const features = [
   {
-    icon: '/Asset/landing/icon-house-search.svg',
+    icon: '/Asset/icon/icon-house-search.svg',
     title: 'Room Booking & Rent',
     description: 'Easily browse, select, and book your dream room with just a few taps.',
   },
   {
-    icon: '/Asset/landing/icon-chart.svg',
+    icon: '/Asset/icon/icon-chart.svg',
     title: 'Owner Dashboard',
     description: 'Comprehensive management tools for boarding house owners.',
   },
   {
-    icon: '/Asset/landing/icon-shield.svg',
+    icon: '/Asset/icon/icon-shield.svg',
     title: 'Secure Payments',
     description: '100% safe transactions integrated with leading payment gateways.',
   },
   {
-    icon: '/Asset/landing/icon-chat.svg',
+    icon: '/Asset/icon/icon-chat.svg',
     title: 'In-App Direct Chat',
     description: 'Communicate directly with property owners securely within the app.',
   },
   {
-    icon: '/Asset/landing/icon-play.svg',
+    icon: '/Asset/icon/icon-play.svg',
     title: 'Video Content Feed',
     description: 'Watch property tours and tips in a scrollable video feed format.',
   },
   {
-    icon: '/Asset/landing/icon-squirrel.svg',
+    icon: '/Asset/icon/icon-squirrel.svg',
     title: 'Virtual Pet Game',
     description: 'Care for your digital squirrel by completing app milestones!',
   },

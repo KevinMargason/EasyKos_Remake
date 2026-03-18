@@ -7,17 +7,17 @@ import { useEffect, useRef } from 'react';
 
 const roomPreviews = [
   {
-    src: '/Asset/landing/kamar1.svg',
+    src: '/Asset/kamar/kamar1.svg',
     alt: 'Preview kamar 1',
     className: 'top-4 right-[22%] h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px]',
   },
   {
-    src: '/Asset/landing/kamar2.svg',
+    src: '/Asset/kamar/kamar2.svg',
     alt: 'Preview kamar 2',
     className: 'top-[132px] -right-6 h-[280px] w-[280px] sm:top-[168px] sm:-right-7 sm:h-[330px] sm:w-[330px] lg:top-[192px] lg:-right-42 lg:h-[390px] lg:w-[390px]',
   },
   {
-    src: '/Asset/landing/kamar3.svg',
+    src: '/Asset/kamar/kamar3.svg',
     alt: 'Preview kamar 3',
     className: 'bottom-0 right-[12%] h-[250px] w-[250px] sm:h-[300px] sm:w-[300px] lg:h-[340px] lg:w-[340px]',
   },

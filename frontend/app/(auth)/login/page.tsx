@@ -11,7 +11,7 @@ import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { setToken } from "@/core/feature/token/tokenSlice";
 import { setUser } from "@/core/feature/user/userSlice";
 import { setRole } from "@/core/feature/role/roleSlice";
-import { auth } from "@/core/services/api";
+import { api } from "@/lib/api";
 
 const loginSchema = Yup.object({
   no_hp: Yup.string().required("E-mail address harus diisi"),
@@ -32,14 +32,10 @@ export default function LoginPage() {
     validationSchema: loginSchema,
     onSubmit: async (values) => {
       try {
-        const payload = {
-          no_hp: values.no_hp,
-          pin: values.pin,
-        };
-        const response = await auth.login(payload);
-        const access_token = response?.data?.token || response?.token;
-        const userData = response?.data?.user || response?.user;
-        const role = userData?.role; // 'owner', 'tenant', atau 'admin'
+        const response = await api.login(values.no_hp, values.pin);
+        const access_token = response.data.token;
+        const userData = response.data.user;
+        const role = userData.role; // 'owner', 'tenant', atau 'admin'
 
         if (access_token) {
           const expiresIn = 7 * 24 * 60 * 60;

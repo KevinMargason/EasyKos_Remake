@@ -43,8 +43,10 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
       (storedMode === 'light' || storedMode === 'dark' ? storedMode : null) ??
       legacy;
 
-    setOverrideTheme(resolvedLegacy);
-    applyTheme(resolvedLegacy ?? getSystemTheme());
+    queueMicrotask(() => {
+      setOverrideTheme(resolvedLegacy);
+      applyTheme(resolvedLegacy ?? getSystemTheme());
+    });
 
     localStorage.removeItem('ek-theme-mode');
     localStorage.removeItem('ek-theme');

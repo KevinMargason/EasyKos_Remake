@@ -118,7 +118,7 @@ export default function RegisterPage() {
                   className="group transition hover:scale-105 active:scale-100"
                 >
                   <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
-                    <Image src="/Asset/landing/icon-search-home.svg" alt="Cari Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
+                    <Image src="/Asset/icon/icon-search-home.svg" alt="Cari Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
                   <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
                     Cari Kos
@@ -131,7 +131,7 @@ export default function RegisterPage() {
                   className="group transition hover:scale-105 active:scale-100"
                 >
                   <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
-                    <Image src="/Asset/landing/icon-house.svg" alt="Pemilik Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
+                    <Image src="/Asset/icon/icon-house.svg" alt="Pemilik Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
                   <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
                     Pemilik Kos

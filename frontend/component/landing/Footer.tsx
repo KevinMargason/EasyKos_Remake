@@ -50,7 +50,7 @@ export default function Footer() {
                 className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-slate-700 hover:bg-[#e07b6d] transition-colors"
               >
                 <Image
-                  src={`/Asset/landing/${icon}`}
+                  src={`/Asset/icon/${icon}`}
                   alt={label}
                   width={22}
                   height={22}
@@ -86,7 +86,7 @@ export default function Footer() {
           <ul className="space-y-3 text-sm leading-7">
             <li className="flex items-center gap-3">
               <Image
-                src="/Asset/landing/icon-mail.svg"
+                src="/Asset/icon/icon-mail.svg"
                 alt="Email"
                 width={20}
                 height={20}
@@ -96,7 +96,7 @@ export default function Footer() {
             </li>
             <li className="flex items-center gap-3">
               <Image
-                src="/Asset/landing/icon-phone.svg"
+                src="/Asset/icon/icon-phone.svg"
                 alt="Phone"
                 width={20}
                 height={20}
@@ -106,7 +106,7 @@ export default function Footer() {
             </li>
             <li className="flex items-center gap-3">
               <Image
-                src="/Asset/landing/icon-navigation.svg"
+                src="/Asset/icon/icon-navigation.svg"
                 alt="Location"
                 width={20}
                 height={20}

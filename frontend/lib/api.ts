@@ -1,6 +1,6 @@
 import type { User, AuthResponse } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-ochre-zeta-68.vercel.app/api';
 
 interface RequestOptions extends RequestInit {
   token?: string;
@@ -21,6 +21,7 @@ class ApiClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
 
     if (options.headers && typeof options.headers === 'object' && !Array.isArray(options.headers)) {
@@ -48,7 +49,7 @@ class ApiClient {
   async login(no_hp: string, pin: string): Promise<AuthResponse> {
     return this.request<AuthResponse>('/login', {
       method: 'POST',
-      body: JSON.stringify({ no_hp, pin }),
+      body: JSON.stringify({ no_hp, password: pin }),
     });
   }
 
@@ -61,7 +62,7 @@ class ApiClient {
   ): Promise<AuthResponse> {
     return this.request<AuthResponse>('/register', {
       method: 'POST',
-      body: JSON.stringify({ nama, no_hp, pin, email, role }),
+      body: JSON.stringify({ nama, no_hp, password: pin, email, role }),
     });
   }
 
