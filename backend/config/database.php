@@ -6,6 +6,14 @@ $mysqlSslCaAttribute = defined('Pdo\\Mysql::ATTR_SSL_CA')
     ? constant('Pdo\\Mysql::ATTR_SSL_CA')
     : (defined('PDO::MYSQL_ATTR_SSL_CA') ? constant('PDO::MYSQL_ATTR_SSL_CA') : null);
 
+$mysqlSslCaPath = env('MYSQL_ATTR_SSL_CA');
+
+if (is_string($mysqlSslCaPath) && $mysqlSslCaPath !== '') {
+    $mysqlSslCaPath = str_starts_with($mysqlSslCaPath, DIRECTORY_SEPARATOR)
+        ? $mysqlSslCaPath
+        : base_path($mysqlSslCaPath);
+}
+
 return [
 
     /*
@@ -62,9 +70,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') && $mysqlSslCaAttribute !== null
+                ? array_filter([
+                    $mysqlSslCaAttribute => env('MYSQL_ATTR_SSL_CA'),
+                ])
+                : [],
         ],
 
         'mariadb' => [

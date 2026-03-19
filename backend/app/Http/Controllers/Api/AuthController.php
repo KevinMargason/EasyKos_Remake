@@ -72,7 +72,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($validated['password'], $user->pin)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid phone number or password'
+                'message' => 'Invalid credentials'
             ], 401);
         }
 

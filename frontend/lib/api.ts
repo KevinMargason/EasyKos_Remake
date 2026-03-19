@@ -1,6 +1,9 @@
 import type { User, AuthResponse } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-ochre-zeta-68.vercel.app/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://backend-ochre-zeta-68.vercel.app/api'
+    : 'http://localhost:8000/api');
 
 interface RequestOptions extends RequestInit {
   token?: string;
