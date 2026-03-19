@@ -65,14 +65,17 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Find user by phone number
-        $user = User::where('no_hp', $validated['no_hp'])->first();
+        // Support login with either phone number or email in the same field.
+        $identifier = trim($validated['no_hp']);
+        $user = User::where('no_hp', $identifier)
+            ->orWhere('email', $identifier)
+            ->first();
 
         // Verify password using Hash::check()
         if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid phone number or password'
+                'message' => 'Invalid credentials'
             ], 401);
         }
 
