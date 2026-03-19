@@ -12,7 +12,7 @@
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
-        "APP_URL": "https://easy-kos-backend-kevinmargason-kevin-margasons-projects.vercel.app/",
+        "APP_URL": "https://easy-kos-backend.vercel.app/",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
         "APP_PACKAGES_CACHE": "/tmp/packages.php",
