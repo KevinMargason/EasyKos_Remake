@@ -51,6 +51,32 @@ class KosController extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $kos = Kos::find($id);
+
+        if (!$kos) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data Kos tidak ditemukan'
+            ], 404);
+        }
+
+        $request->validate([
+            'nama'            => 'sometimes|string|max:255',
+            'alamat'          => 'sometimes|string',
+            'jumlah_kamar'    => 'sometimes|integer',
+            'gender'          => 'sometimes|string',
+            'foto'            => 'sometimes|string|nullable',
+            'rating'          => 'sometimes|numeric',
+            'region_idregion' => 'sometimes|integer'
+        ]);
+
+        $kos->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Kos berhasil diupdate!',
+            'data'    => $kos
+        ], 200);
     }
 
     /**
@@ -59,5 +85,20 @@ class KosController extends Controller
     public function destroy(string $id)
     {
         //
+        $kos = Kos::find($id);
+
+        if (!$kos) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data Kos tidak ditemukan'
+            ], 404);
+        }
+
+        $kos->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Kos berhasil dihapus!'
+        ], 200);
     }
 }
