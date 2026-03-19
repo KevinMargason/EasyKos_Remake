@@ -72,7 +72,7 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') && $mysqlSslCaAttribute !== null
                 ? array_filter([
-                    $mysqlSslCaAttribute => $mysqlSslCaPath,
+                    $mysqlSslCaAttribute => env('MYSQL_ATTR_SSL_CA'),
                 ])
                 : [],
         ],
