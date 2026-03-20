@@ -5,7 +5,7 @@ export interface User {
   nama: string;
   no_hp: string;
   email?: string | null;
-  role: 'owner' | 'tenant' | 'admin';
+  role: 'owner' | 'user';
   created_at: string;
   updated_at: string;
 }

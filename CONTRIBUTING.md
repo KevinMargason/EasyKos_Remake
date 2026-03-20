@@ -100,7 +100,7 @@ Use conventional commit format:
 - `docs: Update README`
 - `style: Format code with Prettier`
 - `refactor: Restructure room service`
-- `test: Add tests for tenant controller`
+- `test: Add tests for user controller`
 - `chore: Update dependencies`
 
 ## Testing

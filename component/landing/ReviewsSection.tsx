@@ -6,21 +6,21 @@ import { useEffect, useRef } from 'react';
 const reviews = [
   {
     quote:
-      'EasyKos helped me find a room in less than one day. The process felt clear, fast, and secure from start to finish.',
+      'EasyKos membantu saya menemukan kamar dalam waktu kurang dari satu hari. Prosesnya terasa jelas, cepat, dan aman dari awal sampai akhir.',
     name: 'Kevin Margason',
-    role: 'Tenant',
+    role: 'Penyewa',
   },
   {
     quote:
-      'The dashboard saves a lot of time for property management. Payment tracking and tenant communication are much easier now.',
+      'Dasbor ini menghemat banyak waktu untuk pengelolaan properti. Pelacakan pembayaran dan komunikasi dengan penyewa sekarang jauh lebih mudah.',
     name: 'Budi Santoso',
-    role: 'Owner',
+    role: 'Pemilik',
   },
   {
     quote:
-      'I love the visual style and mascot missions. It makes routine tasks less stressful and keeps me engaged every day.',
+      'Saya suka gaya visualnya dan misi maskotnya. Ini membuat tugas rutin terasa lebih ringan dan membuat saya tetap terlibat setiap hari.',
     name: 'Mira Adelia',
-    role: 'Tenant',
+    role: 'Penyewa',
   },
 ];
 
@@ -50,39 +50,39 @@ export default function ReviewsSection() {
     <section
       id="reviews"
       ref={sectionRef}
-      className="bg-white py-20 dark:bg-slate-950 sm:py-24 lg:py-[106px]"
+      className="bg-white py-24 dark:bg-slate-950 sm:py-28 lg:py-[128px]"
     >
       <div className="mx-auto w-full max-w-[1358px] px-5 sm:px-8 lg:px-[72px]">
-        <div className="mx-auto max-w-[760px] text-center">
-          <h2 className="reveal text-[31px] font-extrabold leading-tight text-slate-900 dark:text-slate-50 sm:text-[36px] md:text-[44px]">
-            Trusted by Tenants and Owners
+        <div className="mx-auto max-w-[800px] text-center">
+          <h2 className="reveal text-[34px] font-extrabold leading-tight text-slate-900 dark:text-slate-50 sm:text-[40px] md:text-[50px] lg:text-[56px]">
+            Dipercaya oleh Penyewa dan Pemilik
           </h2>
-          <p className="reveal delay-1 mt-4 text-[15px] leading-8 text-slate-500 dark:text-slate-400 sm:text-base">
-            Real stories from people who now use EasyKos every day.
+          <p className="reveal delay-1 mt-5 text-[15px] leading-8 text-slate-500 dark:text-slate-400 sm:text-base lg:text-[16px]">
+            Kisah nyata dari orang-orang yang kini menggunakan EasyKos setiap hari.
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 lg:mt-14 lg:grid-cols-3">
+        <div className="mt-14 grid grid-cols-1 gap-9 lg:mt-16 lg:grid-cols-3">
           {reviews.map((review, index) => (
             <article
               key={review.name}
-              className={`reveal delay-${index + 1} glass-card group rounded-[24px] p-8 transition hover:-translate-y-1.5 hover:shadow-[0_20px_44px_rgba(186,96,84,0.22)] dark:hover:shadow-[0_20px_44px_rgba(2,6,23,0.68)] lg:min-h-[306px] ${index === 1 ? 'lg:-mt-8' : ''}`}
+              className={`reveal delay-${index + 1} glass-card group rounded-[26px] p-9 transition hover:-translate-y-2 hover:shadow-[0_24px_48px_rgba(186,96,84,0.24)] dark:hover:shadow-[0_24px_48px_rgba(2,6,23,0.7)] lg:min-h-[340px] ${index === 1 ? 'lg:-mt-10' : ''}`}
             >
-              <div className="mb-5 flex items-center gap-1 text-[#f59e0b]">
+              <div className="mb-6 flex items-center gap-1.5 text-[#f59e0b]">
                 {Array.from({ length: 5 }).map((_, starIndex) => (
-                  <Star key={`${review.name}-${starIndex}`} size={17} fill="currentColor" />
+                  <Star key={`${review.name}-${starIndex}`} size={18} fill="currentColor" />
                 ))}
               </div>
-              <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">&ldquo;{review.quote}&rdquo;</p>
-              <div className="mt-8 border-t border-[#efe5dd] pt-5 dark:border-slate-700">
-                <div className="flex items-center gap-3">
-                  <span className="relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-[#6f6f6f] to-[#4f4f4f] shadow-[0_10px_20px_rgba(15,23,42,0.26)] dark:from-slate-500 dark:to-slate-700">
-                    <span className="absolute top-[10px] h-5 w-5 rounded-full bg-white/95 dark:bg-slate-100" />
-                    <span className="absolute bottom-[8px] h-[18px] w-[30px] rounded-full bg-white/95 dark:bg-slate-100" />
+              <p className="text-base leading-8 text-slate-600 dark:text-slate-300">&ldquo;{review.quote}&rdquo;</p>
+              <div className="mt-10 border-t border-[#efe5dd] pt-6 dark:border-slate-700">
+                <div className="flex items-center gap-4">
+                  <span className="relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-[#6f6f6f] to-[#4f4f4f] shadow-[0_10px_20px_rgba(15,23,42,0.24)] dark:from-slate-500 dark:to-slate-700">
+                    <span className="absolute top-[10px] h-5 w-5 rounded-full bg-white/100 dark:bg-slate-100" />
+                    <span className="absolute bottom-[8px] h-5 w-7 rounded-full bg-white/100 dark:bg-slate-100" />
                   </span>
                   <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{review.name}</p>
-                    <p className="text-xs font-semibold text-[#BA6054] dark:text-[#e07b6d]">{review.role}</p>
+                    <p className="text-base font-bold text-slate-900 dark:text-slate-100">{review.name}</p>
+                    <p className="text-sm font-semibold text-[#BA6054] dark:text-[#e07b6d]">{review.role}</p>
                   </div>
                 </div>
               </div>

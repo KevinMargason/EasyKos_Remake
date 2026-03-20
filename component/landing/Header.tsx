@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { Menu, Moon, Sun, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTheme } from '@/component/ThemeProvider';
+import { AUTH_ROUTES } from '@/lib/routes';
 
 const navItems = [
-  { label: 'Home', href: '#home' },
-  { label: 'Feature', href: '#features' },
-  { label: 'Review', href: '#reviews' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Beranda', href: '#home' },
+  { label: 'Fitur', href: '#features' },
+  { label: 'Ulasan', href: '#reviews' },
+  { label: 'Tanya Jawab', href: '#faq' },
 ];
 
 export default function Header() {
@@ -96,10 +97,10 @@ export default function Header() {
           </button>
 
           <Link
-            href="/register"
+            href={AUTH_ROUTES.REGISTER}
             className="hidden rounded-full bg-[#BA6054] px-7 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(186,96,84,0.25)] transition hover:scale-[1.03] hover:bg-[#9f4f45] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] md:inline-flex"
           >
-            Sign Up
+            Daftar
           </Link>
 
           {/* Mobile: dark toggle + hamburger */}
@@ -143,11 +144,11 @@ export default function Header() {
               );
             })}
             <Link
-              href="/register"
+              href={AUTH_ROUTES.REGISTER}
               onClick={() => setOpen(false)}
               className="mt-1 inline-flex w-fit rounded-full bg-[#BA6054] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#9f4f45]"
             >
-              Sign Up
+              Daftar
             </Link>
           </div>
         </div>

@@ -1,9 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const normalizeRole = (role) => {
+    if (role === 'owner') return 'owner';
+    if (role === 'user') return 'user';
+    return null;
+};
+
 const getInitialRole = () => {
     if (typeof window === 'undefined') return null;
     try {
-        return localStorage.getItem('role');
+        return normalizeRole(localStorage.getItem('role'));
     } catch {
         return null;
     }
@@ -20,7 +26,7 @@ const roleSlice = createSlice({
     initialState,
     reducers: {
         setRole: (state, action) => {
-            state.role = action.payload || null;
+            state.role = normalizeRole(action.payload);
             if (typeof window !== 'undefined') {
                 try {
                     if (state.role) localStorage.setItem('role', state.role);

@@ -1,3 +1,5 @@
+import { AUTH_ROUTES } from '@/lib/routes';
+
 export const setupInterceptorsTo = (axiosInstance, options = {}) => {
     const { onUnauthorized, disableErrorToast = false } = options;
 
@@ -29,7 +31,9 @@ export const setupInterceptorsTo = (axiosInstance, options = {}) => {
             const status = error?.response?.status;
             if (status === 401) {
                 if (typeof window !== 'undefined') {
-                    const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+                    const isLoginPage =
+                        window.location.pathname === AUTH_ROUTES.LOGIN ||
+                        window.location.pathname === AUTH_ROUTES.REGISTER;
                     const isLoginRequest = error?.config?.url?.includes('/auth/login') || error?.config?.url?.includes('api/auth/login');
                     
                     if (!isLoginPage && !isLoginRequest) {
@@ -42,7 +46,7 @@ export const setupInterceptorsTo = (axiosInstance, options = {}) => {
                             document.cookie = 'token=; path=/; max-age=0';
                         } catch { }
                         if (onUnauthorized) onUnauthorized();
-                        else window.location.replace('/login');
+                        else window.location.replace(AUTH_ROUTES.LOGIN);
                     }
                 }
             }

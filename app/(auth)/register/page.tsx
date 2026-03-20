@@ -2,15 +2,19 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { AUTH_ROUTES, ROUTES } from '@/lib/routes';
+import { useAppDispatch } from '@/core/store/hooks';
+import { setRole } from '@/core/feature/role/roleSlice';
 
-type RoleType = 'owner' | 'tenant';
+type RoleType = 'owner' | 'user';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [step, setStep] = useState<'role' | 'form'>('role');
   const [formData, setFormData] = useState({
     nama: '',
@@ -41,6 +45,7 @@ export default function RegisterPage() {
   };
 
   const handleRoleSelect = (role: RoleType) => {
+    dispatch(setRole(role));
     setFormData({ ...formData, role });
     setStep('form');
   };
@@ -73,24 +78,14 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await api.register(
-        formData.nama,
-        formData.no_hp,
-        formData.pin,
-        formData.email || null,
-        formData.role,
-      );
-
-      if (response.status === "success" && response.data) {
-        setSuccess("Pendaftaran berhasil! Redirecting ke login...");
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } else {
-        setError(response.message || 'Pendaftaran gagal');
-      }
+      setSuccess("Halaman ini masih UI saja. Data pendaftaran belum dikirim ke backend.");
+      toast.info('Data pendaftaran belum dikirim ke backend.');
+      setTimeout(() => {
+        router.push(AUTH_ROUTES.LOGIN);
+      }, 1500);
     } catch (error) {
       console.error('gagal registrasi gagal');
+      setError('Pendaftaran gagal.');
     } finally {
       setLoading(false);
     }
@@ -105,23 +100,23 @@ export default function RegisterPage() {
           {step === 'role' && (
           <div className="animate-fade-in py-4 sm:py-8">
               <Link
-                href="/"
+                href={ROUTES.HOME}
                 className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
               >
                 <ArrowLeft size={16} />
-                Back to homepage
+                Kembali ke beranda
               </Link>
               <div className="mx-auto mt-4 grid max-w-[500px] grid-cols-2 gap-4 sm:gap-6">
                 <button
                   type="button"
-                  onClick={() => handleRoleSelect('tenant')}
+                  onClick={() => handleRoleSelect('user')}
                   className="group transition hover:scale-105 active:scale-100"
                 >
                   <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
-                    <Image src="/Asset/icon/icon-search-home.svg" alt="Cari Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
+                    <Image src="/Asset/icon/icon-search-home.svg" alt="Cari kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
                   <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
-                    Cari Kos
+                    Cari kos
                   </div>
                 </button>
 
@@ -131,18 +126,18 @@ export default function RegisterPage() {
                   className="group transition hover:scale-105 active:scale-100"
                 >
                   <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
-                    <Image src="/Asset/icon/icon-house.svg" alt="Pemilik Kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
+                    <Image src="/Asset/icon/icon-house.svg" alt="Pemilik kos" width={44} height={44} className="sm:h-[58px] sm:w-[58px]" />
                   </div>
                   <div className="glass-role-option mt-3 flex h-[50px] w-full items-center justify-center rounded-[20px] px-2 text-base font-medium text-[#BA6054] dark:text-[#f5d1cb] sm:h-[58px] sm:text-xl md:text-2xl">
-                    Pemilik Kos
+                    Pemilik kos
                   </div>
                 </button>
               </div>
 
               <div className="mt-8 text-center text-[17px] text-[#244454] dark:text-slate-400">
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
-                  Log in
+                Sudah punya akun?{' '}
+                <Link href={AUTH_ROUTES.LOGIN} className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
+                  Masuk
                 </Link>
               </div>
             </div>
@@ -157,21 +152,27 @@ export default function RegisterPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, role: 'tenant' }))}
+                  onClick={() => {
+                    dispatch(setRole('user'));
+                    setFormData((prev) => ({ ...prev, role: 'user' }));
+                  }}
                   className={`relative z-10 h-[50px] rounded-t-[16px] px-2 text-base font-medium transition-colors duration-300 sm:h-[58px] sm:text-xl md:text-2xl ${!isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
                 >
                   Cari Kos
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, role: 'owner' }))}
+                  onClick={() => {
+                    dispatch(setRole('owner'));
+                    setFormData((prev) => ({ ...prev, role: 'owner' }));
+                  }}
                   className={`relative z-10 h-[50px] rounded-t-[16px] px-2 text-base font-medium transition-colors duration-300 sm:h-[58px] sm:text-xl md:text-2xl ${isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
                 >
                   Pemilik Kos
                 </button>
               </div>
 
-              <h1 className="text-3xl font-bold leading-none text-[#BA6054] sm:text-4xl md:text-5xl">Sign Up</h1>
+              <h1 className="text-3xl font-bold leading-none text-[#BA6054] sm:text-4xl md:text-5xl">Daftar</h1>
 
               <form className="mt-3" onSubmit={handleSubmit}>
                 {error && (
@@ -194,7 +195,7 @@ export default function RegisterPage() {
                     id="nama"
                     name="nama"
                     type="text"
-                    placeholder="Enter Full name"
+                    placeholder="Masukkan nama lengkap"
                     className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
                     value={formData.nama}
                     onChange={handleChange}
@@ -204,13 +205,13 @@ export default function RegisterPage() {
 
                 <div className="mt-3">
                   <label htmlFor="no_hp" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                    No. Telp
+                    Nomor HP
                   </label>
                   <input
                     id="no_hp"
                     name="no_hp"
                     type="text"
-                    placeholder="Enter Phone Number"
+                    placeholder="Masukkan nomor HP"
                     className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
                     value={formData.no_hp}
                     onChange={handleChange}
@@ -220,13 +221,13 @@ export default function RegisterPage() {
 
                 <div className="mt-3">
                   <label htmlFor="email" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                    E-mail address
+                    Alamat e-mail
                   </label>
                   <input
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Enter Email"
+                    placeholder="Masukkan e-mail"
                     className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
                     value={formData.email}
                     onChange={handleChange}
@@ -236,14 +237,14 @@ export default function RegisterPage() {
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
                   <div>
                     <label htmlFor="pin" className="text-[17px] font-medium text-[#244454] dark:text-slate-200">
-                      Password
+                      Kata sandi
                     </label>
                     <div className="mt-1 flex items-center border-0 border-b border-[#b9b9b9] pb-2 dark:border-slate-600">
                       <input
                         id="pin"
                         name="pin"
                         type={showPin ? 'text' : 'password'}
-                        placeholder="Enter Password"
+                        placeholder="Masukkan kata sandi"
                         className="w-full bg-transparent text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl md:text-2xl"
                         value={formData.pin}
                         onChange={handleChange}
@@ -251,7 +252,7 @@ export default function RegisterPage() {
                       />
                       <button
                         type="button"
-                        aria-label="Show password"
+                        aria-label="Tampilkan kata sandi"
                         onClick={() => setShowPin((prev) => !prev)}
                         className="text-[#101827] dark:text-slate-400"
                       >
@@ -262,14 +263,14 @@ export default function RegisterPage() {
 
                   <div>
                     <label htmlFor="confirmPin" className="text-[17px] font-medium text-[#244454] dark:text-slate-200">
-                      Confirm Password
+                      Konfirmasi kata sandi
                     </label>
                     <div className="mt-1 flex items-center border-0 border-b border-[#b9b9b9] pb-2 dark:border-slate-600">
                       <input
                         id="confirmPin"
                         name="confirmPin"
                         type={showConfirmPin ? 'text' : 'password'}
-                        placeholder="Enter Password"
+                        placeholder="Masukkan kata sandi"
                         className="w-full bg-transparent text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl md:text-2xl"
                         value={formData.confirmPin}
                         onChange={handleChange}
@@ -277,7 +278,7 @@ export default function RegisterPage() {
                       />
                       <button
                         type="button"
-                        aria-label="Show confirm password"
+                        aria-label="Tampilkan konfirmasi kata sandi"
                         onClick={() => setShowConfirmPin((prev) => !prev)}
                         className="text-[#101827] dark:text-slate-400"
                       >
@@ -292,13 +293,13 @@ export default function RegisterPage() {
                   disabled={loading}
                   className="mt-7 h-[52px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-2xl font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:h-[58px] sm:text-3xl md:text-4xl"
                 >
-                  {loading ? 'Loading...' : 'Sign Up'}
+                  {loading ? 'Memuat...' : 'Daftar'}
                 </button>
 
                 <div className="mt-7 text-center text-[17px] text-[#244454] dark:text-slate-400">
-                  Already have an account?{' '}
-                  <Link href="/login" className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
-                    Log in
+                  Sudah punya akun?{' '}
+                  <Link href={AUTH_ROUTES.LOGIN} className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
+                    Masuk
                   </Link>
                 </div>
 
@@ -307,7 +308,7 @@ export default function RegisterPage() {
                   onClick={() => setStep('role')}
                   className="mt-4 inline-flex items-center gap-2 text-sm text-[#7e6a66] hover:text-[#5c4b48] dark:text-slate-400 dark:hover:text-slate-200"
                 >
-                  Back to role selection
+                  Kembali ke pilihan peran
                 </button>
               </form>
             </div>

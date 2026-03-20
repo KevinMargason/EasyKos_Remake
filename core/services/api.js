@@ -1,25 +1,11 @@
-import { createAxiosInstance } from "./axiosInstances";
-import { createHandleRequest } from "./interceptors";
-
-const handleRequest = createHandleRequest();
-const axiosInstance = createAxiosInstance();
-
-export const auth = {
-
-  login: (data) => handleRequest(axiosInstance.post("/login", data)),
-
-  register: (data) => handleRequest(axiosInstance.post("/register", data)),
+export const apiConfig = {
+  mode: 'UI_ONLY',
+  note: 'Tidak ada request API yang dikirim dari frontend untuk sementara.',
+  ready: false,
 };
 
-export const user = {
+export const auth = {};
 
-  // contoh getUserInfo: () => handleRequest(axiosInstance.get("/api/user/get-user-info")),
-};
+export const user = {};
 
-export const tenant = {
-  
-};
-
-export const admin = {
-  
-};
+export const owner = {};

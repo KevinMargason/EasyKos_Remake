@@ -32,13 +32,13 @@ EasyKos_Remake/
 ### Core Features
 
 - **Room Management** - Add, edit, delete, and track room availability
-- **Tenant Management** - Manage tenant information, contracts, and history
+- **User Management** - Manage user information, contracts, and history
 - **Payment Tracking** - Record and monitor rent and utility payments
 - **Dashboard** - Overview of occupancy, payments, and statistics
 
 ### Gamification Features
 
-- **Achievements System** - Reward tenants for good behavior
+- **Achievements System** - Reward users for good behavior
 - **Points & Rewards** - Earn points and redeem rewards
 - **Leaderboards** - Foster positive competition
 
@@ -135,7 +135,7 @@ The application uses JWT token-based authentication:
 
 - `/dashboard` - Main dashboard with statistics
 - `/rooms` - Room management interface
-- `/tenants` - Tenant management interface
+- `/user` - User management interface
 - `/payments` - Payment tracking interface
 - `/achievements` - View achievements and rewards
 

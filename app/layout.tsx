@@ -21,9 +21,9 @@ const inter = Inter({
 // });
 
 export const metadata: Metadata = {
-  title: "EasyKos - Modern Boarding House Management",
+  title: "EasyKos - Pengelolaan Kos Modern",
   description:
-    "Manage your boarding house (kos) with ease - room management, tenant tracking, payment processing, and gamification features",
+    "Kelola kos dengan mudah - manajemen kamar, pelacakan penyewa, proses pembayaran, dan fitur gamifikasi",
 };
 
 export default function RootLayout({

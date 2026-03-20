@@ -1,5 +1,5 @@
 import ChatContent from '@/component/shared/pages/ChatContent';
 
-export default function ChatPage() {
+export default function OwnerChatPage() {
 	return <ChatContent />;
 }

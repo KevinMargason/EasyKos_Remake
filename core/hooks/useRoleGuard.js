@@ -3,16 +3,11 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/core/store/hooks";
-
-const ROLE_HOME = {
-    TENANT: "/",
-    OWNER: "/owner",
-    ADMIN: "/admin",
-};
+import { ROLE_HOME, ROUTES, normalizeRole } from "@/lib/routes";
 
 export const useRoleGuard = ({
     allowedRoles,
-    fallbackWhenNoRole = "/login",
+    fallbackWhenNoRole = ROUTES.LOGIN,
     roleHome = ROLE_HOME,
 } = {}) => {
     const router = useRouter();
@@ -21,9 +16,10 @@ export const useRoleGuard = ({
     const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
-        const resolvedRole =
+        const resolvedRole = normalizeRole(
             roleFromStore ||
-            (typeof window !== "undefined" ? localStorage.getItem("role") : null);
+            (typeof window !== "undefined" ? localStorage.getItem("role") : null)
+        );
 
         if (!resolvedRole) {
             if (fallbackWhenNoRole) {
@@ -32,7 +28,8 @@ export const useRoleGuard = ({
             return;
         }
 
-        const isAllowed = !allowedRoles || allowedRoles.includes(resolvedRole);
+        const normalizedAllowedRoles = allowedRoles?.map(normalizeRole).filter(Boolean);
+        const isAllowed = !normalizedAllowedRoles || normalizedAllowedRoles.includes(resolvedRole);
         if (!isAllowed) {
             const target = roleHome[resolvedRole] || "/";
             if (pathname !== target) router.replace(target);
