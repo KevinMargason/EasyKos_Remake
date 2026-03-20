@@ -22,6 +22,7 @@ Thank you for your interest in contributing to EasyKos! This document provides g
 ## Development Setup
 
 ### Backend
+
 ```bash
 cd backend
 composer install
@@ -32,8 +33,8 @@ php artisan serve
 ```
 
 ### Frontend
+
 ```bash
-cd frontend
 npm install
 cp .env.local.example .env.local
 npm run dev
@@ -50,6 +51,7 @@ npm run dev
 - Run Laravel Pint before committing: `./vendor/bin/pint`
 
 Example:
+
 ```php
 /**
  * Create a new room in the system.
@@ -73,6 +75,7 @@ public function createRoom(array $data): Room
 - Run ESLint before committing: `npm run lint`
 
 Example:
+
 ```typescript
 interface RoomProps {
   room: Room;
@@ -103,24 +106,27 @@ Use conventional commit format:
 ## Testing
 
 ### Backend
+
 ```bash
 cd backend
 php artisan test
 ```
 
 Write tests for:
+
 - API endpoints
 - Model methods
 - Service classes
 - Critical business logic
 
 ### Frontend
+
 ```bash
-cd frontend
 npm run test
 ```
 
 Write tests for:
+
 - Component rendering
 - User interactions
 - API integration
@@ -158,6 +164,7 @@ Write tests for:
 ## Bug Reports
 
 Include:
+
 - Description of the bug
 - Steps to reproduce
 - Expected behavior
@@ -169,6 +176,12 @@ Include:
 
 ```
 EasyKos_Remake/
+├── app/                          # Next.js App Router pages
+├── component/                    # React components
+├── core/                         # Redux store, hooks, services
+├── lib/                          # Utilities
+│   └── api.ts                   # API client
+├── public/                       # Static assets
 ├── backend/
 │   ├── app/
 │   │   ├── Http/Controllers/Api/  # API controllers
@@ -176,23 +189,20 @@ EasyKos_Remake/
 │   │   └── ...
 │   ├── routes/api.php             # API routes
 │   └── ...
-├── frontend/
-│   ├── app/                       # Next.js pages
-│   ├── lib/                       # Utilities
-│   │   └── api.ts                # API client
-│   └── ...
 └── docs/                          # Documentation
 ```
 
 ## Areas for Contribution
 
 ### High Priority
+
 - Complete CRUD implementations for all resources
 - Add comprehensive test coverage
 - Improve error handling
 - Enhance UI/UX
 
 ### Features
+
 - Real-time notifications
 - Advanced search and filtering
 - Reporting and analytics
@@ -201,12 +211,14 @@ EasyKos_Remake/
 - Mobile app (React Native)
 
 ### Documentation
+
 - API documentation
 - User guide
 - Video tutorials
 - Code examples
 
 ### Testing
+
 - Unit tests
 - Integration tests
 - End-to-end tests
@@ -215,6 +227,7 @@ EasyKos_Remake/
 ## Questions?
 
 Feel free to:
+
 - Open an issue for discussion
 - Join our community chat
 - Email maintainers

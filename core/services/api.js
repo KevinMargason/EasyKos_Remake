@@ -6,10 +6,9 @@ const axiosInstance = createAxiosInstance();
 
 export const auth = {
 
-  login: (data) => handleRequest(axiosInstance.post("api/auth/login", data)),
+  login: (data) => handleRequest(axiosInstance.post("/login", data)),
 
-  register: (data) =>
-    handleRequest(axiosInstance.post("/api/auth/register", data)),
+  register: (data) => handleRequest(axiosInstance.post("/register", data)),
 };
 
 export const user = {

@@ -1,8 +1,20 @@
 import axios from "axios";
 import { setupInterceptorsTo } from "./interceptors";
 
+const DEFAULT_API_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://easykosbackend-production.up.railway.app/api"
+    : "http://localhost:8000/api";
+
+const ensureApiSuffix = (url = "") => {
+  const trimmedUrl = url.trim().replace(/\/+$/, "");
+  return /\/api$/i.test(trimmedUrl) ? trimmedUrl : `${trimmedUrl}/api`;
+};
+
 export const createAxiosInstance = (options = {}, axiosConfig = {}) => {
-  const baseUrl = "https://(backendnya)/api";
+  const baseUrl = ensureApiSuffix(
+    process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL
+  );
 
   const instance = axios.create({
     baseURL: `${baseUrl}`,

@@ -14,10 +14,11 @@ This project uses a modern, scalable architecture:
 
 ```
 EasyKos_Remake/
-├── frontend/          # Next.js frontend application
-│   ├── app/          # Next.js App Router pages
-│   ├── lib/          # API client and utilities
-│   └── ...
+├── app/              # Next.js App Router pages
+├── component/        # React components
+├── core/             # Redux store, hooks, services
+├── lib/              # API client and utilities
+├── public/           # Static assets
 ├── backend/          # Laravel API backend
 │   ├── app/          # Laravel application code
 │   ├── config/       # Configuration files
@@ -29,12 +30,14 @@ EasyKos_Remake/
 ## ✨ Features
 
 ### Core Features
+
 - **Room Management** - Add, edit, delete, and track room availability
 - **Tenant Management** - Manage tenant information, contracts, and history
 - **Payment Tracking** - Record and monitor rent and utility payments
 - **Dashboard** - Overview of occupancy, payments, and statistics
 
 ### Gamification Features
+
 - **Achievements System** - Reward tenants for good behavior
 - **Points & Rewards** - Earn points and redeem rewards
 - **Leaderboards** - Foster positive competition
@@ -51,27 +54,32 @@ EasyKos_Remake/
 ### Backend Setup
 
 1. Navigate to backend directory:
+
 ```bash
 cd backend
 ```
 
 2. Install dependencies:
+
 ```bash
 composer install
 ```
 
 3. Configure environment:
+
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
 4. Run migrations:
+
 ```bash
 php artisan migrate
 ```
 
 5. Start development server:
+
 ```bash
 php artisan serve
 ```
@@ -82,34 +90,31 @@ See [backend/README.md](backend/README.md) for detailed setup instructions.
 
 ### Frontend Setup
 
-1. Navigate to frontend directory:
-```bash
-cd frontend
-```
+1. Install dependencies:
 
-2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Configure environment:
+2. Configure environment:
+
 ```bash
 cp .env.local.example .env.local
 ```
 
-4. Update `.env.local` with backend API URL:
+3. Update `.env.local` with backend API URL:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
 ```
 
-5. Start development server:
+4. Start development server:
+
 ```bash
 npm run dev
 ```
 
 Frontend will be available at `http://localhost:3000`
-
-See [frontend/README.md](frontend/README.md) for detailed setup instructions.
 
 ## 🔒 Authentication
 
@@ -123,9 +128,11 @@ The application uses JWT token-based authentication:
 ## 📱 Pages & Features
 
 ### Public Pages
+
 - `/login` - User authentication
 
 ### Protected Pages (require authentication)
+
 - `/dashboard` - Main dashboard with statistics
 - `/rooms` - Room management interface
 - `/tenants` - Tenant management interface
@@ -143,12 +150,14 @@ By default, the backend uses SQLite for local development. No additional configu
 1. Create MongoDB Atlas cluster at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
 
 2. Install MongoDB package in backend:
+
 ```bash
 cd backend
 composer require mongodb/laravel-mongodb
 ```
 
 3. Update `backend/.env`:
+
 ```env
 DB_CONNECTION=mongodb
 DB_DSN=mongodb+srv://username:password@cluster.mongodb.net/easykos?retryWrites=true&w=majority
@@ -167,7 +176,7 @@ DB_DATABASE=easykos
    - Go to [vercel.com](https://vercel.com)
    - Click "New Project"
    - Select repository
-   - Set root directory to `frontend`
+   - Root directory is already set to project root (no additional configuration needed)
 
 3. Configure environment variables:
    - `NEXT_PUBLIC_API_URL` - Your backend API URL
@@ -184,6 +193,7 @@ The Laravel backend can be deployed to various platforms:
 - **Shared Hosting** - Any hosting with PHP 8.3+
 
 Key deployment steps:
+
 1. Set environment variables (especially `APP_KEY`, database credentials)
 2. Run `composer install --no-dev`
 3. Run `php artisan migrate`
@@ -238,28 +248,30 @@ All resource endpoints require authentication (Bearer token in Authorization hea
 ### Running Tests
 
 Backend:
+
 ```bash
 cd backend
 php artisan test
 ```
 
 Frontend:
+
 ```bash
-cd frontend
 npm run test
 ```
 
 ### Code Linting
 
 Backend (Laravel Pint):
+
 ```bash
 cd backend
 ./vendor/bin/pint
 ```
 
 Frontend (ESLint):
+
 ```bash
-cd frontend
 npm run lint
 ```
 
@@ -268,11 +280,13 @@ npm run lint
 This project represents a complete architectural migration:
 
 **From:**
+
 - Monolithic Ionic + Laravel + MySQL application
 - Coupled frontend and backend
 - Traditional SQL database
 
 **To:**
+
 - Decoupled Next.js frontend + Laravel API backend
 - Modern React-based UI with TypeScript
 - MongoDB for flexible, scalable data storage
@@ -289,10 +303,11 @@ This is a competition/learning project. Feel free to fork and adapt for your own
 ## 🆘 Support
 
 For issues and questions:
-- Check the README files in `frontend/` and `backend/` directories
+
 - Review environment configuration
 - Ensure all dependencies are installed
 - Verify database connections
+- Check backend/README.md for backend-specific setup
 
 ## 🎯 Roadmap
 

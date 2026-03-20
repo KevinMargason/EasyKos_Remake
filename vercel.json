@@ -4,6 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://backend-ochre-zeta-68.vercel.app/api"
+    "NEXT_PUBLIC_API_URL": "https://easykosbackend-production.up.railway.app/api"
   }
 }

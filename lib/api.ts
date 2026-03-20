@@ -1,9 +1,23 @@
 import type { User, AuthResponse } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://backend-ochre-zeta-68.vercel.app/api'
-    : 'http://localhost:8000/api');
+// For environment variables in Next.js
+declare var process: {
+  env: {
+    NODE_ENV: 'development' | 'production' | 'test';
+    NEXT_PUBLIC_API_URL?: string;
+  };
+};
+
+const DEFAULT_API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://easykosbackend-production.up.railway.app/api'
+  : 'http://localhost:8000/api';
+
+const ensureApiSuffix = (url: string): string => {
+  const trimmedUrl = url.trim().replace(/\/+$/, '');
+  return /\/api$/i.test(trimmedUrl) ? trimmedUrl : `${trimmedUrl}/api`;
+};
+
+const API_URL = ensureApiSuffix(process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL);
 
 interface RequestOptions extends RequestInit {
   token?: string;
