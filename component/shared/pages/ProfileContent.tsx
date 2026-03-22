@@ -6,6 +6,24 @@ import { BadgeCheck, CalendarDays, Edit3, Mail, Phone, UserRound, Plus, Trash2, 
 import { useState } from 'react';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
 
+type BankPayment = {
+	id: number;
+	type: 'bank';
+	bankName: string;
+	accountNumber: string;
+	accountHolder: string;
+};
+
+type EWalletPayment = {
+	id: number;
+	type: 'gopay' | 'ovo';
+	phone: string;
+};
+
+type PaymentMethod = BankPayment | EWalletPayment;
+
+type NewPaymentState = Omit<BankPayment, 'id'> | Omit<EWalletPayment, 'id'>;
+
 function InfoRow({ label, value, icon: Icon }: { label: string; value: string; icon?: ComponentType<{ size?: number; className?: string }> }) {
 	return (
 		<div className="glass-card flex items-center justify-between gap-4 rounded-[14px] border-2 border-[#e3d0c9] px-4 py-3 shadow-[0_6px_16px_rgba(15,23,42,0.04)] dark:border-slate-700/80">
@@ -21,20 +39,22 @@ function InfoRow({ label, value, icon: Icon }: { label: string; value: string; i
 export default function ProfileContent() {
 	const [showAddPayment, setShowAddPayment] = useState(false);
 	const [showEditProfile, setShowEditProfile] = useState(false);
-	const [paymentMethods, setPaymentMethods] = useState([
+	const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
 		{ id: 1, type: 'bank', bankName: 'BCA', accountNumber: '1234567890', accountHolder: 'Budi T.' },
 		{ id: 2, type: 'gopay', phone: '081234567890' },
 	]);
-	const [newPayment, setNewPayment] = useState({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '', phone: '' });
+	const [newPayment, setNewPayment] = useState<NewPaymentState>({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '' });
 
 	const handleAddPayment = () => {
 		if (newPayment.type === 'bank' && newPayment.bankName && newPayment.accountNumber && newPayment.accountHolder) {
-			setPaymentMethods([...paymentMethods, { id: Date.now(), ...newPayment }]);
-			setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '', phone: '' });
+			const bankPayment: BankPayment = { id: Date.now(), ...newPayment };
+			setPaymentMethods([...paymentMethods, bankPayment]);
+			setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '' });
 			setShowAddPayment(false);
 		} else if ((newPayment.type === 'gopay' || newPayment.type === 'ovo') && newPayment.phone) {
-			setPaymentMethods([...paymentMethods, { id: Date.now(), ...newPayment }]);
-			setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '', phone: '' });
+			const ewalletPayment: EWalletPayment = { id: Date.now(), ...newPayment };
+			setPaymentMethods([...paymentMethods, ewalletPayment]);
+			setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '' });
 			setShowAddPayment(false);
 		}
 	};
@@ -152,7 +172,14 @@ export default function ProfileContent() {
 										<span className="text-sm font-medium text-slate-700 dark:text-slate-300">Tipe Metode</span>
 										<select
 											value={newPayment.type}
-											onChange={(e) => setNewPayment({ ...newPayment, type: e.target.value as any })}
+											onChange={(e) => {
+												const newType = e.target.value;
+												if (newType === 'bank') {
+													setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '' });
+												} else if (newType === 'gopay' || newType === 'ovo') {
+													setNewPayment({ type: newType as 'gopay' | 'ovo', phone: '' });
+												}
+											}}
 											className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white"
 										>
 											<option value="bank">Bank Transfer</option>
@@ -203,7 +230,7 @@ export default function ProfileContent() {
 												type="tel"
 												placeholder="Contoh: 081234567890"
 												value={newPayment.phone}
-												onChange={(e) => setNewPayment({ ...newPayment, phone: e.target.value })}
+												onChange={(e) => setNewPayment({ ...newPayment, phone: e.target.value } as NewPaymentState)}
 												className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-500 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
 											/>
 										</label>
@@ -220,7 +247,7 @@ export default function ProfileContent() {
 									<button
 										onClick={() => {
 											setShowAddPayment(false);
-											setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '', phone: '' });
+											setNewPayment({ type: 'bank', bankName: '', accountNumber: '', accountHolder: '' });
 										}}
 										className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
 									>
