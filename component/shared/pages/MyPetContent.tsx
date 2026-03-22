@@ -122,9 +122,10 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 
 			<UserSectionTitle title={isOwnerMode ? 'Tukar koin menjadi uang tunai' : 'Tukar koin dan dapatkan hadiah'} />
 
-			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+			<div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
 				{rewards.map((reward, index) => (
-					<div key={`${reward.title}-${index}`} className="flex items-center justify-between gap-4 rounded-[16px] border border-[#e3d0c9] bg-white p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-slate-900">
+				<div key={`${reward.title}-${index}`} className="flex flex-col justify-between gap-4 rounded-[16px] border border-[#e3d0c9] bg-white p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-slate-900">
+					<div className="flex items-start justify-between gap-4">
 						<div>
 							<h3 className="text-[16px] font-semibold text-slate-900 dark:text-slate-100">{reward.title}</h3>
 							<p className="mt-2 text-[14px] leading-6 text-slate-600 dark:text-slate-400">{reward.description}</p>
@@ -134,10 +135,20 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 							{reward.coins}
 						</div>
 					</div>
-				))}
+					<button
+						onClick={() => {
+							console.log('Redeem reward:', reward.title);
+							// TODO: Implement redeem functionality with API
+						}}
+						className="rounded-lg bg-[#c86654] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#b85d47] dark:bg-[#d97d6d] dark:hover:bg-[#e89080]"
+					>
+						Tukar Sekarang
+					</button>
 			</div>
+			))}
+		</div>
 
-			{isOwnerMode ? (
+		{isOwnerMode ? (
 				<section className="rounded-[20px] border border-dashed border-[#e3d0c9] bg-[#fff9f7] p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-slate-900/60">
 					<div className="flex items-start gap-3">
 						<BanknoteArrowUp className="mt-0.5 text-[#c86654]" size={20} />

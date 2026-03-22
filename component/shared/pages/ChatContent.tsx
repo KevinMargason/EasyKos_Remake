@@ -67,17 +67,26 @@ function Bubble({ text, side }: { text: string; side: ChatSide }) {
 	const isOwner = side === 'owner';
 	return (
 		<div className={`flex ${isOwner ? 'justify-end' : 'justify-start'}`}>
-			<div className={`max-w-[380px] rounded-[18px] px-5 py-4 text-[18px] shadow-[0_6px_14px_rgba(15,23,42,0.08)] ${isOwner ? 'bg-[#c86654] text-white' : 'glass-card border border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}`}>{text}</div>
+			<div className={`max-w-[320px] rounded-[18px] px-5 py-4 text-[18px] shadow-[0_6px_14px_rgba(15,23,42,0.08)] sm:max-w-[380px] ${isOwner ? 'bg-[#c86654] text-white' : 'glass-card border border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}`}>{text}</div>
 		</div>
 	);
 }
 
 export default function ChatContent() {
 	const [selectedId, setSelectedId] = useState(1);
+	const [messageInput, setMessageInput] = useState('');
 	const selected = useMemo(() => threads.find((thread) => thread.id === selectedId) ?? threads[0], [selectedId]);
 
+	const handleSendMessage = () => {
+		if (messageInput.trim()) {
+			// TODO: Send message to API
+			console.log('Send message:', messageInput);
+			setMessageInput('');
+		}
+	};
+
 	return (
-		<div className="mx-auto grid max-w-[1180px] gap-5 xl:grid-cols-[390px_1fr]">
+		<div className="mx-auto grid max-w-[1180px] gap-5 lg:grid-cols-[300px_1fr]">
 			<div className="space-y-4">
 				<UserSectionTitle title="Pesan" />
 				<div className="space-y-4">
@@ -106,8 +115,20 @@ export default function ChatContent() {
 
 				<div className="border-t-2 border-[#e8d7d0] px-5 py-5 dark:border-slate-800">
 					<div className="glass-card flex items-center gap-3 rounded-full border border-[#e3d0c9] px-5 py-3 shadow-[0_6px_16px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:shadow-[0_6px_16px_rgba(0,0,0,0.25)]">
-						<input type="text" placeholder="Tulis pesan..." className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100" />
-						<button className="text-[34px] leading-none font-bold text-[#c86654] transition hover:text-[#b45141]">&gt;</button>
+						<input 
+							type="text" 
+							placeholder="Tulis pesan..." 
+							value={messageInput}
+							onChange={(e) => setMessageInput(e.target.value)}
+							onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+							className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100" 
+						/>
+						<button 
+							onClick={handleSendMessage}
+							className="text-[34px] leading-none font-bold text-[#c86654] transition hover:text-[#b45141]"
+						>
+							&gt;
+						</button>
 					</div>
 				</div>
 			</div>

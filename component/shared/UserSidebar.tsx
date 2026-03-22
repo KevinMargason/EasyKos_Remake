@@ -1,8 +1,10 @@
 'use client';
 
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
 
@@ -28,8 +30,20 @@ type UserSidebarProps = {
 
 export default function UserSidebar({ role = 'user' }: UserSidebarProps) {
 	const pathname = usePathname();
+	const router = useRouter();
 	const sidebarItems = role === 'owner' ? ownerSidebarItems : userSidebarItems;
 	const homePath = role === 'owner' ? ROUTES.OWNER.HOME : ROUTES.USER.HOME;
+
+	const handleLogout = () => {
+		// TODO: Clear user session/token from localStorage or state management
+		// Clear localStorage
+		if (typeof window !== 'undefined') {
+			localStorage.removeItem('token');
+			localStorage.removeItem('user');
+		}
+		// Redirect to login
+		router.push(ROUTES.LOGIN);
+	};
 
 	return (
 		<aside className="sticky top-0 hidden h-screen w-[230px] shrink-0 border-r border-slate-200/80 bg-white/95 px-5 py-6 shadow-[8px_0_24px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-[8px_0_24px_rgba(0,0,0,0.25)] lg:flex lg:flex-col">
@@ -64,7 +78,10 @@ export default function UserSidebar({ role = 'user' }: UserSidebarProps) {
 			</nav>
 
 			<div className="mt-auto border-t border-slate-200 pt-4 dark:border-slate-800">
-				<button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-[#c35f46] transition hover:bg-[#fbefeb] dark:text-[#f0b2a7] dark:hover:bg-slate-800">
+				<button
+					onClick={handleLogout}
+					className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-[#c35f46] transition hover:bg-[#fbefeb] dark:text-[#f0b2a7] dark:hover:bg-slate-800"
+				>
 					<LogOut size={19} />
 					<span>Keluar</span>
 				</button>
