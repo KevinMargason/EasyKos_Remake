@@ -1,22 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const normalizeRole = (role) => {
-    if (role === 'owner') return 'owner';
-    if (role === 'user') return 'user';
+    if (role === 'owner' || role === 'admin') return 'owner';
+    if (role === 'tenant' || role === 'user') return 'tenant';
     return null;
 };
 
-const getInitialRole = () => {
-    if (typeof window === 'undefined') return null;
-    try {
-        return normalizeRole(localStorage.getItem('role'));
-    } catch {
-        return null;
-    }
-};
-
 const initialState = {
-    role: getInitialRole(),
+    role: null,
     loading: false,
     error: null,
 };

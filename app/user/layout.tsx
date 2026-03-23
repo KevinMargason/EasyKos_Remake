@@ -67,12 +67,12 @@ export default function UserLayout({ children }: { children: ReactNode }) {
 						</button>
 						<UserThemeToggle />
 					</div>
-					<RoleGate allowedRoles={['user']}>
+					<RoleGate allowedRoles={['tenant']}>
 						{children}
 					</RoleGate>
 				</section>
 			</div>
-			<MobileNavBar role="user" />
+				<MobileNavBar role="tenant" />
 
 			{/* Tour Overlay */}
 			<TourOverlay

@@ -33,14 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={inter.variable} suppressHydrationWarning>
-      {/* Anti-FOUC: apply stored theme before paint */}
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var o=localStorage.getItem('ek-theme-override');var isDark=o?o==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',isDark);}catch(e){}})();`,
-          }}
-        />
-      </head>
+      <head />
       <body className="font-sans antialiased">
         <ThemeProvider>
           {/* Bungkus children dengan Providers */}

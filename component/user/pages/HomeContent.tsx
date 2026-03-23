@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bell, Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
 import { ROUTES } from '@/lib/routes';
 import { getFullGreeting } from '@/lib/greetings';
@@ -12,7 +12,7 @@ import { useAppSelector } from '@/core/store/hooks';
 import { useWallet } from '@/core/hooks/useWallet';
 import { useKos } from '@/core/hooks/useKos';
 
-const filters = ['Putri', 'Putra', 'Campuran', 'Dekat Kampus', 'Surabaya', 'Terjangkau'];
+const filters = ['Semua', 'Putri', 'Putra', 'Campuran', 'Dekat Kampus', 'Surabaya', 'Terjangkau'];
 
 const properties = [
 	{
@@ -130,15 +130,64 @@ export default function HomeContent() {
 		fetchKos();
 	}, [fetchKos]);
 
-	const selectedKos = activeKosId && kosList ? kosList.find((p: any) => p.id === activeKosId) : null;
+	const normalizeText = (value: any) => String(value ?? '').toLowerCase();
 
-	// Filter properties based on search query
-	const filteredProperties = kosList && Array.isArray(kosList) ? kosList.filter((prop: any) => {
-		if (!prop) return false;
-		const name = prop.name ? prop.name.toLowerCase() : '';
-		const alamat = prop.alamat ? prop.alamat.toLowerCase() : '';
-		return name.includes(searchQuery.toLowerCase()) || alamat.includes(searchQuery.toLowerCase());
-	}) : [];
+	const mapKosForCard = (property: any) => ({
+		id: String(property.id),
+		name: property.nama || property.name || 'Kos',
+		location: property.alamat || property.location || '-',
+		price: property.harga ? `Rp ${Number(property.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia',
+		period: property.period || '/ Bulan',
+		image: property.image || '/Asset/kamar/kamar1.svg',
+		description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
+		images: property.images || ['/Asset/kamar/kamar1.svg', '/Asset/kamar/kamar2.svg', '/Asset/kamar/kamar3.svg'],
+		facilities: {
+			umum: property.fasilitas_umum || [],
+			kamar: property.fasilitas_kamar || [],
+		},
+		rules: property.peraturan ? [property.peraturan] : [],
+	});
+
+	const selectedKos = activeKosId && kosList ? kosList.find((p: any) => String(p.id) === String(activeKosId)) : null;
+	const selectedKosView = selectedKos ? mapKosForCard(selectedKos) : null;
+
+	const filteredProperties = useMemo(() => {
+		if (!kosList || !Array.isArray(kosList)) return [];
+
+		const query = searchQuery.trim().toLowerCase();
+
+		return kosList.filter((prop: any) => {
+			if (!prop) return false;
+
+			const kosName = normalizeText(prop.nama || prop.name);
+			const alamat = normalizeText(prop.alamat || prop.location);
+			const gender = normalizeText(prop.gender);
+			const harga = Number(prop.harga || 0);
+
+			const matchesSearch =
+				!query ||
+				kosName.includes(query) ||
+				alamat.includes(query) ||
+				gender.includes(query);
+
+			const matchesFilter = (() => {
+				if (activeFilter === 'Semua') return true;
+				if (activeFilter === 'Putri') return gender === 'female' || gender.includes('putri');
+				if (activeFilter === 'Putra') return gender === 'male' || gender.includes('putra');
+				if (activeFilter === 'Campuran') return gender === 'mixed' || gender.includes('campur');
+				if (activeFilter === 'Dekat Kampus') {
+					return ['kampus', 'universitas', 'univ', 'uin', 'itb', 'ugm', 'ui', 'politeknik', 'sekolah'].some((keyword) =>
+						kosName.includes(keyword) || alamat.includes(keyword)
+					);
+				}
+				if (activeFilter === 'Surabaya') return kosName.includes('surabaya') || alamat.includes('surabaya');
+				if (activeFilter === 'Terjangkau') return harga ? harga <= 1500000 : true;
+				return true;
+			})();
+
+			return matchesSearch && matchesFilter;
+		});
+	}, [kosList, searchQuery, activeFilter]);
 
 	// Show loading skeleton while data is loading
 	if (isLoading) {
@@ -158,19 +207,9 @@ export default function HomeContent() {
 
 	return (
 		<div className="mx-auto flex max-w-[1180px] flex-col gap-5">
-			{activeKosId && selectedKos ? (
+			{activeKosId && selectedKosView ? (
 				<KosDetailPage
-					kos={{
-						id: selectedKos.id,
-						name: selectedKos.name,
-						location: selectedKos.location,
-						price: selectedKos.price,
-						period: selectedKos.period,
-						images: selectedKos.images,
-						description: selectedKos.description,
-						facilities: selectedKos.facilities,
-						rules: selectedKos.rules,
-					}}
+					kos={selectedKosView}
 					owner={{ name: 'Budi T.' }}
 					onBack={() => setActiveKosId(null)}
 				/>
@@ -202,7 +241,7 @@ export default function HomeContent() {
 					<Search size={20} className="text-slate-400 dark:text-slate-500" />
 					<input
 						type="text"
-						placeholder="Cari kos..."
+						placeholder="Cari kos berdasarkan nama atau alamat..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
@@ -211,14 +250,12 @@ export default function HomeContent() {
 
 				<button
 					onClick={() => {
-						// Search is already real-time via filteredProperties, but this can be a clear button or submit
-						if (searchQuery === '') {
-							setSearchQuery('');
-						}
+						setSearchQuery('');
+						setActiveFilter('Semua');
 					}}
 					className="glass-card rounded-full border border-transparent px-8 py-3 text-[15px] font-semibold shadow-[0_4px_10px_rgba(15,23,42,0.06)] transition bg-[linear-gradient(rgba(255,255,255,0.78),rgba(255,255,255,0.78)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] bg-origin-[padding-box,border-box] bg-clip-[padding-box,border-box] text-[#b86552] hover:bg-[linear-gradient(rgba(255,248,246,0.84),rgba(255,248,246,0.84)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] dark:bg-[linear-gradient(rgba(15,23,42,0.75),rgba(15,23,42,0.75)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] dark:bg-origin-[padding-box,border-box] dark:bg-clip-[padding-box,border-box] dark:text-[#f0b2a7] dark:hover:bg-[linear-gradient(rgba(30,41,59,0.8),rgba(30,41,59,0.8)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)]"
 				>
-					Cari
+					Reset
 				</button>
 			</div>
 
@@ -251,20 +288,12 @@ export default function HomeContent() {
 			<section className="space-y-4">
 				<UserSectionTitle title="Rekomendasi untuk Anda" action={<button className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#b85d47] dark:text-slate-400 dark:hover:text-[#f0b2a7]"><Bell size={16} /><span>Lihat semua</span></button>} />
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{searchQuery ? (
-						filteredProperties.length > 0 ? (
-							filteredProperties.map((property: any, index: any) => (
-								<PropertyCard key={`search-${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
-							))
-						) : (
-							<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian</p>
-						)
-					) : kosList && Array.isArray(kosList) ? (
-						kosList.map((property: any, index: any) => (
-							<PropertyCard key={`${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
+					{filteredProperties.length > 0 ? (
+						filteredProperties.map((property: any, index: any) => (
+							<PropertyCard key={`search-${property.id}-${index}`} {...mapKosForCard(property)} onClick={() => setActiveKosId(String(property.id))} />
 						))
 					) : (
-						<p className="col-span-full text-center text-slate-500">Tidak ada data</p>
+						<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
 					)}
 				</div>
 			</section>
@@ -272,20 +301,12 @@ export default function HomeContent() {
 			<section className="space-y-4 pb-8">
 				<UserSectionTitle title="Populer" />
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{searchQuery ? (
-						filteredProperties.length > 0 ? (
-							filteredProperties.map((property: any, index: any) => (
-								<PropertyCard key={`popular-search-${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
-							))
-						) : (
-							<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian</p>
-						)
-					) : kosList && Array.isArray(kosList) ? (
-						kosList.map((property: any, index: any) => (
-							<PropertyCard key={`popular-${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
+					{filteredProperties.length > 0 ? (
+						filteredProperties.map((property: any, index: any) => (
+							<PropertyCard key={`popular-search-${property.id}-${index}`} {...mapKosForCard(property)} onClick={() => setActiveKosId(String(property.id))} />
 						))
 					) : (
-						<p className="col-span-full text-center text-slate-500">Tidak ada data</p>
+						<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
 					)}
 				</div>
 			</section>

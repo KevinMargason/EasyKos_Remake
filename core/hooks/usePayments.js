@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/core/store/hooks';
 import * as apiService from '@/core/services/api';
+import { unwrapApiData, unwrapApiList } from '@/core/utils/apiResponse';
 import {
   setPayments,
   setCurrentPayment,
@@ -20,11 +21,9 @@ export const usePayments = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.payments.getAll();
-      if (response.success) {
-        dispatch(setPayments(response.data));
-      }
+      dispatch(setPayments(unwrapApiList(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil daftar pembayaran'));
       throw error;
     }
   }, [dispatch]);
@@ -33,11 +32,9 @@ export const usePayments = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.payments.getDetail(id);
-      if (response.success) {
-        dispatch(setCurrentPayment(response.data));
-      }
+      dispatch(setCurrentPayment(unwrapApiData(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil detail pembayaran'));
       throw error;
     }
   }, [dispatch]);
@@ -46,12 +43,10 @@ export const usePayments = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.payments.create(data);
-      if (response.success) {
-        dispatch(addPayment(response.data));
-      }
+      dispatch(addPayment(unwrapApiData(response)));
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal membuat pembayaran'));
       throw error;
     }
   }, [dispatch]);
@@ -60,12 +55,10 @@ export const usePayments = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.payments.pay(id);
-      if (response.success) {
-        dispatch(updatePayment(response.data));
-      }
+      dispatch(updatePayment(unwrapApiData(response)));
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal memproses pembayaran'));
       throw error;
     }
   }, [dispatch]);
@@ -73,11 +66,9 @@ export const usePayments = () => {
   const fetchVouchers = useCallback(async () => {
     try {
       const response = await apiService.vouchers.getAll();
-      if (response.success) {
-        dispatch(setVouchers(response.data));
-      }
+      dispatch(setVouchers(unwrapApiList(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil voucher'));
     }
   }, [dispatch]);
 
@@ -86,7 +77,7 @@ export const usePayments = () => {
       const response = await apiService.vouchers.create(data);
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal membuat voucher'));
       throw error;
     }
   }, [dispatch]);
@@ -95,8 +86,9 @@ export const usePayments = () => {
   const fetchPaymentMethods = useCallback(async () => {
     try {
       const response = await apiService.paymentMethods.getAll();
-      setPaymentMethods(response || []);
-      return response || [];
+      const list = unwrapApiList(response);
+      setPaymentMethods(list);
+      return list;
     } catch (error) {
       console.error('Failed to fetch payment methods:', error);
       setPaymentMethods([]);

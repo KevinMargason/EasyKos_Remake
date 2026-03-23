@@ -12,7 +12,7 @@ import { getFullGreeting } from '@/lib/greetings';
 export default function OwnerHomeContent() {
 	const user = useAppSelector((state: any) => state.user.user);
 	const { totalKoin } = useWallet();
-	const { kosList, fetchKos } = useKos();
+	const { kosList, roomsList, fetchKos, fetchRooms } = useKos();
 	const { invoices, fetchPayments } = usePayments();
 	
 	const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +24,7 @@ export default function OwnerHomeContent() {
 				setIsLoading(true);
 				await Promise.all([
 					fetchKos(),
+					fetchRooms(),
 					fetchPayments()
 				]);
 				// Calculate streak from user data (days since registration or last login streak)
@@ -40,7 +41,7 @@ export default function OwnerHomeContent() {
 			}
 		};
 		loadData();
-	}, [fetchKos, fetchPayments, user]);
+	}, [fetchKos, fetchRooms, fetchPayments, user]);
 
 	// Calculate owner statistics
 	const stats = useMemo(() => {
@@ -52,17 +53,18 @@ export default function OwnerHomeContent() {
 		// Calculate total monthly revenue (sum of paid payments this month)
 		const monthlyRevenue = invoices
 			?.filter((inv: any) => {
-				const paymentDate = inv.status === 'paid' ? new Date(inv.updated_at) : null;
+				const paymentDateSource = inv.tanggal_bayar || inv.updated_at;
+				const paymentDate = String(inv.status || '').toUpperCase() === 'PAID' && paymentDateSource ? new Date(paymentDateSource) : null;
 				return paymentDate && paymentDate >= monthStart && paymentDate <= monthEnd;
 			})
-			.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) || 0;
+			.reduce((sum: number, inv: any) => sum + (inv.nominal || 0), 0) || 0;
 
 		// Count pending payments
-		const pendingCount = invoices?.filter((inv: any) => inv.status === 'pending').length || 0;
+		const pendingCount = invoices?.filter((inv: any) => String(inv.status || '').toUpperCase() === 'UNPAID' || String(inv.status || '').toLowerCase() === 'pending').length || 0;
 
-		// Calculate occupancy
-		const totalRooms = kosList.reduce((sum: any, kos: any) => sum + (kos.total_rooms || 0), 0);
-		const occupiedRooms = kosList.reduce((sum: any, kos: any) => sum + (kos.occupied_rooms || 0), 0);
+		// Calculate occupancy from actual room data
+		const totalRooms = roomsList.length || kosList.reduce((sum: number, kos: any) => sum + (kos.jumlah_kamar || 0), 0);
+		const occupiedRooms = roomsList.filter((room: any) => room.users_id).length;
 		const emptyRooms = totalRooms - occupiedRooms;
 
 		return [
@@ -86,7 +88,7 @@ export default function OwnerHomeContent() {
 				icon: Flame 
 			},
 		];
-	}, [invoices, kosList]);
+	}, [invoices, kosList, roomsList]);
 
 	if (isLoading) {
 		return (

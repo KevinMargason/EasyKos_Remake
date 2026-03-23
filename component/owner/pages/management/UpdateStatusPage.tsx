@@ -10,12 +10,14 @@ type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur'
 
 interface UpdateStatusPageProps {
 	onBack: () => void;
-	kosList: string[];
+	kosList: Array<{ label: string; value: string }>;
+	roomsList: Array<{ label: string; value: string; kosId: string }>;
 	amenitiesIcons?: Record<AmenityKey, { icon: string; label: string }>;
 }
 
-export default function UpdateStatusPage({ onBack, kosList, amenitiesIcons }: UpdateStatusPageProps) {
+export default function UpdateStatusPage({ onBack, kosList, roomsList, amenitiesIcons }: UpdateStatusPageProps) {
 	const [selectedKos, setSelectedKos] = useState<string | null>(null);
+	const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
 	const [selectedFasilitasUmum, setSelectedFasilitasUmum] = useState<string[]>([]);
 	const [selectedFasilitasKamar, setSelectedFasilitasKamar] = useState<string[]>([]);
 	const [selectedType, setSelectedType] = useState('Putra');
@@ -42,6 +44,11 @@ export default function UpdateStatusPage({ onBack, kosList, amenitiesIcons }: Up
 			return;
 		}
 
+		if (!selectedRoom) {
+			toast.error('Pilih kamar terlebih dahulu');
+			return;
+		}
+
 		if (!formData.hargaKamar.trim()) {
 			toast.error('Harga Kamar harus diisi');
 			return;
@@ -49,14 +56,18 @@ export default function UpdateStatusPage({ onBack, kosList, amenitiesIcons }: Up
 
 		setIsLoading(true);
 		try {
-			// Parse kos ID from selectedKos (assuming format like "Kos Name - ID" or just use as ID)
-			const kosIdMatch = selectedKos.match(/(\d+)$/);
-			const kosId = kosIdMatch ? kosIdMatch[1] : selectedKos;
+			const genderMap: Record<string, 'male' | 'female' | 'mixed'> = {
+				Putra: 'male',
+				Putri: 'female',
+				Campur: 'mixed',
+			};
+
+			const kosId = selectedKos;
+			const roomId = selectedRoom;
 
 			// Update kos with type and amenities - use correct field names
 			const kosUpdateData = {
-				gender: selectedType,  // Backend expects "gender" not "jenis"
-				fasilitas_umum: selectedFasilitasUmum.filter((a) => ['wifi', 'cctv', 'kulkas', 'laundry', 'ruangTamu', 'dapur', 'kamarMandiLuar'].includes(a)),
+				gender: genderMap[selectedType] || 'mixed',
 			};
 
 			await api.kos.update(kosId, kosUpdateData);
@@ -67,7 +78,7 @@ export default function UpdateStatusPage({ onBack, kosList, amenitiesIcons }: Up
 				fasilitas_kamar: selectedFasilitasKamar.filter((a) => ['lemari', 'meja', 'kursi', 'kasur', 'kamarMandiDalam'].includes(a)),
 			};
 
-			await api.rooms.update(kosId, roomUpdateData);
+			await api.rooms.update(roomId, roomUpdateData);
 
 			toast.success('Status Kos berhasil diperbarui!');
 			onBack();
@@ -101,20 +112,24 @@ export default function UpdateStatusPage({ onBack, kosList, amenitiesIcons }: Up
 								<input
 									type="text"
 									placeholder="Cari Kamar...."
+									readOnly
 									className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
 								/>
 								<Image src="/Asset/icon/icon-search-home.svg" alt="search" width={20} height={20} className="absolute right-3 top-3.5" />
 							</div>
 							{kosList.map((kos) => (
 								<button
-									key={kos}
+									key={kos.value}
 									type="button"
-									onClick={() => setSelectedKos(kos)}
+									onClick={() => {
+										setSelectedKos(kos.value);
+										setSelectedRoom(null);
+									}}
 									className={`w-full rounded-lg border-2 px-4 py-3 text-left text-sm font-medium transition ${
-										selectedKos === kos ? 'border-[#c86654] bg-[#fef8f6] text-[#c86654] dark:bg-slate-800' : 'border-slate-200 bg-white text-slate-900 hover:border-[#c86654] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+										selectedKos === kos.value ? 'border-[#c86654] bg-[#fef8f6] text-[#c86654] dark:bg-slate-800' : 'border-slate-200 bg-white text-slate-900 hover:border-[#c86654] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
 									}`}
 								>
-									{kos}
+									{kos.label}
 								</button>
 							))}
 						</div>
@@ -122,6 +137,26 @@ export default function UpdateStatusPage({ onBack, kosList, amenitiesIcons }: Up
 
 					{/* Detail Kamar */}
 					<div className="lg:col-span-2">
+						{selectedKos ? (
+							<div className="mb-6">
+								<h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Pilih Kamar</h3>
+								<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+									{roomsList.filter((room) => room.kosId === selectedKos).map((room) => (
+										<button
+											key={room.value}
+											type="button"
+											onClick={() => setSelectedRoom(room.value)}
+											className={`rounded-lg border-2 px-4 py-3 text-left text-sm font-medium transition ${
+												selectedRoom === room.value ? 'border-[#c86654] bg-[#fef8f6] text-[#c86654] dark:bg-slate-800' : 'border-slate-200 bg-white text-slate-900 hover:border-[#c86654] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+											}`}
+										>
+											{room.label}
+										</button>
+									))}
+								</div>
+							</div>
+						) : null}
+
 						<h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Jenis Kos</h3>
 						<div className="mb-6 flex gap-3">
 							{['Putra', 'Putri', 'Campur'].map((type) => (

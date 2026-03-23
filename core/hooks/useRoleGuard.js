@@ -7,9 +7,9 @@ import { ROLE_HOME, ROUTES, normalizeRole } from "@/lib/routes";
 
 /**
  * @typedef {Object} UseRoleGuardOptions
- * @property {Array<'user' | 'owner'>=} allowedRoles
+ * @property {Array<'tenant' | 'owner'>=} allowedRoles
  * @property {string=} fallbackWhenNoRole
- * @property {Record<'user' | 'owner', string>=} roleHome
+ * @property {Record<'tenant' | 'owner', string>=} roleHome
  */
 
 /**

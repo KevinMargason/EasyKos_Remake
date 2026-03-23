@@ -28,6 +28,7 @@ const kosSlice = createSlice({
 
     setCurrentKos: (state, action) => {
       state.currentKos = action.payload;
+      state.isLoading = false;
       state.error = null;
     },
 
@@ -39,6 +40,7 @@ const kosSlice = createSlice({
 
     setCurrentRoom: (state, action) => {
       state.currentRoom = action.payload;
+      state.isLoading = false;
       state.error = null;
     },
 

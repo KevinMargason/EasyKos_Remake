@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Plus, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/core/services/api';
+import { useAppSelector } from '@/core/store/hooks';
+import { unwrapApiData } from '@/core/utils/apiResponse';
 
 type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur' | 'lemari' | 'meja' | 'kursi' | 'kasur' | 'kamarMandiDalam' | 'kamarMandiLuar';
 
@@ -14,6 +16,7 @@ interface AddRoomPageProps {
 }
 
 export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps) {
+	const user = useAppSelector((state: any) => state.user.user);
 	const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 	const [selectedType, setSelectedType] = useState('Putra');
 	const [selectedRegion, setSelectedRegion] = useState('1');  // Default region ID
@@ -76,23 +79,28 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 
 		setIsLoading(true);
 		try {
+			const genderMap: Record<string, 'male' | 'female' | 'mixed'> = {
+				Putra: 'male',
+				Putri: 'female',
+				Campur: 'mixed',
+			};
+
 			// Create kos first - Map to backend field names
 			const kosData = {
 				nama: formData.namaKos,
 				alamat: formData.alamat,
-				gender: selectedType,  // Backend expects "gender" not "jenis"
-				region_idregion: selectedRegion,  // Add region field
-				jumlah_kamar: parseInt(formData.nomorKamar) || 1,  // Backend requires this
-				peraturan: formData.peraturan,
-				etnic_target_region_tageting: 'umum',  // Backend requires this - using default
-				fasilitas_umum: selectedAmenities.filter((a) => ['wifi', 'cctv', 'kulkas', 'laundry', 'ruangTamu', 'dapur', 'kamarMandiLuar'].includes(a)),
+				gender: genderMap[selectedType] || 'mixed',
+				region_idregion: parseInt(selectedRegion, 10),
+				jumlah_kamar: 1,
+				rating: 0,
 			};
 			
 			// Debug: Log data sebelum dikirim
 			console.log('📤 Sending KOS data:', kosData);
 
 			const kosResponse = await api.kos.create(kosData);
-			const kosId = kosResponse.data?.id || kosResponse.id;
+			const kosPayload = unwrapApiData(kosResponse);
+			const kosId = kosPayload?.id || kosResponse?.id;
 
 			if (!kosId) {
 				throw new Error('Gagal membuat Kos - ID tidak diterima');
@@ -101,10 +109,11 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 			// Create room with the kos_id
 			const roomData = {
 				kos_id: kosId,
-				nomor: formData.nomorKamar,
+				nomor_kamar: formData.nomorKamar,
 				harga: parseInt(formData.hargaKamar.replace(/\D/g, ''), 10),
-				fasilitas_kamar: selectedAmenities.filter((a) => ['lemari', 'meja', 'kursi', 'kasur', 'kamarMandiDalam'].includes(a)),
-				status: 'tersedia',
+				ukuran_kamar: '3x3',
+				listrik: 'token',
+				users_id: user?.id || null,
 			};
 			
 			// Debug: Log data sebelum dikirim

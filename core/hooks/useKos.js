@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/core/store/hooks';
 import * as apiService from '@/core/services/api';
+import { unwrapApiData, unwrapApiList } from '@/core/utils/apiResponse';
 import {
   setKosList,
   setCurrentKos,
@@ -20,11 +21,11 @@ export const useKos = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.kos.getAll();
-      if (response.success) {
-        dispatch(setKosList(response.data));
-      }
+      dispatch(setKosList(unwrapApiList(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil data kos'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch]);
 
@@ -32,11 +33,11 @@ export const useKos = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.kos.getDetail(id);
-      if (response.success) {
-        dispatch(setCurrentKos(response.data));
-      }
+      dispatch(setCurrentKos(unwrapApiData(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil detail kos'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch]);
 
@@ -44,11 +45,11 @@ export const useKos = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.rooms.getAll();
-      if (response.success) {
-        dispatch(setRoomsList(response.data));
-      }
+      dispatch(setRoomsList(unwrapApiList(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil daftar kamar'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch]);
 
@@ -56,33 +57,29 @@ export const useKos = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.rooms.getDetail(id);
-      if (response.success) {
-        dispatch(setCurrentRoom(response.data));
-      }
+      dispatch(setCurrentRoom(unwrapApiData(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil detail kamar'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch]);
 
   const fetchFasilitas = useCallback(async () => {
     try {
       const response = await apiService.fasilitas.getAll();
-      if (response.success) {
-        dispatch(setFasilitas(response.data));
-      }
+      dispatch(setFasilitas(unwrapApiList(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil fasilitas'));
     }
   }, [dispatch]);
 
   const fetchAturan = useCallback(async () => {
     try {
       const response = await apiService.aturan.getAll();
-      if (response.success) {
-        dispatch(setAturan(response.data));
-      }
+      dispatch(setAturan(unwrapApiList(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil aturan'));
     }
   }, [dispatch]);
 
@@ -90,13 +87,15 @@ export const useKos = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.kos.getCurrent();
-      if (response.success || response.data) {
-        dispatch(setCurrentKos(response.data || response));
-      } else {
-        dispatch(setError('Gagal mengambil data kos saat ini'));
-      }
+      dispatch(setCurrentKos(unwrapApiData(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      if (error?.response?.status === 404) {
+        dispatch(setCurrentKos(null));
+        return;
+      }
+      dispatch(setError(error?.message || 'Gagal mengambil data kos saat ini'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch]);
 

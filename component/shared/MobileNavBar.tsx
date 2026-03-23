@@ -22,10 +22,10 @@ const ownerNavItems: Array<{ label: string; href: string; icon: string }> = [
 ];
 
 type MobileNavBarProps = {
-	role?: 'user' | 'owner';
+	role?: 'tenant' | 'owner';
 };
 
-export default function MobileNavBar({ role = 'user' }: MobileNavBarProps) {
+export default function MobileNavBar({ role = 'tenant' }: MobileNavBarProps) {
 	const pathname = usePathname();
 	const navItems = role === 'owner' ? ownerNavItems : userNavItems;
 	const homePath = role === 'owner' ? ROUTES.OWNER.HOME : ROUTES.USER.HOME;

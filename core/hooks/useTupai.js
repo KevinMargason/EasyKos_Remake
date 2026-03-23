@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/core/store/hooks';
 import * as apiService from '@/core/services/api';
+import { unwrapApiData, unwrapApiList } from '@/core/utils/apiResponse';
 import {
   setTupai,
   setAllTupai,
@@ -18,14 +19,13 @@ export const useTupai = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.myTupai.getAll();
-      if (response.success) {
-        dispatch(setAllTupai(response.data));
-        if (response.data && response.data.length > 0) {
-          dispatch(setTupai(response.data[0]));
-        }
+      const payload = unwrapApiList(response);
+      dispatch(setAllTupai(payload));
+      if (payload.length > 0) {
+        dispatch(setTupai(payload[0]));
       }
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil data tupai'));
       throw error;
     }
   }, [dispatch]);
@@ -34,11 +34,9 @@ export const useTupai = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.myTupai.getDetail(id);
-      if (response.success) {
-        dispatch(setTupai(response.data));
-      }
+      dispatch(setTupai(unwrapApiData(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil detail tupai'));
       throw error;
     }
   }, [dispatch]);
@@ -47,12 +45,10 @@ export const useTupai = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.myTupai.adopt(data);
-      if (response.success) {
-        dispatch(adoptTupai(response.data));
-      }
+      dispatch(adoptTupai(unwrapApiData(response)));
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengadopsi tupai'));
       throw error;
     }
   }, [dispatch]);
@@ -61,15 +57,13 @@ export const useTupai = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.myTupai.feed(id);
-      if (response.success) {
-        dispatch(updateTupaiAfterAction({
-          tupai: response.data,
-          action: 'feed',
-        }));
-      }
+      dispatch(updateTupaiAfterAction({
+        tupai: unwrapApiData(response),
+        action: 'feed',
+      }));
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal memberi makan tupai'));
       throw error;
     }
   }, [dispatch]);
@@ -78,15 +72,13 @@ export const useTupai = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.myTupai.sleep(id);
-      if (response.success) {
-        dispatch(updateTupaiAfterAction({
-          tupai: response.data,
-          action: 'sleep',
-        }));
-      }
+      dispatch(updateTupaiAfterAction({
+        tupai: unwrapApiData(response),
+        action: 'sleep',
+      }));
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal membuat tupai tidur'));
       throw error;
     }
   }, [dispatch]);

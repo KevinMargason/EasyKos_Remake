@@ -24,12 +24,12 @@ export const AUTH_ROUTES = {
 } as const;
 
 export const ROLE_HOME = {
-  user: ROUTES.USER.HOME,
+  tenant: ROUTES.USER.HOME,
   owner: ROUTES.OWNER.HOME,
 } as const;
 
 export const normalizeRole = (role: unknown) => {
-  if (role === 'owner') return 'owner';
-  if (role === 'user') return 'user';
+  if (role === 'owner' || role === 'admin') return 'owner';
+  if (role === 'tenant' || role === 'user') return 'tenant';
   return null;
 };

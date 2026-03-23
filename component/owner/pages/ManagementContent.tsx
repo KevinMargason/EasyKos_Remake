@@ -13,7 +13,7 @@ import ResidentHistoryPage from './management/ResidentHistoryPage';
 
 export default function OwnerManagementContent() {
 	const [activeMenu, setActiveMenu] = useState<'home' | 'add-room' | 'update-status' | 'resident-history'>('home');
-	const { kosList, fetchKos } = useKos();
+	const { kosList, roomsList, fetchKos, fetchRooms } = useKos();
 	const { invoices, fetchPayments } = usePayments();
 	const [isLoading, setIsLoading] = useState(true);
 
@@ -23,6 +23,7 @@ export default function OwnerManagementContent() {
 				setIsLoading(true);
 				await Promise.all([
 					fetchKos(),
+					fetchRooms(),
 					fetchPayments()
 				]);
 			} finally {
@@ -51,21 +52,21 @@ export default function OwnerManagementContent() {
 	};
 
 	// Calculate statistics from real data
-	const { paymentWarnings, roomStats, kosListForDropdown } = useMemo(() => {
+	const { paymentWarnings, roomStats, kosOptions, roomOptions } = useMemo(() => {
 		// Get unpaid payments for warnings
 		const warnings = invoices
-			?.filter((inv: any) => inv.status === 'pending')
+			?.filter((inv: any) => inv.status === 'UNPAID' || inv.status === 'pending')
 			.slice(0, 3)
 			.map((inv: any) => ({
-				name: inv.tenant_name || 'Penghuni',
-				detail: `${inv.kos_name} - Unit ${inv.room_number}`,
+				name: inv.invoice_number ? `Invoice #${inv.invoice_number}` : `Payment #${inv.id}`,
+				detail: `Room ${inv.rooms_id || '-'} • ${inv.jenis_pembayaran || 'bulanan'}`,
 				status: 'Chat'
 			})) || [];
 
 		// Calculate room statistics
-		const totalRooms = kosList.reduce((sum: any, kos: any) => sum + (kos.total_rooms || 0), 0);
-		const occupiedRooms = kosList.reduce((sum: any, kos: any) => sum + (kos.occupied_rooms || 0), 0);
-		const availableRooms = totalRooms - occupiedRooms;
+		const totalRooms = roomsList.length || kosList.reduce((sum: number, kos: any) => sum + (kos.jumlah_kamar || 0), 0);
+		const occupiedRooms = roomsList.filter((room: any) => room.users_id).length;
+		const availableRooms = Math.max(totalRooms - occupiedRooms, 0);
 
 		const stats = [
 			{ label: 'Total Kamar', value: totalRooms.toString() },
@@ -73,20 +74,24 @@ export default function OwnerManagementContent() {
 			{ label: 'Terisi', value: occupiedRooms.toString() },
 		];
 
-		// Build kos list for dropdowns
-		const list = kosList.flatMap((kos: any) =>
-			Array.from({ length: kos.total_rooms || 0 }, (_, i) => ({
-				label: `${kos.name} - ${i + 1}`,
-				value: `kamar_${kos.id}_${i + 1}`
-			}))
-		);
+		const kosListForDropdown = kosList.map((kos: any) => ({
+			label: kos.nama || kos.name || `Kos ${kos.id}`,
+			value: String(kos.id),
+		}));
+
+		const roomListForDropdown = roomsList.map((room: any) => ({
+			label: `${room.kos?.nama || room.kos?.name || `Kos ${room.kos_id}`} - ${room.nomor_kamar || room.nomor || room.id}`,
+			value: String(room.id),
+			kosId: String(room.kos_id),
+		}));
 
 		return {
 			paymentWarnings: warnings,
 			roomStats: stats,
-			kosListForDropdown: list
+			kosOptions: kosListForDropdown,
+			roomOptions: roomListForDropdown,
 		};
-	}, [kosList, invoices]);
+	}, [kosList, roomsList, invoices]);
 
 	if (isLoading) {
 		return (
@@ -217,9 +222,9 @@ export default function OwnerManagementContent() {
 			) : activeMenu === 'add-room' ? (
 				<AddRoomPage onBack={() => setActiveMenu('home')} amenitiesIcons={amenitiesIcons} />
 			) : activeMenu === 'update-status' ? (
-				<UpdateStatusPage onBack={() => setActiveMenu('home')} kosList={kosListForDropdown} amenitiesIcons={amenitiesIcons} />
+				<UpdateStatusPage onBack={() => setActiveMenu('home')} kosList={kosOptions} roomsList={roomOptions} amenitiesIcons={amenitiesIcons} />
 			) : (
-				<ResidentHistoryPage onBack={() => setActiveMenu('home')} kosList={kosListForDropdown} />
+				<ResidentHistoryPage onBack={() => setActiveMenu('home')} kosList={kosOptions} />
 			)}
 		</div>
 	);

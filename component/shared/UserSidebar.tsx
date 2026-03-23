@@ -25,10 +25,10 @@ const ownerSidebarItems: Array<{ label: string; href: string; icon: string; acti
 ];
 
 type UserSidebarProps = {
-	role?: 'user' | 'owner';
+	role?: 'tenant' | 'owner';
 };
 
-export default function UserSidebar({ role = 'user' }: UserSidebarProps) {
+export default function UserSidebar({ role = 'tenant' }: UserSidebarProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const sidebarItems = role === 'owner' ? ownerSidebarItems : userSidebarItems;

@@ -1,16 +1,17 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { BanknoteArrowUp, Coins } from 'lucide-react';
+import { toast } from 'sonner';
 import { useTheme } from '@/component/ThemeProvider';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
-import { BanknoteArrowUp, Coins } from 'lucide-react';
 import { useAppSelector } from '@/core/store/hooks';
 import { useTupai } from '@/core/hooks/useTupai';
 import { useWallet } from '@/core/hooks/useWallet';
+import { usePayments } from '@/core/hooks/usePayments';
 import { useMissions } from '@/core/hooks/useMissions';
 import { getFullGreeting } from '@/lib/greetings';
-import { toast } from 'sonner';
 
 const userRewards = [
 	{ title: 'Diskon Sewa 10rb', value: 10000, coins: 250 },
@@ -34,53 +35,63 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 	const { theme } = useTheme();
 	const isOwnerMode = mode === 'owner';
 	const rewards = isOwnerMode ? ownerRewards : userRewards;
-	
-	// Get real data from hooks
-  const user = useAppSelector((state: any) => state.user.user);
-	const { totalKoin, redeemVoucher, redemptionLoading } = useWallet();
-	const { missions } = useMissions();
-	const { tupai, loading, adoptNewTupai, feedTupai, sleepTupai } = useTupai();
-	
+
+	const [mounted, setMounted] = useState(false);
 	const [isFeeding, setIsFeeding] = useState(false);
 	const [isSleeping, setIsSleeping] = useState(false);
 	const [displayMetrics, setDisplayMetrics] = useState<any>(null);
 	const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-	// Calculate metrics based on backend timestamps (O(1) calculation)
+	const user = useAppSelector((state: any) => state.user.user);
+	const { totalKoin, redeemVoucher, redemptionLoading } = useWallet();
+	const { vouchers, fetchVouchers } = usePayments();
+	const { missions } = useMissions();
+	const { tupai, loading, adoptNewTupai, feedTupai, sleepTupai } = useTupai();
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		if (!mounted) return;
+		fetchVouchers().catch(() => {
+			// Optional data only.
+		});
+	}, [fetchVouchers, mounted]);
+
+	useEffect(() => {
+		if (!mounted) return;
+		if (!tupai && !loading) {
+			adoptNewTupai().catch(() => null);
+		}
+	}, [mounted, tupai, loading, adoptNewTupai]);
+
 	const calculateMetricsFromTimestamps = (pet: any) => {
 		if (!pet) return null;
 
 		const now = new Date().getTime();
-		const DECAY_RATE = 1; // 1% per minute
-		const MAX_DECAY_TIME = 100; // 100 minutes to reach 0%
+		const decayRate = 1;
 
-		// Calculate current kenyang (hunger) based on last_fed_at
 		let kenyangValue = 100;
 		if (pet.last_fed_at) {
-			const timeSinceFed = (now - new Date(pet.last_fed_at).getTime()) / 60000; // minutes
-			kenyangValue = Math.max(0, 100 - (timeSinceFed * DECAY_RATE));
+			const timeSinceFed = (now - new Date(pet.last_fed_at).getTime()) / 60000;
+			kenyangValue = Math.max(0, 100 - (timeSinceFed * decayRate));
 		}
 
-		// Calculate current segar (freshness) based on last_slept_at
 		let segarValue = 100;
 		if (pet.last_slept_at) {
-			const timeSinceSlept = (now - new Date(pet.last_slept_at).getTime()) / 60000; // minutes
-			segarValue = Math.max(0, 100 - (timeSinceSlept * DECAY_RATE));
+			const timeSinceSlept = (now - new Date(pet.last_slept_at).getTime()) / 60000;
+			segarValue = Math.max(0, 100 - (timeSinceSlept * decayRate));
 		}
 
-		return {
-			kenyang: kenyangValue,
-			segar: segarValue,
-		};
+		return { kenyang: kenyangValue, segar: segarValue };
 	};
 
-	// Determine pet expression based on calculated metrics (O(1))
 	const getPetExpression = (metrics: any) => {
 		if (!metrics) return null;
 
 		const { segar, kenyang } = metrics;
 
-		// EXHAUSTED: Segar < 40%
 		if (segar < 40) {
 			return {
 				expression: 'exhausted',
@@ -91,7 +102,6 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 			};
 		}
 
-		// HUNGRY: Kenyang < 40%
 		if (kenyang < 40) {
 			return {
 				expression: 'hungry',
@@ -102,7 +112,6 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 			};
 		}
 
-		// HAPPY: Both bars >= 70%
 		if (segar >= 70 && kenyang >= 70) {
 			return {
 				expression: 'happy',
@@ -113,7 +122,6 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 			};
 		}
 
-		// NORMAL: Everything else
 		return {
 			expression: 'normal',
 			segar: Math.round(segar),
@@ -123,83 +131,82 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 		};
 	};
 
-	// Update display metrics when tupai changes or every minute
 	useEffect(() => {
-		if (!tupai) return;
+		if (!mounted || !tupai) return;
 
 		const updateMetrics = () => {
 			const metrics = calculateMetricsFromTimestamps(tupai);
-			const expression = getPetExpression(metrics);
-			setDisplayMetrics(expression);
+			setDisplayMetrics(getPetExpression(metrics));
 		};
 
-		// Initial calculation
 		updateMetrics();
-
-		// Update every minute (more efficient than every second)
 		pollingRef.current = setInterval(updateMetrics, 60000);
 
 		return () => {
 			if (pollingRef.current) clearInterval(pollingRef.current);
 		};
-	}, [tupai, theme]);
-	
-	useEffect(() => {
-		// Fetch tupai data on component mount if not already loaded
-		if (!tupai && !loading) {
-			adoptNewTupai().catch((err: any) => console.log('Pet might not be adopted yet'));
-		}
-	}, [tupai, loading, adoptNewTupai]);
-	
+	}, [mounted, tupai, theme]);
+
 	const handleFeed = async () => {
 		if (!tupai) return;
 		setIsFeeding(true);
 		try {
 			await feedTupai(tupai.id);
 			toast.success('Peliharaan Anda sekarang sedang makan!');
-		} catch (err: any) {
+		} catch {
 			toast.error('Gagal memberi makan peliharaan');
 		} finally {
 			setIsFeeding(false);
 		}
 	};
-	
+
 	const handleSleep = async () => {
 		if (!tupai) return;
 		setIsSleeping(true);
 		try {
 			await sleepTupai(tupai.id);
 			toast.success('Peliharaan Anda sekarang sedang tidur!');
-		} catch (err: any) {
+		} catch {
 			toast.error('Gagal membuat peliharaan tidur');
 		} finally {
 			setIsSleeping(false);
 		}
 	};
-	
+
 	const handleRedeem = async (reward: typeof userRewards[0]) => {
 		try {
 			if (totalKoin < reward.coins) {
 				toast.error('Koin Anda tidak cukup');
 				return;
 			}
-			await redeemVoucher({ coins: reward.coins, name: reward.title });
+			const matchedVoucher = vouchers?.find((voucher: any) => Number(voucher.nominal_diskon) === reward.value);
+			if (!matchedVoucher) {
+				toast.error('Voucher backend untuk nominal ini belum tersedia');
+				return;
+			}
+			if (!user?.id) {
+				toast.error('Data pengguna belum tersedia');
+				return;
+			}
+			await redeemVoucher({
+				users_id: user.id,
+				voucher_id: matchedVoucher.id,
+				harga_koin: reward.coins,
+			});
 			toast.success(`Berhasil menukar ${reward.title}!`);
-		} catch (err: any) {
+		} catch {
 			toast.error('Gagal menukar voucher');
 		}
 	};
 
-	if (!tupai && loading) {
-		const { greeting, userName } = getFullGreeting(user?.name);
+	if (!mounted) {
 		return (
 			<div className="mx-auto flex max-w-[1180px] flex-col gap-5">
 				<div className="flex items-center justify-between gap-4">
 					<div>
-						<p className="text-[14px] text-slate-500 dark:text-slate-400">{greeting}</p>
-						<h1 className="text-[26px] font-bold leading-none text-slate-900 dark:text-slate-100">{userName}</h1>
+						<p className="text-[14px] text-slate-500 dark:text-slate-400">Memuat...</p>
+						<h1 className="text-[26px] font-bold leading-none text-slate-900 dark:text-slate-100">Memuat data...</h1>
 					</div>
-					<div className="text-center text-slate-500">Memuat data peliharaan...</div>
 				</div>
 			</div>
 		);
@@ -268,14 +275,14 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 					</div>
 
 					<div className="flex flex-col gap-4 lg:items-end">
-						<button 
+						<button
 							onClick={handleFeed}
 							disabled={isFeeding}
 							className="inline-flex min-w-[168px] items-center justify-center gap-3 rounded-[24px] bg-[#f5ece8] px-8 py-4 text-[18px] font-semibold text-[#c2705f] shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition hover:bg-[#f1e2dc] disabled:opacity-50 dark:bg-[#2b211f] dark:text-[#f0b2a7] dark:hover:bg-[#342826]">
 							<Image src="/Asset/icon/icon-bowl.svg" alt="Makan" width={24} height={24} className="mt-1" />
 							{isFeeding ? 'Sedang makan...' : 'Makan'}
 						</button>
-						<button 
+						<button
 							onClick={handleSleep}
 							disabled={isSleeping}
 							className="inline-flex min-w-[168px] items-center justify-center gap-3 rounded-[24px] bg-[#8d9bb9] px-8 py-4 text-[18px] font-semibold text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition hover:bg-[#7c8cab] disabled:opacity-50 dark:bg-[#55627e] dark:text-slate-100 dark:hover:bg-[#49566f]">
@@ -290,32 +297,30 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 
 			<div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
 				{rewards.map((reward, index) => (
-				<div key={`${reward.title}-${index}`} className="flex flex-col justify-between gap-4 rounded-[16px] border border-[#e3d0c9] bg-white p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-slate-900">
-					<div className="flex items-start justify-between gap-4">
-						<div>
-							<h3 className="text-[16px] font-semibold text-slate-900 dark:text-slate-100">{reward.title}</h3>
-							<p className="mt-2 text-[14px] leading-6 text-slate-600 dark:text-slate-400">
-								{isOwnerMode ? `Dapatkan uang tunai Rp ${reward.value.toLocaleString('id-ID')}` : `Dapatkan diskon Rp ${reward.value.toLocaleString('id-ID')}`}
-							</p>
+					<div key={`${reward.title}-${index}`} className="flex flex-col justify-between gap-4 rounded-[16px] border border-[#e3d0c9] bg-white p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-slate-900">
+						<div className="flex items-start justify-between gap-4">
+							<div>
+								<h3 className="text-[16px] font-semibold text-slate-900 dark:text-slate-100">{reward.title}</h3>
+								<p className="mt-2 text-[14px] leading-6 text-slate-600 dark:text-slate-400">
+									{isOwnerMode ? `Dapatkan uang tunai Rp ${reward.value.toLocaleString('id-ID')}` : `Dapatkan diskon Rp ${reward.value.toLocaleString('id-ID')}`}
+								</p>
+							</div>
+							<div className="inline-flex items-center gap-2 rounded-full bg-[#fff3ef] px-4 py-2 text-[14px] font-semibold text-[#d36b57] dark:bg-[#2f1b17] dark:text-[#f0b2a7]">
+								{isOwnerMode ? <Coins size={16} /> : null}
+								{reward.coins} Koin
+							</div>
 						</div>
-						<div className="inline-flex items-center gap-2 rounded-full bg-[#fff3ef] px-4 py-2 text-[14px] font-semibold text-[#d36b57] dark:bg-[#2f1b17] dark:text-[#f0b2a7]">
-							{isOwnerMode ? <Coins size={16} /> : null}
-							{reward.coins} Koin
-						</div>
+						<button
+							onClick={() => handleRedeem(reward)}
+							disabled={redemptionLoading || totalKoin < reward.coins}
+							className="rounded-lg bg-[#c86654] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#b85d47] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#d97d6d] dark:hover:bg-[#e89080]">
+							{redemptionLoading ? 'Sedang ditukar...' : totalKoin < reward.coins ? 'Koin tidak cukup' : 'Tukar Sekarang'}
+						</button>
 					</div>
-					<button
-						onClick={() => handleRedeem(reward)}
-						disabled={redemptionLoading || totalKoin < reward.coins}
-						className="rounded-lg bg-[#c86654] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#b85d47] disabled:opacity-50 dark:bg-[#d97d6d] dark:hover:bg-[#e89080] disabled:cursor-not-allowed"
-					>
-						{redemptionLoading ? 'Sedang ditukar...' : totalKoin < reward.coins ? 'Koin tidak cukup' : 'Tukar Sekarang'}
-					</button>
+				))}
 			</div>
-			))}
-		</div>
-	);
 
-		{isOwnerMode ? (
+			{isOwnerMode ? (
 				<section className="rounded-[20px] border border-dashed border-[#e3d0c9] bg-[#fff9f7] p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-slate-900/60">
 					<div className="flex items-start gap-3">
 						<BanknoteArrowUp className="mt-0.5 text-[#c86654]" size={20} />

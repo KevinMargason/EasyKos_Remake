@@ -1,30 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const getInitialUser = () => {
-    if (typeof window === 'undefined') return null;
-    try {
-        const stored = localStorage.getItem('user');
-        return stored ? JSON.parse(stored) : null;
-    } catch {
-        return null;
-    }
-};
-
-const getInitialUserPenpos = () => {
-    if (typeof window === 'undefined') return null;
-    try {
-        return localStorage.getItem('userPenpos');
-    } catch {
-        return null;
-    }
-};
-
 const initialState = {
-    user: getInitialUser(),
-    userPenpos: getInitialUserPenpos(),
+    user: null,
+    userPenpos: null,
     isLoading: false,
     error: null,
-    isAuthenticated: !!getInitialUser(),
+    isAuthenticated: false,
 };
 
 const userSlice = createSlice({

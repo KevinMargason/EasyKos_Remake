@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/core/store/hooks';
 import * as apiService from '@/core/services/api';
+import { unwrapApiData } from '@/core/utils/apiResponse';
 import {
   setBalance,
   updateBalance,
@@ -16,11 +17,9 @@ export const useWallet = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.wallet.getBalance(userId);
-      if (response.success) {
-        dispatch(setBalance(response.data));
-      }
+      dispatch(setBalance(unwrapApiData(response)));
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal mengambil saldo koin'));
       throw error;
     }
   }, [dispatch]);
@@ -29,14 +28,11 @@ export const useWallet = () => {
     try {
       dispatch(setLoading(true));
       const response = await apiService.rewards.redeemVoucher(data);
-      if (response.success) {
-        // Update balance after redeem
-        const koinSpent = data.harga_koin || 0;
-        dispatch(updateBalance({ koinChange: -koinSpent }));
-      }
+      const koinSpent = data.harga_koin ?? data.coins ?? 0;
+      dispatch(updateBalance({ koinChange: -koinSpent }));
       return response;
     } catch (error) {
-      dispatch(setError(error.message));
+      dispatch(setError(error?.message || 'Gagal menukar voucher'));
       throw error;
     }
   }, [dispatch]);

@@ -17,7 +17,7 @@ interface Resident {
 
 interface ResidentHistoryPageProps {
 	onBack: () => void;
-	kosList: string[];
+	kosList: Array<{ label: string; value: string }>;
 }
 
 export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistoryPageProps) {
@@ -95,15 +95,15 @@ export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistory
 							</div>
 							{kosList.map((kos) => (
 								<button
-									key={kos}
-									onClick={() => setSelectedKos(kos)}
+									key={kos.value}
+									onClick={() => setSelectedKos(kos.value)}
 									className={`w-full rounded-lg border-2 px-4 py-3 text-left text-sm font-medium transition ${
-										selectedKos === kos
+										selectedKos === kos.value
 											? 'border-[#c86654] bg-[#fef8f6] text-[#c86654] dark:bg-slate-800'
 											: 'border-slate-200 bg-white text-slate-900 hover:border-[#c86654] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
 									}`}
 								>
-									{kos}
+									{kos.label}
 								</button>
 							))}
 						</div>

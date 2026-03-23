@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { ROLE_HOME, ROUTES, normalizeRole } from "@/lib/routes";
 import { useAppDispatch } from "@/core/store/hooks";
+import { setToken } from "@/core/feature/token/tokenSlice";
 import { setUser } from "@/core/feature/user/userSlice";
 import { setRole } from "@/core/feature/role/roleSlice";
 import { api } from "@/core/services/api";
@@ -40,21 +41,22 @@ export default function LoginPage() {
 
         if (response && (response.access_token || response.success)) {
           const { access_token, user } = response;
+          const normalizedRole = normalizeRole(user?.role);
           
           // Store token
-          if (typeof window !== "undefined") {
-            localStorage.setItem("token", access_token);
-            localStorage.setItem("role", user.role);
-          }
+          dispatch(setToken(access_token));
           
           // Update Redux store
           dispatch(setUser(user));
-          dispatch(setRole(user.role));
+            dispatch(setRole(normalizedRole || 'tenant'));
+
+          if (typeof window !== 'undefined' && normalizedRole) {
+            localStorage.setItem('role', normalizedRole);
+          }
           
           toast.success(`Selamat datang, ${user.name}!`);
           
           // Redirect based on role
-          const normalizedRole = normalizeRole(user.role);
           const targetRoute = normalizedRole ? ROLE_HOME[normalizedRole] : ROUTES.USER.HOME;
           router.push(targetRoute);
         }

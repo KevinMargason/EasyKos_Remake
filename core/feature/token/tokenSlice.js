@@ -1,18 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const getTokenFromCookie = () => {
-    if (typeof document === 'undefined') return null;
-    try {
-        const tokenFromCookie = document.cookie
-            ?.split('; ')
-            ?.find((c) => c.startsWith('token='))
-            ?.split('=')[1];
-        return tokenFromCookie ? decodeURIComponent(tokenFromCookie) : null;
-    } catch {
-        return null;
-    }
-};
-
 const clearAuthLocalStorage = () => {
     if (typeof window === 'undefined') return;
     try {
@@ -25,25 +12,8 @@ const clearAuthLocalStorage = () => {
     }
 };
 
-const getInitialToken = () => {
-    if (typeof window === 'undefined') return null;
-    try {
-        const tokenFromCookie = getTokenFromCookie();
-        const tokenFromLocalStorage = localStorage.getItem('token');
-        
-        if (!tokenFromCookie && tokenFromLocalStorage) {
-            clearAuthLocalStorage();
-            return null;
-        }
-        
-        return tokenFromCookie || tokenFromLocalStorage;
-    } catch {
-        return null;
-    }
-};
-
 const initialState = {
-    token: getInitialToken(),
+    token: null,
     isLoading: false,
     error: null,
 };

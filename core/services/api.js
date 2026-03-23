@@ -152,6 +152,11 @@ export const aturan = {
     const response = await axiosInstance.get('/aturan');
     return response.data;
   },
+
+  create: async (data) => {
+    const response = await axiosInstance.post('/aturan', data);
+    return response.data;
+  },
 };
 
 // ======================== PAYMENT ENDPOINTS ========================
