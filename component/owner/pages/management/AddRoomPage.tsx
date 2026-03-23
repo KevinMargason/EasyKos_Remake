@@ -79,17 +79,17 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 
 		setIsLoading(true);
 		try {
-			const genderMap: Record<string, 'male' | 'female' | 'mixed'> = {
-				Putra: 'male',
-				Putri: 'female',
-				Campur: 'mixed',
+			const genderMap: Record<string, 'Putra' | 'Putri' | 'Campur'> = {
+				Putra: 'Putra',
+				Putri: 'Putri',
+				Campur: 'Campur',
 			};
 
 			// Create kos first - Map to backend field names
 			const kosData = {
 				nama: formData.namaKos,
 				alamat: formData.alamat,
-				gender: genderMap[selectedType] || 'mixed',
+				gender: genderMap[selectedType] || 'Campur',
 				region_idregion: parseInt(selectedRegion, 10),
 				jumlah_kamar: 1,
 				rating: 0,

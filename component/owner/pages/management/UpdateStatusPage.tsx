@@ -56,10 +56,10 @@ export default function UpdateStatusPage({ onBack, kosList, roomsList, amenities
 
 		setIsLoading(true);
 		try {
-			const genderMap: Record<string, 'male' | 'female' | 'mixed'> = {
-				Putra: 'male',
-				Putri: 'female',
-				Campur: 'mixed',
+			const genderMap: Record<string, 'Putra' | 'Putri' | 'Campur'> = {
+				Putra: 'Putra',
+				Putri: 'Putri',
+				Campur: 'Campur',
 			};
 
 			const kosId = selectedKos;
@@ -67,7 +67,7 @@ export default function UpdateStatusPage({ onBack, kosList, roomsList, amenities
 
 			// Update kos with type and amenities - use correct field names
 			const kosUpdateData = {
-				gender: genderMap[selectedType] || 'mixed',
+				gender: genderMap[selectedType] || 'Campur',
 			};
 
 			await api.kos.update(kosId, kosUpdateData);

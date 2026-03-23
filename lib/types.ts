@@ -37,7 +37,7 @@ export interface Kos {
   nama: string;
   alamat: string;
   jumlah_kamar: number;
-  gender: 'mixed' | 'male' | 'female';
+  gender: 'Putra' | 'Putri' | 'Campur';
   rating?: number;
   region_idregion?: number;
   created_at?: string;

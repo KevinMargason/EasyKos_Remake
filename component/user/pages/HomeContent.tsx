@@ -172,9 +172,9 @@ export default function HomeContent() {
 
 			const matchesFilter = (() => {
 				if (activeFilter === 'Semua') return true;
-				if (activeFilter === 'Putri') return gender === 'female' || gender.includes('putri');
-				if (activeFilter === 'Putra') return gender === 'male' || gender.includes('putra');
-				if (activeFilter === 'Campuran') return gender === 'mixed' || gender.includes('campur');
+				if (activeFilter === 'Putri') return gender === 'putri';
+				if (activeFilter === 'Putra') return gender === 'putra';
+				if (activeFilter === 'Campuran') return gender === 'campur';
 				if (activeFilter === 'Dekat Kampus') {
 					return ['kampus', 'universitas', 'univ', 'uin', 'itb', 'ugm', 'ui', 'politeknik', 'sekolah'].some((keyword) =>
 						kosName.includes(keyword) || alamat.includes(keyword)
