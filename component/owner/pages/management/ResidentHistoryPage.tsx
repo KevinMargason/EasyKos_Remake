@@ -2,7 +2,18 @@
 
 import Image from 'next/image';
 import { ChevronLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/core/services/api';
+
+interface Resident {
+	periode: string;
+	nomor: string;
+	nama: string;
+	tanggalMasuk: string;
+	tanggalKeluar: string;
+	status: string;
+}
 
 interface ResidentHistoryPageProps {
 	onBack: () => void;
@@ -11,14 +22,50 @@ interface ResidentHistoryPageProps {
 
 export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistoryPageProps) {
 	const [statusFilter, setStatusFilter] = useState('semua');
-	const residentData = [
-		{ periode: '2025 (Jan-Feb)', nomor: '101', nama: 'Sharty', tanggalMasuk: '01/12/2023', tanggalKeluar: '03/01/2024', status: 'Selesai' },
-		{ periode: '2025 (Jan-Feb)', nomor: '102', nama: 'Megan', tanggalMasuk: '01/01/2024', tanggalKeluar: '-', status: 'AKTIF' },
-		{ periode: '2025 (Jan-Feb)', nomor: '103', nama: 'Putu', tanggalMasuk: '01/06/2023', tanggalKeluar: '-', status: 'AKTIF' },
-		{ periode: '2025 (Jan-Feb)', nomor: '101', nama: 'Putu', tanggalMasuk: '01/01/2024', tanggalKeluar: '03/02/2024', status: 'Selesai' },
-		{ periode: '2025 (Jan-Feb)', nomor: '101', nama: 'Putu', tanggalMasuk: '01/01/2024', tanggalKeluar: '03/02/2024', status: 'Selesai' },
-		{ periode: '2025 (Jan-Feb)', nomor: '101', nama: 'Putu', tanggalMasuk: '01/01/2024', tanggalKeluar: '03/02/2024', status: 'Selesai' },
-	];
+	const [selectedKos, setSelectedKos] = useState<string | null>(null);
+	const [searchName, setSearchName] = useState('');
+	const [residents, setResidents] = useState<Resident[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+
+	// Load residents from API when selectedKos changes
+	useEffect(() => {
+		const loadResidents = async () => {
+			if (!selectedKos) {
+				setResidents([]);
+				return;
+			}
+
+			try {
+				setIsLoading(true);
+				const kosIdMatch = selectedKos.match(/(\d+)$/);
+				const kosId = kosIdMatch ? kosIdMatch[1] : selectedKos;
+
+				const response = await api.residents.getByKos(kosId);
+				if (response && Array.isArray(response)) {
+					setResidents(response);
+				} else if (response && response.data && Array.isArray(response.data)) {
+					setResidents(response.data);
+				}
+			} catch (error: any) {
+				console.error('Failed to load residents:', error);
+				toast.error('Gagal memuat data penghuni');
+				setResidents([]);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadResidents();
+	}, [selectedKos]);
+
+	// Filter residents by status and search name
+	const filteredResidents = useMemo(() => {
+		return residents.filter((resident) => {
+			const matchesStatus = statusFilter === 'semua' || resident.status.toLowerCase() === statusFilter.toLowerCase();
+			const matchesSearch = searchName === '' || resident.nama.toLowerCase().includes(searchName.toLowerCase());
+			return matchesStatus && matchesSearch;
+		});
+	}, [residents, statusFilter, searchName]);
 
 	return (
 		<div className="mx-auto w-full max-w-[1180px]">
@@ -49,7 +96,12 @@ export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistory
 							{kosList.map((kos) => (
 								<button
 									key={kos}
-									className="w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-900 transition hover:border-[#c86654] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+									onClick={() => setSelectedKos(kos)}
+									className={`w-full rounded-lg border-2 px-4 py-3 text-left text-sm font-medium transition ${
+										selectedKos === kos
+											? 'border-[#c86654] bg-[#fef8f6] text-[#c86654] dark:bg-slate-800'
+											: 'border-slate-200 bg-white text-slate-900 hover:border-[#c86654] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+									}`}
 								>
 									{kos}
 								</button>
@@ -65,6 +117,8 @@ export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistory
 								<input
 									type="text"
 									placeholder="Cari Nama"
+									value={searchName}
+									onChange={(e) => setSearchName(e.target.value)}
 									className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
 								/>
 								<Image src="/Asset/icon/icon-search-home.svg" alt="search" width={20} height={20} className="absolute right-3 top-3.5" />
@@ -74,10 +128,7 @@ export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistory
 								{['semua', 'selesai', 'aktif'].map((status) => (
 									<button
 										key={status}
-										onClick={() => {
-											setStatusFilter(status);
-											console.log('Filter by status:', status);
-										}}
+										onClick={() => setStatusFilter(status)}
 										className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
 											statusFilter === status
 												? 'border-[#c86654] bg-[#fff5f0] text-[#c86654] dark:border-[#f0b2a7] dark:bg-slate-800 dark:text-[#f0b2a7]'
@@ -92,40 +143,52 @@ export default function ResidentHistoryPage({ onBack, kosList }: ResidentHistory
 
 						{/* Tabel */}
 						<div className="overflow-x-auto">
-							<table className="w-full border-collapse text-sm">
-								<thead>
-									<tr className="border-b border-slate-200 dark:border-slate-700">
-										<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">PERIODE</th>
-										<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">NOMOR KAMAR</th>
-										<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">NAMA PENGHUNI</th>
-										<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">TANGGAL MASUK</th>
-										<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">TANGGAL KELUAR</th>
-										<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">STATUS</th>
-									</tr>
-								</thead>
-								<tbody>
-									{residentData.map((resident, idx) => (
-										<tr key={idx} className="border-b border-slate-200 dark:border-slate-700">
-											<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.periode}</td>
-											<td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{resident.nomor}</td>
-											<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.nama}</td>
-											<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.tanggalMasuk}</td>
-											<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.tanggalKeluar}</td>
-											<td className="px-4 py-3">
-												<span
-													className={`rounded px-3 py-1 text-xs font-semibold ${
-														resident.status === 'AKTIF'
-															? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200'
-															: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-													}`}
-												>
-													{resident.status}
-												</span>
-											</td>
+							{isLoading ? (
+								<div className="flex items-center justify-center py-8">
+									<div className="animate-pulse text-slate-500">Memuat data penghuni...</div>
+								</div>
+							) : filteredResidents.length === 0 ? (
+								<div className="flex items-center justify-center py-8">
+									<div className="text-slate-500">
+										{selectedKos ? 'Tidak ada data penghuni' : 'Pilih Kos untuk melihat data penghuni'}
+									</div>
+								</div>
+							) : (
+								<table className="w-full border-collapse text-sm">
+									<thead>
+										<tr className="border-b border-slate-200 dark:border-slate-700">
+											<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">PERIODE</th>
+											<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">NOMOR KAMAR</th>
+											<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">NAMA PENGHUNI</th>
+											<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">TANGGAL MASUK</th>
+											<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">TANGGAL KELUAR</th>
+											<th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">STATUS</th>
 										</tr>
-									))}
-								</tbody>
-							</table>
+									</thead>
+									<tbody>
+										{filteredResidents.map((resident, idx) => (
+											<tr key={idx} className="border-b border-slate-200 dark:border-slate-700">
+												<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.periode}</td>
+												<td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{resident.nomor}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.nama}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.tanggalMasuk}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-slate-400">{resident.tanggalKeluar}</td>
+												<td className="px-4 py-3">
+													<span
+														className={`rounded px-3 py-1 text-xs font-semibold ${
+															resident.status.toUpperCase() === 'AKTIF'
+																? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200'
+																: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+														}`}
+													>
+														{resident.status}
+													</span>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							)}
 						</div>
 					</div>
 				</div>

@@ -9,36 +9,33 @@ import { toast } from 'sonner';
 import { AUTH_ROUTES, ROUTES } from '@/lib/routes';
 import { useAppDispatch } from '@/core/store/hooks';
 import { setRole } from '@/core/feature/role/roleSlice';
+import { api } from '@/core/services/api';
 
-type RoleType = 'owner' | 'user';
+type RoleType = 'owner' | 'tenant';
 
 export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [step, setStep] = useState<'role' | 'form'>('role');
   const [formData, setFormData] = useState({
-    nama: '',
+    name: '',
     no_hp: '',
-    pin: '',
-    confirmPin: '',
+    password: '',
+    confirmPassword: '',
     email: '',
-    role: 'owner' as RoleType,
+    role: 'tenant' as RoleType,
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPin, setShowPin] = useState(false);
-  const [showConfirmPin, setShowConfirmPin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     if (name === 'no_hp') {
       setFormData({ ...formData, [name]: value.replace(/[^0-9]/g, '') });
-    } else if (name === 'pin') {
-      setFormData({ ...formData, [name]: value.slice(0, 30) });
-    } else if (name === 'confirmPin') {
-      setFormData({ ...formData, [name]: value.slice(0, 30) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -56,36 +53,70 @@ export default function RegisterPage() {
     setSuccess('');
     setLoading(true);
 
-    if (formData.nama.length < 3) {
+    // Validation
+    if (formData.name.length < 3) {
       setError('Nama harus minimal 3 karakter');
       setLoading(false);
       return;
     }
-    if (formData.no_hp.length < 10) {
-      setError('Nomor HP harus minimal 10 digit');
+    if (!formData.email || !formData.email.includes('@')) {
+      setError('Email harus valid');
       setLoading(false);
       return;
     }
-    if (formData.pin.length < 6) {
-      setError('Password minimal 6 karakter');
+    if (formData.no_hp.length < 10 || formData.no_hp.length > 20) {
+      setError('Nomor HP harus 10-20 digit');
       setLoading(false);
       return;
     }
-    if (formData.pin !== formData.confirmPin) {
+    if (formData.password.length < 8) {
+      setError('Password minimal 8 karakter');
+      setLoading(false);
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
       setError('Password dan Confirm Password tidak sama');
       setLoading(false);
       return;
     }
 
     try {
-      setSuccess("Halaman ini masih UI saja. Data pendaftaran belum dikirim ke backend.");
-      toast.info('Data pendaftaran belum dikirim ke backend.');
-      setTimeout(() => {
-        router.push(AUTH_ROUTES.LOGIN);
-      }, 1500);
-    } catch (error) {
-      console.error('gagal registrasi gagal');
-      setError('Pendaftaran gagal.');
+      const registerData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        no_hp: formData.no_hp,
+        role: formData.role,
+      };
+
+      console.log('Sending registration data:', registerData);
+      const response = await api.auth.register(registerData);
+
+      if (response.data || response.success) {
+        toast.success('Pendaftaran berhasil! Silakan masuk dengan akun Anda.');
+        setSuccess('Pendaftaran berhasil! Mengarahkan ke halaman login...');
+        setTimeout(() => {
+          router.push(AUTH_ROUTES.LOGIN);
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('Registrasi gagal:', error);
+      let errorMsg = 'Pendaftaran gagal. Silakan coba lagi.';
+      
+      if (error?.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error?.response?.data && typeof error.response.data === 'object') {
+        // Handle Laravel validation errors
+        const errors = Object.values(error.response.data).flat();
+        errorMsg = errors.join(', ');
+      } else if (error?.message) {
+        errorMsg = error.message;
+      }
+      
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -98,7 +129,7 @@ export default function RegisterPage() {
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[980px] items-center justify-center">
         <div className="glass-card animate-fade-in-up w-full max-w-[640px] rounded-[20px] px-7 py-7 sm:px-8 sm:py-8">
           {step === 'role' && (
-          <div className="animate-fade-in py-4 sm:py-8">
+            <div className="animate-fade-in py-4 sm:py-8">
               <Link
                 href={ROUTES.HOME}
                 className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
@@ -109,7 +140,7 @@ export default function RegisterPage() {
               <div className="mx-auto mt-4 grid max-w-[500px] grid-cols-2 gap-4 sm:gap-6">
                 <button
                   type="button"
-                  onClick={() => handleRoleSelect('user')}
+                  onClick={() => handleRoleSelect('tenant')}
                   className="group transition hover:scale-105 active:scale-100"
                 >
                   <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#F8EFEE] transition group-hover:opacity-85 dark:bg-[#3d2820] sm:h-[92px] sm:w-[92px]">
@@ -134,186 +165,164 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              <div className="mt-8 text-center text-[17px] text-[#244454] dark:text-slate-400">
+              {/* Login Link */}
+              <div className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
                 Sudah punya akun?{' '}
-                <Link href={AUTH_ROUTES.LOGIN} className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
-                  Masuk
+                <Link
+                  href={AUTH_ROUTES.LOGIN}
+                  className="font-medium text-[#BA6054] transition hover:text-[#a05246] dark:hover:text-[#f0b2a7]"
+                >
+                  Masuk di sini
                 </Link>
               </div>
             </div>
           )}
 
           {step === 'form' && (
-            <div className="animate-fade-in">
-              <div className="relative mb-4 grid grid-cols-2 border-b border-[#d8b1ab] text-center dark:border-slate-600">
-                <span
-                  aria-hidden="true"
-                  className={`pointer-events-none absolute bottom-0 z-0 h-[50px] w-1/2 rounded-t-[16px] bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] shadow-[0_8px_16px_rgba(0,0,0,0.2)] transition-transform duration-300 ease-out sm:h-[58px] ${isOwner ? 'translate-x-full' : 'translate-x-0'}`}
-                />
+            <div className="animate-fade-in space-y-6 py-4 sm:py-8">
+              <div>
                 <button
                   type="button"
-                  onClick={() => {
-                    dispatch(setRole('user'));
-                    setFormData((prev) => ({ ...prev, role: 'user' }));
-                  }}
-                  className={`relative z-10 h-[50px] rounded-t-[16px] px-2 text-base font-medium transition-colors duration-300 sm:h-[58px] sm:text-xl md:text-2xl ${!isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
+                  onClick={() => setStep('role')}
+                  className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
                 >
-                  Cari Kos
+                  <ArrowLeft size={16} />
+                  Ubah pilihan
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    dispatch(setRole('owner'));
-                    setFormData((prev) => ({ ...prev, role: 'owner' }));
-                  }}
-                  className={`relative z-10 h-[50px] rounded-t-[16px] px-2 text-base font-medium transition-colors duration-300 sm:h-[58px] sm:text-xl md:text-2xl ${isOwner ? 'text-white' : 'text-[#BA6054] dark:text-[#e07b6d]'}`}
-                >
-                  Pemilik Kos
-                </button>
+                <h1 className="mt-4 text-[28px] font-bold leading-tight text-slate-900 dark:text-slate-100">
+                  Daftar sebagai {isOwner ? 'Pemilik Kos' : 'Pencari Kos'}
+                </h1>
               </div>
 
-              <h1 className="text-3xl font-bold leading-none text-[#BA6054] sm:text-4xl md:text-5xl">Daftar</h1>
-
-              <form className="mt-3" onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
-                  <div className="mb-3 rounded-md border border-[#BA6054] bg-[#ffeceb] px-3 py-2 text-sm text-[#BA6054]">
+                  <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
                     {error}
                   </div>
                 )}
 
                 {success && (
-                  <div className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  <div className="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-200">
                     {success}
                   </div>
                 )}
 
+                {/* Name */}
                 <div>
-                  <label htmlFor="nama" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                    Nama lengkap
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Nama Lengkap
                   </label>
                   <input
-                    id="nama"
-                    name="nama"
                     type="text"
-                    placeholder="Masukkan nama lengkap"
-                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
-                    value={formData.nama}
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
-                    required
+                    placeholder="Masukkan nama lengkap Anda"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
                   />
                 </div>
 
-                <div className="mt-3">
-                  <label htmlFor="no_hp" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                    Nomor HP
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Email
                   </label>
                   <input
-                    id="no_hp"
-                    name="no_hp"
-                    type="text"
-                    placeholder="Masukkan nomor HP"
-                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
-                    value={formData.no_hp}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="mt-3">
-                  <label htmlFor="email" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                    Alamat e-mail
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
                     type="email"
-                    placeholder="Masukkan e-mail"
-                    className="mt-1 w-full border-0 border-b border-[#b9b9b9] bg-transparent pb-2 text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:border-[#BA6054] focus:outline-none dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-[#e07b6d] sm:text-xl md:text-2xl"
+                    name="email"
                     value={formData.email}
                     onChange={handleChange}
+                    placeholder="example@email.com"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
                   />
                 </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-                  <div>
-                    <label htmlFor="pin" className="text-[17px] font-medium text-[#244454] dark:text-slate-200">
-                      Kata sandi
-                    </label>
-                    <div className="mt-1 flex items-center border-0 border-b border-[#b9b9b9] pb-2 dark:border-slate-600">
-                      <input
-                        id="pin"
-                        name="pin"
-                        type={showPin ? 'text' : 'password'}
-                        placeholder="Masukkan kata sandi"
-                        className="w-full bg-transparent text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl md:text-2xl"
-                        value={formData.pin}
-                        onChange={handleChange}
-                        required
-                      />
-                      <button
-                        type="button"
-                        aria-label="Tampilkan kata sandi"
-                        onClick={() => setShowPin((prev) => !prev)}
-                        className="text-[#101827] dark:text-slate-400"
-                      >
-                        {showPin ? <Eye size={28} /> : <EyeOff size={28} />}
-                      </button>
-                    </div>
-                  </div>
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Nomor HP (10-20 digit)
+                  </label>
+                  <input
+                    type="tel"
+                    name="no_hp"
+                    value={formData.no_hp}
+                    onChange={handleChange}
+                    placeholder="08123456789"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                  />
+                </div>
 
-                  <div>
-                    <label htmlFor="confirmPin" className="text-[17px] font-medium text-[#244454] dark:text-slate-200">
-                      Konfirmasi kata sandi
-                    </label>
-                    <div className="mt-1 flex items-center border-0 border-b border-[#b9b9b9] pb-2 dark:border-slate-600">
-                      <input
-                        id="confirmPin"
-                        name="confirmPin"
-                        type={showConfirmPin ? 'text' : 'password'}
-                        placeholder="Masukkan kata sandi"
-                        className="w-full bg-transparent text-lg text-[#1f1f1f] placeholder:text-[#b7b7b7] focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl md:text-2xl"
-                        value={formData.confirmPin}
-                        onChange={handleChange}
-                        required
-                      />
-                      <button
-                        type="button"
-                        aria-label="Tampilkan konfirmasi kata sandi"
-                        onClick={() => setShowConfirmPin((prev) => !prev)}
-                        className="text-[#101827] dark:text-slate-400"
-                      >
-                        {showConfirmPin ? <Eye size={28} /> : <EyeOff size={28} />}
-                      </button>
-                    </div>
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Password (minimum 8 karakter)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Masukkan password"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 pr-12 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
 
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Konfirmasi Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Ulangi password"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 pr-12 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Register Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-7 h-[52px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-2xl font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:h-[58px] sm:text-3xl md:text-4xl"
+                  className="w-full rounded-lg bg-[#BA6054] px-6 py-3 text-center font-semibold text-white transition hover:bg-[#a05246] disabled:opacity-50 dark:hover:bg-[#c97161]"
                 >
-                  {loading ? 'Memuat...' : 'Daftar'}
+                  {loading ? 'Mendaftar...' : 'Daftar'}
                 </button>
 
-                <div className="mt-7 text-center text-[17px] text-[#244454] dark:text-slate-400">
+                {/* Login Link */}
+                <div className="text-center text-sm text-slate-600 dark:text-slate-400">
                   Sudah punya akun?{' '}
-                  <Link href={AUTH_ROUTES.LOGIN} className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]">
-                    Masuk
+                  <Link
+                    href={AUTH_ROUTES.LOGIN}
+                    className="font-medium text-[#BA6054] transition hover:text-[#a05246] dark:hover:text-[#f0b2a7]"
+                  >
+                    Masuk di sini
                   </Link>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setStep('role')}
-                  className="mt-4 inline-flex items-center gap-2 text-sm text-[#7e6a66] hover:text-[#5c4b48] dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                  Kembali ke pilihan peran
-                </button>
               </form>
             </div>
           )}
-          </div>
+        </div>
       </div>
     </div>
   );

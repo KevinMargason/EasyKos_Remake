@@ -8,32 +8,60 @@ import * as Yup from "yup";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { ROLE_HOME, ROUTES, normalizeRole } from "@/lib/routes";
+import { useAppDispatch } from "@/core/store/hooks";
+import { setUser } from "@/core/feature/user/userSlice";
+import { setRole } from "@/core/feature/role/roleSlice";
+import { api } from "@/core/services/api";
 
 const loginSchema = Yup.object({
-  no_hp: Yup.string().required("Nomor HP harus diisi"),
-  pin: Yup.string()
-    .min(6, "Kata sandi minimal 6 karakter")
-    .required("Kata sandi harus diisi"),
+  email: Yup.string().email('Email harus valid').required("Email harus diisi"),
+  password: Yup.string()
+    .min(8, "Password minimal 8 karakter")
+    .required("Password harus diisi"),
 });
 
 export default function LoginPage() {
   const router = useRouter();
-  const [showPin, setShowPin] = useState(false);
+  const dispatch = useAppDispatch();
+  const [showPassword, setShowPassword] = useState(false);
   const formik = useFormik({
     initialValues: {
-      no_hp: "",
-      pin: "",
+      email: "",
+      password: "",
     },
     validationSchema: loginSchema,
     onSubmit: async (values) => {
       try {
-        const message = `Halaman ini masih UI saja. Data login ${values.no_hp} belum dikirim ke backend.`;
-        toast.info(message);
-        const storedRole = typeof window !== "undefined" ? normalizeRole(localStorage.getItem("role")) : null;
-        router.push(storedRole ? ROLE_HOME[storedRole] : ROUTES.USER.HOME);
-      } catch (error) {
+        console.log('Logging in with:', { email: values.email });
+        const response = await api.auth.login({
+          email: values.email,
+          password: values.password,
+        });
+
+        if (response && (response.access_token || response.success)) {
+          const { access_token, user } = response;
+          
+          // Store token
+          if (typeof window !== "undefined") {
+            localStorage.setItem("token", access_token);
+            localStorage.setItem("role", user.role);
+          }
+          
+          // Update Redux store
+          dispatch(setUser(user));
+          dispatch(setRole(user.role));
+          
+          toast.success(`Selamat datang, ${user.name}!`);
+          
+          // Redirect based on role
+          const normalizedRole = normalizeRole(user.role);
+          const targetRoute = normalizedRole ? ROLE_HOME[normalizedRole] : ROUTES.USER.HOME;
+          router.push(targetRoute);
+        }
+      } catch (error: any) {
         console.error("Login Error:", error);
-        toast.error("Login gagal.");
+        const errorMsg = error?.response?.data?.message || error?.response?.data?.error || `Login gagal: ${error?.message}`;
+        toast.error(errorMsg);
       }
     },
   });
@@ -62,59 +90,61 @@ export default function LoginPage() {
           <h1 className="mt-3 text-[34px] font-bold leading-none text-[#BA6054] sm:text-[44px] md:text-[52px]">Masuk</h1>
 
           <form className="mt-5" onSubmit={handleSubmit}>
+            {/* Email Field */}
             <div>
-              <label htmlFor="no_hp" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                Nomor HP
+              <label htmlFor="email" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
+                Email
               </label>
               <input
-                id="no_hp"
-                name="no_hp"
-                type="text"
-                placeholder="Masukkan nomor HP"
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Masukkan email Anda"
                 className={`mt-1 w-full border-0 border-b bg-transparent pb-2 text-[24px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[30px] md:text-[34px] ${
-                  touched.no_hp && errors.no_hp ? "border-[#BA6054]" : "border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
+                  touched.email && errors.email ? "border-[#BA6054]" : "border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
                 }`}
-                value={values.no_hp}
+                value={values.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
-              {touched.no_hp && errors.no_hp && (
-                <p className="mt-1 text-xs text-[#db6c64]">{errors.no_hp}</p>
+              {touched.email && errors.email && (
+                <p className="mt-1 text-xs text-[#db6c64]">{errors.email}</p>
               )}
             </div>
 
+            {/* Password Field */}
             <div className="mt-4">
-              <label htmlFor="pin" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
-                Kata sandi
+              <label htmlFor="password" className="text-[17px] font-medium text-[#1f1f1f] dark:text-slate-200">
+                Password
               </label>
-              <div className={`mt-1 flex items-center border-0 border-b pb-2 ${touched.pin && errors.pin ? "border-[#BA6054]" : "border-[#b9b9b9] dark:border-slate-600"}`}>
+              <div className={`mt-1 flex items-center border-0 border-b pb-2 ${touched.password && errors.password ? "border-[#BA6054]" : "border-[#b9b9b9] dark:border-slate-600"}`}>
                 <input
-                  id="pin"
-                  name="pin"
-                  type={showPin ? "text" : "password"}
-                  placeholder="Masukkan kata sandi"
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Masukkan password"
                   className="w-full bg-transparent text-[24px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[30px] md:text-[34px]"
-                  value={values.pin}
+                  value={values.password}
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
                 <button
                   type="button"
-                  aria-label="Tampilkan kata sandi"
-                  onClick={() => setShowPin((prev) => !prev)}
+                  aria-label="Tampilkan password"
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="text-[#101827] dark:text-slate-400"
                 >
-                  {showPin ? <Eye size={26} /> : <EyeOff size={26} />}
+                  {showPassword ? <Eye size={26} /> : <EyeOff size={26} />}
                 </button>
               </div>
-              {touched.pin && errors.pin && (
-                <p className="mt-1 text-xs text-[#db6c64]">{errors.pin}</p>
+              {touched.password && errors.password && (
+                <p className="mt-1 text-xs text-[#db6c64]">{errors.password}</p>
               )}
             </div>
 
             <div className="mt-2 text-right">
-                <button type="button" className="text-[16px] text-[#BA6054] hover:opacity-75">
-                Lupa kata sandi?
+              <button type="button" className="text-[16px] text-[#BA6054] hover:opacity-75">
+                Lupa password?
               </button>
             </div>
 
@@ -133,7 +163,7 @@ export default function LoginPage() {
               </Link>
             </div>
           </form>
-          </div>
+        </div>
       </div>
     </div>
   );

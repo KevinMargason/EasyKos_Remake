@@ -54,10 +54,27 @@ export default function UserSidebar({ role = 'user' }: UserSidebarProps) {
 			<nav className="flex-1 space-y-2 overflow-y-auto pr-1">
 				{sidebarItems.map(({ label, href, icon, activeIconClassName }) => {
 					const active = href === homePath ? pathname === homePath : pathname === href || pathname.startsWith(`${href}/`);
+					const getTourAttribute = () => {
+						if (role === 'owner') {
+							if (label === 'Beranda') return 'sidebar-home';
+							if (label === 'Manajemen') return 'sidebar-management';
+							if (label === 'Chat') return 'sidebar-chat';
+							if (label === 'Profil') return 'sidebar-profile';
+							if (label === 'Peliharaan Saya') return 'sidebar-mypet';
+						} else {
+							if (label === 'Beranda') return 'sidebar-home';
+							if (label === 'Kos Saya') return 'sidebar-mykos';
+							if (label === 'Chat') return 'sidebar-chat';
+							if (label === 'Profil') return 'sidebar-profile';
+							if (label === 'My Pet') return 'sidebar-mypet';
+						}
+						return '';
+					};
 					return (
 						<Link
 							key={label}
 							href={href}
+							data-tour={getTourAttribute()}
 							className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition ${
 								active
 									? 'bg-[#fff1e7] text-[#BA6054] shadow-[inset_0_0_0_1px_rgba(186,96,84,0.10)] dark:bg-[#2f1d18] dark:text-[#e07b6d] dark:shadow-[inset_0_0_0_1px_rgba(224,123,109,0.14)]'
@@ -80,6 +97,7 @@ export default function UserSidebar({ role = 'user' }: UserSidebarProps) {
 			<div className="mt-auto border-t border-slate-200 pt-4 dark:border-slate-800">
 				<button
 					onClick={handleLogout}
+					data-tour={role === 'owner' ? 'owner-sidebar-logout' : 'user-sidebar-logout'}
 					className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-[#c35f46] transition hover:bg-[#fbefeb] dark:text-[#f0b2a7] dark:hover:bg-slate-800"
 				>
 					<LogOut size={19} />

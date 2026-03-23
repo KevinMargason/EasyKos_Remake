@@ -104,8 +104,8 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 			{/* Image Carousel */}
 			<div className="relative h-96 w-full bg-slate-200 dark:bg-slate-800">
 				<Image
-					src={kos.images[currentImageIndex]}
-					alt={kos.name}
+					src={kos.images[currentImageIndex] || '/Asset/kamar/kamar1.svg'}
+					alt={kos.name || 'Kos image'}
 					fill
 					className="object-cover"
 				/>
@@ -156,7 +156,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 							}`}
 						>
 							<Image
-								src={image}
+								src={image || '/Asset/kamar/kamar1.svg'}
 								alt={`thumbnail-${index}`}
 								fill
 								className="object-cover"

@@ -3,10 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bell, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
 import { ROUTES } from '@/lib/routes';
+import { getFullGreeting } from '@/lib/greetings';
 import KosDetailPage from './KosDetailPage';
+import { useAppSelector } from '@/core/store/hooks';
+import { useWallet } from '@/core/hooks/useWallet';
+import { useKos } from '@/core/hooks/useKos';
 
 const filters = ['Putri', 'Putra', 'Campuran', 'Dekat Kampus', 'Surabaya', 'Terjangkau'];
 
@@ -92,8 +96,8 @@ function PropertyCard({
 		>
 			<div className="relative h-[165px] w-full overflow-hidden bg-[#d9aa7d]">
 				<Image
-					src={image}
-					alt={name}
+					src={image || '/Asset/kamar/kamar1.svg'}
+					alt={name || 'Gambar kos'}
 					fill
 					className="object-cover transition duration-500 group-hover:scale-105"
 					sizes="(max-width: 1280px) 100vw, 33vw"
@@ -115,14 +119,42 @@ export default function HomeContent() {
 	const [activeFilter, setActiveFilter] = useState(filters[0]);
 	const [activeKosId, setActiveKosId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState('');
+	
+	// Get real data from Redux and hooks
+	const user = useAppSelector((state: any) => state.user.user);
+	const { totalKoin } = useWallet();
+	const { kosList, fetchKos, isLoading } = useKos();
+	
+	useEffect(() => {
+		// Fetch kos data on component mount
+		fetchKos();
+	}, [fetchKos]);
 
-	const selectedKos = activeKosId ? properties.find((p) => p.id === activeKosId) : null;
+	const selectedKos = activeKosId && kosList ? kosList.find((p: any) => p.id === activeKosId) : null;
 
 	// Filter properties based on search query
-	const filteredProperties = properties.filter((prop) => 
-		prop.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-		prop.location.toLowerCase().includes(searchQuery.toLowerCase())
-	);
+	const filteredProperties = kosList && Array.isArray(kosList) ? kosList.filter((prop: any) => {
+		if (!prop) return false;
+		const name = prop.name ? prop.name.toLowerCase() : '';
+		const alamat = prop.alamat ? prop.alamat.toLowerCase() : '';
+		return name.includes(searchQuery.toLowerCase()) || alamat.includes(searchQuery.toLowerCase());
+	}) : [];
+
+	// Show loading skeleton while data is loading
+	if (isLoading) {
+		return (
+			<div className="mx-auto flex max-w-[1180px] flex-col gap-6">
+				<div className="animate-pulse space-y-4">
+					<div className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+					<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+						{[1, 2, 3, 4, 5, 6].map((i) => (
+							<div key={i} className="h-48 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+						))}
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="mx-auto flex max-w-[1180px] flex-col gap-5">
@@ -148,19 +180,19 @@ export default function HomeContent() {
 					<div className="flex items-center gap-4">
 						<Image src="/Asset/icon/icon-person.svg" alt="Akun pengguna" width={90} height={90} />
 						<div className='mb-5'>
-							<p className="text-[14px] text-slate-500 dark:text-slate-400">Selamat pagi,</p>
-							<h1 className="text-[26px] font-bold leading-none text-slate-900 dark:text-slate-100">Budi T.</h1>
+							<p className="text-[14px] text-slate-500 dark:text-slate-400">{getFullGreeting(user?.name).greeting}</p>
+							<h1 className="text-[26px] font-bold leading-none text-slate-900 dark:text-slate-100">{getFullGreeting(user?.name).userName}</h1>
 						</div>
 					</div>
 
 					<div className="flex items-center gap-3 self-start sm:pt-1">
 						<div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
 							<Image src="/Asset/icon/icon-fire.svg" alt="Streak" width={18} height={18} />
-							<span>12 Hari</span>
+							<span>--</span>
 						</div>
 						<div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
 							<Image src="/Asset/icon/icon-coin.svg" alt="Koin" width={18} height={18} />
-							<span>10 Koin</span>
+							<span>{totalKoin || 0} Koin</span>
 						</div>
 					</div>
 				</header>
@@ -221,16 +253,18 @@ export default function HomeContent() {
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 					{searchQuery ? (
 						filteredProperties.length > 0 ? (
-							filteredProperties.map((property, index) => (
+							filteredProperties.map((property: any, index: any) => (
 								<PropertyCard key={`search-${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
 							))
 						) : (
 							<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian</p>
 						)
-					) : (
-						properties.map((property, index) => (
+					) : kosList && Array.isArray(kosList) ? (
+						kosList.map((property: any, index: any) => (
 							<PropertyCard key={`${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
 						))
+					) : (
+						<p className="col-span-full text-center text-slate-500">Tidak ada data</p>
 					)}
 				</div>
 			</section>
@@ -240,16 +274,18 @@ export default function HomeContent() {
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 					{searchQuery ? (
 						filteredProperties.length > 0 ? (
-							filteredProperties.map((property, index) => (
+							filteredProperties.map((property: any, index: any) => (
 								<PropertyCard key={`popular-search-${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
 							))
 						) : (
 							<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian</p>
 						)
-					) : (
-						properties.map((property, index) => (
+					) : kosList && Array.isArray(kosList) ? (
+						kosList.map((property: any, index: any) => (
 							<PropertyCard key={`popular-${property.name}-${index}`} {...property} onClick={() => setActiveKosId(property.id)} />
 						))
+					) : (
+						<p className="col-span-full text-center text-slate-500">Tidak ada data</p>
 					)}
 				</div>
 			</section>

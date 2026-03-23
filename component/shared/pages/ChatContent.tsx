@@ -1,8 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
+import { toast } from 'sonner';
+import { api } from '@/core/services/api';
 
 type ChatSide = 'owner' | 'user';
 
@@ -20,7 +22,8 @@ type Thread = {
 	messages: Message[];
 };
 
-const threads: Thread[] = [
+// Local fallback threads if API is not available
+const fallbackThreads: Thread[] = [
 	{
 		id: 1,
 		name: 'Budi T. (Pemilik)',
@@ -73,15 +76,69 @@ function Bubble({ text, side }: { text: string; side: ChatSide }) {
 }
 
 export default function ChatContent() {
+	const [threads, setThreads] = useState<Thread[]>(fallbackThreads);
 	const [selectedId, setSelectedId] = useState(1);
 	const [messageInput, setMessageInput] = useState('');
-	const selected = useMemo(() => threads.find((thread) => thread.id === selectedId) ?? threads[0], [selectedId]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isSending, setIsSending] = useState(false);
 
-	const handleSendMessage = () => {
-		if (messageInput.trim()) {
-			// TODO: Send message to API
-			console.log('Send message:', messageInput);
+	// Load chats from API on mount
+	useEffect(() => {
+		const loadChats = async () => {
+			try {
+				setIsLoading(true);
+				const response = await api.messages.getChats();
+				if (response && Array.isArray(response)) {
+					setThreads(response);
+				}
+			} catch (error: any) {
+				console.warn('Failed to load chats from API, using fallback:', error.message);
+				// Use fallback threads if API fails
+				setThreads(fallbackThreads);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		loadChats();
+	}, []);
+
+	const selected = useMemo(() => threads.find((thread) => thread.id === selectedId) ?? threads[0], [selectedId, threads]);
+
+	const handleSendMessage = async () => {
+		if (!messageInput.trim()) {
+			return;
+		}
+
+		setIsSending(true);
+		try {
+			// Send message to API
+			const response = await api.messages.sendMessage({
+				thread_id: selectedId,
+				content: messageInput,
+			});
+
+			// Update local state with the new message
+			if (response) {
+				setThreads((prevThreads) =>
+					prevThreads.map((thread) =>
+						thread.id === selectedId
+							? {
+									...thread,
+									messages: [...thread.messages, { from: 'owner', text: messageInput }],
+									preview: messageInput,
+							  }
+							: thread
+					)
+				);
+				toast.success('Pesan terkirim!');
+			}
+
 			setMessageInput('');
+		} catch (error: any) {
+			console.error('Failed to send message:', error);
+			toast.error(error.response?.data?.message || 'Gagal mengirim pesan');
+		} finally {
+			setIsSending(false);
 		}
 	};
 
@@ -120,12 +177,14 @@ export default function ChatContent() {
 							placeholder="Tulis pesan..." 
 							value={messageInput}
 							onChange={(e) => setMessageInput(e.target.value)}
-							onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-							className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100" 
+							onKeyPress={(e) => e.key === 'Enter' && !isSending && handleSendMessage()}
+							disabled={isSending}
+							className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100 disabled:opacity-50" 
 						/>
 						<button 
 							onClick={handleSendMessage}
-							className="text-[34px] leading-none font-bold text-[#c86654] transition hover:text-[#b45141]"
+							disabled={isSending || !messageInput.trim()}
+							className="text-[34px] leading-none font-bold text-[#c86654] transition hover:text-[#b45141] disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							&gt;
 						</button>

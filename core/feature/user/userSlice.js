@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const getInitialUser = () => {
     if (typeof window === 'undefined') return null;
     try {
-        return localStorage.getItem('user');
+        const stored = localStorage.getItem('user');
+        return stored ? JSON.parse(stored) : null;
     } catch {
         return null;
     }
@@ -36,7 +37,7 @@ const userSlice = createSlice({
             state.error = null;
             if (typeof window !== 'undefined' && action.payload) {
                 try {
-                    localStorage.setItem('user', action.payload);
+                    localStorage.setItem('user', JSON.stringify(action.payload));
                 } catch { }
             }
         },

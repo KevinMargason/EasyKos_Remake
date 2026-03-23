@@ -2,8 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 
 const userNavItems: Array<{ label: string; href: string; icon: string }> = [
@@ -28,32 +27,38 @@ type MobileNavBarProps = {
 
 export default function MobileNavBar({ role = 'user' }: MobileNavBarProps) {
 	const pathname = usePathname();
-	const router = useRouter();
 	const navItems = role === 'owner' ? ownerNavItems : userNavItems;
 	const homePath = role === 'owner' ? ROUTES.OWNER.HOME : ROUTES.USER.HOME;
 
-	const handleLogout = () => {
-		// Clear localStorage
-		if (typeof window !== 'undefined') {
-			localStorage.removeItem('token');
-			localStorage.removeItem('user');
-		}
-		// Redirect to login
-		router.push(ROUTES.LOGIN);
-	};
-
 	return (
 		<nav className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_-8px_24px_rgba(0,0,0,0.25)] lg:hidden">
-			<div className="flex items-center justify-between gap-1">
-				{/* Navigation Items - Show 4 items, hide last one */}
-				<div className="flex flex-1 items-center justify-around gap-1">
-					{navItems.slice(0, 4).map(({ label, href, icon }) => {
+			<div className="flex items-center">
+				{/* Navigation Items - Keep all items visible so tour targets exist on mobile/tablet */}
+				<div className="flex w-full items-center justify-around gap-1 overflow-x-auto pr-1">
+					{navItems.map(({ label, href, icon }) => {
 						const active = href === homePath ? pathname === homePath : pathname === href || pathname.startsWith(`${href}/`);
+						const getTourAttribute = () => {
+							if (role === 'owner') {
+								if (label === 'Beranda') return 'sidebar-home';
+								if (label === 'Manajemen') return 'sidebar-management';
+								if (label === 'Chat') return 'sidebar-chat';
+								if (label === 'Profil') return 'sidebar-profile';
+								if (label === 'Peliharaan') return 'sidebar-mypet';
+							} else {
+								if (label === 'Beranda') return 'sidebar-home';
+								if (label === 'Kos Saya') return 'sidebar-mykos';
+								if (label === 'Chat') return 'sidebar-chat';
+								if (label === 'Profil') return 'sidebar-profile';
+								if (label === 'My Pet') return 'sidebar-mypet';
+							}
+							return '';
+						};
 						return (
 							<Link
 								key={label}
 								href={href}
-								className={`flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-[11px] font-medium transition ${
+								data-tour={getTourAttribute()}
+								className={`flex min-w-[64px] flex-col items-center gap-1 rounded-lg px-2.5 py-2 text-[11px] font-medium transition ${
 									active
 										? 'text-[#BA6054] dark:text-[#e07b6d]'
 										: 'text-slate-600 dark:text-slate-400'
@@ -72,16 +77,6 @@ export default function MobileNavBar({ role = 'user' }: MobileNavBarProps) {
 						);
 					})}
 				</div>
-
-				{/* Logout Button */}
-				<button
-					onClick={handleLogout}
-					className="flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-[11px] font-medium text-[#c35f46] transition hover:bg-[#fbefeb] dark:text-[#f0b2a7] dark:hover:bg-slate-800"
-					title="Keluar"
-				>
-					<LogOut size={20} />
-					<span className="hidden xs:inline">Keluar</span>
-				</button>
 			</div>
 		</nav>
 	);

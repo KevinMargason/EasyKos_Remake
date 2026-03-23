@@ -3,28 +3,34 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Plus, Edit3, History } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ROUTES } from '@/lib/routes';
+import { useKos } from '@/core/hooks/useKos';
+import { usePayments } from '@/core/hooks/usePayments';
 import AddRoomPage from './management/AddRoomPage';
 import UpdateStatusPage from './management/UpdateStatusPage';
 import ResidentHistoryPage from './management/ResidentHistoryPage';
 
-const paymentWarnings = [
-	{ name: 'Putu', detail: 'Lantai 2 unit 1', status: 'Chat' },
-	{ name: 'Putri', detail: 'Lantai 2 unit 3', status: 'Chat' },
-	{ name: 'Megan', detail: 'Lantai 1 Unit 4', status: 'Chat' },
-];
-
-const roomStats = [
-	{ label: 'Total Kamar', value: '20' },
-	{ label: 'Tersedia', value: '16' },
-	{ label: 'Terisi', value: '4' },
-];
-
 export default function OwnerManagementContent() {
 	const [activeMenu, setActiveMenu] = useState<'home' | 'add-room' | 'update-status' | 'resident-history'>('home');
+	const { kosList, fetchKos } = useKos();
+	const { invoices, fetchPayments } = usePayments();
+	const [isLoading, setIsLoading] = useState(true);
 
-	const kosList = ['101 - Kosong', '102 - Terisi (Megan)', '103 - Terisi (Putu)', '104 - Kosong'];
+	useEffect(() => {
+		const loadData = async () => {
+			try {
+				setIsLoading(true);
+				await Promise.all([
+					fetchKos(),
+					fetchPayments()
+				]);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		loadData();
+	}, [fetchKos, fetchPayments]);
 
 	type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur' | 'lemari' | 'meja' | 'kursi' | 'kasur' | 'kamarMandiDalam' | 'kamarMandiLuar' | 'tambah';
 
@@ -44,6 +50,55 @@ export default function OwnerManagementContent() {
 		tambah: { icon: '/Asset/icon/icon-add.svg', label: 'Tambah' },
 	};
 
+	// Calculate statistics from real data
+	const { paymentWarnings, roomStats, kosListForDropdown } = useMemo(() => {
+		// Get unpaid payments for warnings
+		const warnings = invoices
+			?.filter((inv: any) => inv.status === 'pending')
+			.slice(0, 3)
+			.map((inv: any) => ({
+				name: inv.tenant_name || 'Penghuni',
+				detail: `${inv.kos_name} - Unit ${inv.room_number}`,
+				status: 'Chat'
+			})) || [];
+
+		// Calculate room statistics
+		const totalRooms = kosList.reduce((sum: any, kos: any) => sum + (kos.total_rooms || 0), 0);
+		const occupiedRooms = kosList.reduce((sum: any, kos: any) => sum + (kos.occupied_rooms || 0), 0);
+		const availableRooms = totalRooms - occupiedRooms;
+
+		const stats = [
+			{ label: 'Total Kamar', value: totalRooms.toString() },
+			{ label: 'Tersedia', value: availableRooms.toString() },
+			{ label: 'Terisi', value: occupiedRooms.toString() },
+		];
+
+		// Build kos list for dropdowns
+		const list = kosList.flatMap((kos: any) =>
+			Array.from({ length: kos.total_rooms || 0 }, (_, i) => ({
+				label: `${kos.name} - ${i + 1}`,
+				value: `kamar_${kos.id}_${i + 1}`
+			}))
+		);
+
+		return {
+			paymentWarnings: warnings,
+			roomStats: stats,
+			kosListForDropdown: list
+		};
+	}, [kosList, invoices]);
+
+	if (isLoading) {
+		return (
+			<div className="mx-auto flex max-w-[1180px] flex-col gap-6">
+				<div className="animate-pulse space-y-4">
+					<div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+					<div className="h-48 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="mx-auto flex max-w-[1180px] flex-col gap-6">
 			<h1 className="text-[26px] font-semibold text-slate-900 dark:text-slate-100">Manajemen Properti</h1>
@@ -57,27 +112,35 @@ export default function OwnerManagementContent() {
 							</div>
 							<div className="max-w-[360px]">
 								<h2 className="text-[28px] font-bold leading-tight text-[#c86654]">Peringatan Pembayaran</h2>
-								<p className="mt-3 text-[14px] font-medium text-slate-500 dark:text-slate-400">Terdapat 3 kamar yang belum membayar bulan ini</p>
+								<p className="mt-3 text-[14px] font-medium text-slate-500 dark:text-slate-400">
+									{paymentWarnings.length > 0 
+										? `Terdapat ${paymentWarnings.length} kamar yang belum membayar` 
+										: 'Semua pembayaran sudah lunas'}
+								</p>
 							</div>
 
 							<div className="mt-6 space-y-4">
-								{paymentWarnings.map((warning) => (
-									<Link
-										key={warning.name}
-										href={ROUTES.OWNER.CHAT}
-										className="flex items-center justify-between gap-4 rounded-[16px] transition hover:bg-[#fff9f7] dark:hover:bg-slate-800/60"
-										aria-label={`Buka chat untuk ${warning.name}`}
-									>
-										<div>
-											<div className="text-[18px] font-bold text-slate-900 dark:text-slate-100">{warning.name}</div>
-											<div className="text-[14px] text-slate-500 dark:text-slate-400">{warning.detail}</div>
-										</div>
-										<div className="inline-flex items-center gap-2 rounded-full border border-[#f1ddd8] bg-white px-3 py-2 text-[12px] font-semibold text-[#c86654] shadow-[0_4px_10px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-800">
-											<Image src="/Asset/icon/icon-chat3.svg" alt="Ikon chat" width={14} height={14} />
-											<span>{warning.status}</span>
-										</div>
-									</Link>
-								))}
+								{paymentWarnings.length > 0 ? (
+									paymentWarnings.map((warning: any) => (
+										<Link
+											key={warning.name}
+											href={ROUTES.OWNER.CHAT}
+											className="flex items-center justify-between gap-4 rounded-[16px] transition hover:bg-[#fff9f7] dark:hover:bg-slate-800/60"
+											aria-label={`Buka chat untuk ${warning.name}`}
+										>
+											<div>
+												<div className="text-[18px] font-bold text-slate-900 dark:text-slate-100">{warning.name}</div>
+												<div className="text-[14px] text-slate-500 dark:text-slate-400">{warning.detail}</div>
+											</div>
+											<div className="inline-flex items-center gap-2 rounded-full border border-[#f1ddd8] bg-white px-3 py-2 text-[12px] font-semibold text-[#c86654] shadow-[0_4px_10px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-800">
+												<Image src="/Asset/icon/icon-chat3.svg" alt="Ikon chat" width={14} height={14} />
+												<span>{warning.status}</span>
+											</div>
+										</Link>
+									))
+								) : (
+									<p className="text-center text-slate-500 py-4">Tidak ada pembayaran yang tertunda</p>
+								)}
 							</div>
 						</article>
 
@@ -91,7 +154,7 @@ export default function OwnerManagementContent() {
 							</div>
 
 							<div className="mt-6 space-y-4">
-								{roomStats.map((stat) => (
+								{roomStats.map((stat: any) => (
 									<div key={stat.label} className="flex items-center justify-between gap-4">
 										<div className="text-[18px] font-bold text-slate-900 dark:text-slate-100">{stat.label}</div>
 										<div className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#f1ddd8] bg-white text-[14px] font-semibold text-[#c86654] shadow-[0_4px_10px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#f0b2a7]">
@@ -154,9 +217,9 @@ export default function OwnerManagementContent() {
 			) : activeMenu === 'add-room' ? (
 				<AddRoomPage onBack={() => setActiveMenu('home')} amenitiesIcons={amenitiesIcons} />
 			) : activeMenu === 'update-status' ? (
-				<UpdateStatusPage onBack={() => setActiveMenu('home')} kosList={kosList} amenitiesIcons={amenitiesIcons} />
+				<UpdateStatusPage onBack={() => setActiveMenu('home')} kosList={kosListForDropdown} amenitiesIcons={amenitiesIcons} />
 			) : (
-				<ResidentHistoryPage onBack={() => setActiveMenu('home')} kosList={kosList} />
+				<ResidentHistoryPage onBack={() => setActiveMenu('home')} kosList={kosListForDropdown} />
 			)}
 		</div>
 	);
