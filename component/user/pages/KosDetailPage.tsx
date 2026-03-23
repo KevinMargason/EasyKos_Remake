@@ -58,7 +58,7 @@ const capitalizeFacility = (text: string): string => {
 		.trim();
 };
 
-export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack }: KosDetailPageProps) {
+export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps) {
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 	const [selectedDate, setSelectedDate] = useState('');
 	const [selectedDuration, setSelectedDuration] = useState('1');
@@ -96,7 +96,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 	const kosName = kos.name || kos.nama || 'Kos';
 	const kosLocation = kos.location || kos.alamat || '-';
 	const kosPrice = kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia');
-	const resolvedOwnerName = owner?.name || kos.owner?.name || 'Pemilik Kos';
+	const resolvedOwnerName = owner?.name || kos.owner?.name || 'Nama pemilik belum tersedia';
 	const generalFacilities = kos.facilities?.umum || [];
 	const roomFacilities = kos.facilities?.kamar || [];
 
@@ -285,7 +285,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 									<div className=" relative mt-2 h-20 w-15 overflow-hidden">
 										<Image
 											src={owner?.avatar || '/Asset/icon/icon-person.svg'}
-											alt={owner?.name || 'Owner'}
+												alt={resolvedOwnerName}
 											fill
 											className="object-cover"
 										/>
@@ -405,13 +405,13 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 									<div className="relative h-20 w-20 overflow-hidden rounded-full">
 										<Image
 											src={owner?.avatar || '/Asset/icon/icon-person.svg'}
-											alt={owner?.name || 'Owner'}
+											alt={resolvedOwnerName}
 											fill
 											className="object-cover"
 										/>
 									</div>
 									<div className="text-center">
-										<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{owner?.name}</h3>
+										<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{resolvedOwnerName}</h3>
 										<p className="text-sm text-slate-500 dark:text-slate-400">Pemilik Kos</p>
 									</div>
 								</div>
@@ -419,7 +419,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 								<div className="space-y-3">
 									<button
 										onClick={() => {
-											console.log('Open chat with', owner?.name);
+											console.log('Open chat with', resolvedOwnerName);
 											setShowContactModal(false);
 											// TODO: Navigate to chat with owner
 										}}

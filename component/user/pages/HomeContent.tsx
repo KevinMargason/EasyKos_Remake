@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bell, Search } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
 import { ROUTES } from '@/lib/routes';
 import { getFullGreeting } from '@/lib/greetings';
@@ -123,21 +123,91 @@ export default function HomeContent() {
 	// Get real data from Redux and hooks
 	const user = useAppSelector((state: any) => state.user.user);
 	const { totalKoin } = useWallet();
-	const { kosList, roomsList, fetchKos, fetchRooms, isLoading } = useKos();
+	const { kosList, roomsList, fasilitas, aturan, fetchKos, fetchRooms, fetchFasilitas, fetchAturan, isLoading } = useKos();
+
+	const loadHomeData = useCallback(async () => {
+		await Promise.all([
+			fetchKos(),
+			fetchRooms(),
+			fetchFasilitas(),
+			fetchAturan(),
+		]);
+	}, [fetchKos, fetchRooms, fetchFasilitas, fetchAturan]);
 	
 	useEffect(() => {
-		// Fetch kos data on component mount
-		fetchKos();
-		fetchRooms();
-	}, [fetchKos, fetchRooms]);
+		void loadHomeData();
+	}, [loadHomeData]);
+
+	useEffect(() => {
+		const handleFocus = () => {
+			void loadHomeData();
+		};
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'visible') {
+				void loadHomeData();
+			}
+		};
+
+		window.addEventListener('focus', handleFocus);
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+
+		return () => {
+			window.removeEventListener('focus', handleFocus);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
+	}, [loadHomeData]);
+
+	const activeFasilitas = useMemo(() => {
+		if (!Array.isArray(fasilitas)) return [];
+
+		return fasilitas
+			.filter((item: any) => item && item.status !== false)
+			.map((item: any) => item.nama_fasilitas || item.nama || '')
+			.filter(Boolean);
+	}, [fasilitas]);
+
+	const fasilitasUmumBackend = useMemo(() => {
+		if (!Array.isArray(fasilitas)) return [];
+
+		return fasilitas
+			.filter((item: any) => item && item.status !== false && String(item.kategori || '').toLowerCase() === 'publik')
+			.map((item: any) => item.nama_fasilitas || item.nama || '')
+			.filter(Boolean);
+	}, [fasilitas]);
+
+	const fasilitasKamarBackend = useMemo(() => {
+		if (!Array.isArray(fasilitas)) return [];
+
+		return fasilitas
+			.filter((item: any) => item && item.status !== false && String(item.kategori || '').toLowerCase() === 'privat')
+			.map((item: any) => item.nama_fasilitas || item.nama || '')
+			.filter(Boolean);
+	}, [fasilitas]);
+
+	const activeAturan = useMemo(() => {
+		if (!Array.isArray(aturan)) return [];
+
+		return aturan
+			.filter((item: any) => item && item.status !== false)
+			.map((item: any) => item.nama_aturan || item.nama || '')
+			.filter(Boolean);
+	}, [aturan]);
 
 	const normalizeText = (value: any) => String(value ?? '').toLowerCase();
 
 	const mapKosForCard = (property: any, room: any = null) => {
-		const fasilitasUmum = property.fasilitas_umum || property.fasilitasUmum || property.facilities?.umum || room?.fasilitas_umum || [];
-		const fasilitasKamar = property.fasilitas_kamar || property.fasilitasKamar || property.facilities?.kamar || room?.fasilitas_kamar || [];
-		const ownerName = property.owner?.name || property.owner_name || room?.owner?.name || room?.user?.name || room?.users?.name || room?.users?.nama || 'Pemilik Kos';
+		const fasilitasUmum = property.fasilitas_umum || property.fasilitasUmum || property.facilities?.umum || room?.fasilitas_umum || (fasilitasUmumBackend.length > 0 ? fasilitasUmumBackend : activeFasilitas);
+		const fasilitasKamar = property.fasilitas_kamar || property.fasilitasKamar || property.facilities?.kamar || room?.fasilitas_kamar || (fasilitasKamarBackend.length > 0 ? fasilitasKamarBackend : activeFasilitas);
 		const roomPrice = room?.harga ?? property.harga;
+		const ruleValues = Array.isArray(property.peraturan)
+			? property.peraturan
+			: property.peraturan
+				? String(property.peraturan)
+					.split(/\r?\n|,/)
+					.map((item: string) => item.trim())
+					.filter(Boolean)
+				: activeAturan;
 
 		return {
 			id: String(property.id),
@@ -145,15 +215,14 @@ export default function HomeContent() {
 			location: property.alamat || property.location || '-',
 			price: roomPrice ? `Rp ${Number(roomPrice).toLocaleString('id-ID')}` : 'Harga belum tersedia',
 			period: property.period || '/ Bulan',
-			image: property.image || '/Asset/kamar/kamar1.svg',
+			image: property.foto || property.image || '/Asset/kamar/kamar1.svg',
 			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
-			images: property.images || ['/Asset/kamar/kamar1.svg', '/Asset/kamar/kamar2.svg', '/Asset/kamar/kamar3.svg'],
+			images: property.images || (property.foto ? [property.foto] : ['/Asset/kamar/kamar1.svg']),
 			facilities: {
 				umum: fasilitasUmum,
 				kamar: fasilitasKamar,
 			},
-			rules: property.peraturan ? [property.peraturan] : [],
-			owner: { name: ownerName },
+			rules: ruleValues,
 		};
 	};
 
@@ -228,7 +297,6 @@ export default function HomeContent() {
 			{activeKosId && selectedKosView ? (
 				<KosDetailPage
 					kos={selectedKosView}
-					owner={selectedKosView.owner}
 					onBack={() => setActiveKosId(null)}
 				/>
 			) : (

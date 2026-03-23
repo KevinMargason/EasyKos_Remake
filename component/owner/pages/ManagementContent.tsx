@@ -17,21 +17,18 @@ export default function OwnerManagementContent() {
 	const { invoices, fetchPayments } = usePayments();
 	const [isLoading, setIsLoading] = useState(true);
 
+	const loadData = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			await Promise.all([fetchKos(), fetchRooms(), fetchPayments()]);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [fetchKos, fetchRooms, fetchPayments]);
+
 	useEffect(() => {
-		const loadData = async () => {
-			try {
-				setIsLoading(true);
-				await Promise.all([
-					fetchKos(),
-					fetchRooms(),
-					fetchPayments()
-				]);
-			} finally {
-				setIsLoading(false);
-			}
-		};
 		loadData();
-	}, [fetchKos, fetchPayments]);
+	}, [loadData]);
 
 	type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur' | 'lemari' | 'meja' | 'kursi' | 'kasur' | 'kamarMandiDalam' | 'kamarMandiLuar' | 'tambah';
 
@@ -220,9 +217,9 @@ export default function OwnerManagementContent() {
 					</section>
 				</>
 			) : activeMenu === 'add-room' ? (
-				<AddRoomPage onBack={() => setActiveMenu('home')} amenitiesIcons={amenitiesIcons} />
+				<AddRoomPage onBack={() => setActiveMenu('home')} onSaved={loadData} amenitiesIcons={amenitiesIcons} />
 			) : activeMenu === 'update-status' ? (
-				<UpdateStatusPage onBack={() => setActiveMenu('home')} kosList={kosOptions} roomsList={roomOptions} amenitiesIcons={amenitiesIcons} />
+				<UpdateStatusPage onBack={() => setActiveMenu('home')} onSaved={loadData} kosList={kosOptions} roomsList={roomOptions} amenitiesIcons={amenitiesIcons} />
 			) : (
 				<ResidentHistoryPage onBack={() => setActiveMenu('home')} kosList={kosOptions} />
 			)}

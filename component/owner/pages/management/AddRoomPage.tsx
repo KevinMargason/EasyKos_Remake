@@ -6,17 +6,20 @@ import { Plus, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/core/services/api';
 import { useAppSelector } from '@/core/store/hooks';
+import { useKos } from '@/core/hooks/useKos';
 import { unwrapApiData } from '@/core/utils/apiResponse';
 
 type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur' | 'lemari' | 'meja' | 'kursi' | 'kasur' | 'kamarMandiDalam' | 'kamarMandiLuar';
 
 interface AddRoomPageProps {
 	onBack: () => void;
+	onSaved?: () => void | Promise<void>;
 	amenitiesIcons: Record<AmenityKey, { icon: string; label: string }>;
 }
 
-export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps) {
+export default function AddRoomPage({ onBack, onSaved, amenitiesIcons }: AddRoomPageProps) {
 	const user = useAppSelector((state: any) => state.user.user);
+	const { fetchKos, fetchRooms, fetchFasilitas, fetchAturan } = useKos();
 	const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 	const [selectedType, setSelectedType] = useState('Putra');
 	const [selectedRegion, setSelectedRegion] = useState('1');  // Default region ID
@@ -97,7 +100,7 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 			}
 
 			// Create kos first - Map to backend field names
-			const kosData = {
+			const kosData: Record<string, unknown> = {
 				nama: formData.namaKos,
 				alamat: formData.alamat,
 				gender: genderMap[selectedType] || 'Campur',
@@ -105,6 +108,12 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				jumlah_kamar: 1,
 				rating: 0,
 			};
+			if (formData.peraturan.trim()) {
+				kosData.peraturan = formData.peraturan.trim();
+			}
+			if (fasilitasUmum.length > 0) {
+				kosData.fasilitas_umum = fasilitasUmum;
+			}
 			
 			// Debug: Log data sebelum dikirim
 			console.log('📤 Sending KOS data:', kosData);
@@ -118,7 +127,7 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 			}
 
 			// Create room with the kos_id
-			const roomData = {
+			const roomData: Record<string, unknown> = {
 				kos_id: kosId,
 				nomor_kamar: formData.nomorKamar,
 				harga: hargaKamar,
@@ -126,6 +135,9 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				listrik: 'token',
 				users_id: user?.id || null,
 			};
+			if (fasilitasKamar.length > 0) {
+				roomData.fasilitas_kamar = fasilitasKamar;
+			}
 			
 			// Debug: Log data sebelum dikirim
 			console.log('📤 Sending ROOM data:', roomData);
@@ -137,6 +149,9 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 			if (!roomId) {
 				throw new Error('Kos berhasil dibuat, tetapi room belum tersimpan. Periksa payload rooms backend.');
 			}
+
+			await Promise.all([fetchKos(), fetchRooms(), fetchFasilitas(), fetchAturan()]);
+			await onSaved?.();
 
 			toast.success('Kos berhasil ditambahkan!');
 			onBack();
@@ -288,15 +303,15 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 										<button
 											key={amenity}
 											onClick={() => handleAmenityToggle(amenity)}
-											className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? 'is-active' : ''} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]`}
 											type="button"
+											className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? 'is-active' : ''} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]`}
 										>
 											<Image src={amenitiesIcons[amenity as AmenityKey].icon} alt={amenitiesIcons[amenity as AmenityKey].label} width={28} height={28} className={`h-7 w-7 object-contain transition ${selectedAmenities.includes(amenity) ? 'brightness-0 invert' : ''}`} />
 											<span className="text-center text-[10px] font-semibold leading-tight">{amenitiesIcons[amenity as AmenityKey].label}</span>
 										</button>
 									))}
 									<button
-									onClick={() => toast.info('Fitur tambah fasilitas akan segera tersedia')}
+										onClick={() => toast.info('Fitur tambah fasilitas akan segera tersedia')}
 										className="glass-chip inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]"
 										type="button"
 									>
@@ -313,6 +328,7 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 										<button
 											key={amenity}
 											onClick={() => handleAmenityToggle(amenity)}
+											type="button"
 											className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? 'is-active' : ''} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]`}
 										>
 											<Image src={amenitiesIcons[amenity as AmenityKey].icon} alt={amenitiesIcons[amenity as AmenityKey].label} width={28} height={28} className={`h-7 w-7 object-contain transition ${selectedAmenities.includes(amenity) ? 'brightness-0 invert' : ''}`} />

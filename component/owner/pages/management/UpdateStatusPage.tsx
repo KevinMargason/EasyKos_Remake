@@ -11,12 +11,13 @@ type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur'
 
 interface UpdateStatusPageProps {
 	onBack: () => void;
+	onSaved?: () => void | Promise<void>;
 	kosList: Array<{ label: string; value: string }>;
 	roomsList: Array<{ label: string; value: string; kosId: string }>;
 	amenitiesIcons?: Record<AmenityKey, { icon: string; label: string }>;
 }
 
-export default function UpdateStatusPage({ onBack, kosList, roomsList, amenitiesIcons }: UpdateStatusPageProps) {
+export default function UpdateStatusPage({ onBack, onSaved, kosList, roomsList, amenitiesIcons }: UpdateStatusPageProps) {
 	const { fetchKos, fetchRooms } = useKos();
 	const [selectedKos, setSelectedKos] = useState<string | null>(null);
 	const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export default function UpdateStatusPage({ onBack, kosList, roomsList, amenities
 
 			await api.rooms.update(roomId, roomUpdateData);
 			await Promise.all([fetchKos(), fetchRooms()]);
+			await onSaved?.();
 
 			toast.success('Status Kos berhasil diperbarui!');
 			onBack();
