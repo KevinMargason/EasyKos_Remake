@@ -76,6 +76,10 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 			toast.error('Harga Kamar harus diisi');
 			return;
 		}
+		if (!formData.nomorKamar.trim()) {
+			toast.error('Nomor Kamar harus diisi');
+			return;
+		}
 
 		setIsLoading(true);
 		try {
@@ -100,8 +104,6 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				region_idregion: parseInt(selectedRegion, 10),
 				jumlah_kamar: 1,
 				rating: 0,
-				peraturan: formData.peraturan.trim() || undefined,
-				fasilitas_umum: fasilitasUmum,
 			};
 			
 			// Debug: Log data sebelum dikirim
@@ -123,13 +125,18 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				ukuran_kamar: '3x3',
 				listrik: 'token',
 				users_id: user?.id || null,
-				fasilitas_kamar: fasilitasKamar,
 			};
 			
 			// Debug: Log data sebelum dikirim
 			console.log('📤 Sending ROOM data:', roomData);
 
-			await api.rooms.create(roomData);
+			const roomResponse = await api.rooms.create(roomData);
+			const roomPayload = unwrapApiData(roomResponse);
+			const roomId = roomPayload?.id || roomResponse?.id;
+
+			if (!roomId) {
+				throw new Error('Kos berhasil dibuat, tetapi room belum tersimpan. Periksa payload rooms backend.');
+			}
 
 			toast.success('Kos berhasil ditambahkan!');
 			onBack();
@@ -148,7 +155,7 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				toast.error(`Validasi gagal:\n${errorMsg}`);
 				console.error('Validation details:', validationErrors);
 			} else {
-				toast.error(error.response?.data?.message || `Error: ${error.message}`);
+				toast.error(error.response?.data?.message || error.message || 'Gagal menambahkan kos');
 			}
 		} finally {
 			setIsLoading(false);
