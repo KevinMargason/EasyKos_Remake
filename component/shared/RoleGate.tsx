@@ -14,7 +14,7 @@ type RoleGateProps = {
 export default function RoleGate({ allowedRoles, fallbackWhenNoRole = ROUTES.LOGIN, children }: RoleGateProps) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const roleFromStore = useAppSelector((state) => state.role.role);
+	const roleFromStore = useAppSelector((state: any) => state.role.role);
 	const [isChecking, setIsChecking] = useState(true);
 
 	useEffect(() => {
