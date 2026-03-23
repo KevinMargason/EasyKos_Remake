@@ -84,6 +84,13 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				Putri: 'Putri',
 				Campur: 'Campur',
 			};
+			const fasilitasUmum = selectedAmenities.filter((amenity) => ['wifi', 'cctv', 'kulkas', 'laundry', 'ruangTamu', 'dapur', 'kamarMandiLuar'].includes(amenity));
+			const fasilitasKamar = selectedAmenities.filter((amenity) => ['lemari', 'meja', 'kursi', 'kasur', 'kamarMandiDalam'].includes(amenity));
+			const hargaKamar = parseInt(formData.hargaKamar.replace(/\D/g, ''), 10);
+
+			if (Number.isNaN(hargaKamar)) {
+				throw new Error('Harga Kamar tidak valid');
+			}
 
 			// Create kos first - Map to backend field names
 			const kosData = {
@@ -93,6 +100,8 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 				region_idregion: parseInt(selectedRegion, 10),
 				jumlah_kamar: 1,
 				rating: 0,
+				peraturan: formData.peraturan.trim() || undefined,
+				fasilitas_umum: fasilitasUmum,
 			};
 			
 			// Debug: Log data sebelum dikirim
@@ -110,10 +119,11 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 			const roomData = {
 				kos_id: kosId,
 				nomor_kamar: formData.nomorKamar,
-				harga: parseInt(formData.hargaKamar.replace(/\D/g, ''), 10),
+				harga: hargaKamar,
 				ukuran_kamar: '3x3',
 				listrik: 'token',
 				users_id: user?.id || null,
+				fasilitas_kamar: fasilitasKamar,
 			};
 			
 			// Debug: Log data sebelum dikirim
@@ -121,7 +131,7 @@ export default function AddRoomPage({ onBack, amenitiesIcons }: AddRoomPageProps
 
 			await api.rooms.create(roomData);
 
-			toast.success('Kamar Kos berhasil ditambahkan!');
+			toast.success('Kos berhasil ditambahkan!');
 			onBack();
 		} catch (error: any) {
 			console.error('❌ Submit error:', error);

@@ -8,9 +8,12 @@ import PaymentModal from './PaymentModal';
 interface KosDetailPageProps {
 	kos: {
 		id: string;
-		name: string;
-		location: string;
-		price: string;
+		name?: string;
+		nama?: string;
+		location?: string;
+		alamat?: string;
+		price?: string;
+		harga?: number | string;
 		period: string;
 		images: string[];
 		description: string;
@@ -19,9 +22,12 @@ interface KosDetailPageProps {
 			kamar: string[];
 		};
 		rules: string[];
+		owner?: {
+			name?: string;
+		};
 	};
 	owner?: {
-		name: string;
+		name?: string;
 		avatar?: string;
 	};
 	onBack: () => void;
@@ -77,15 +83,22 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 	const handleBook = () => {
 		if (selectedDate && selectedDuration) {
 			setBookingData({
-				kosName: kos.name,
+				kosName: kos.name || kos.nama || 'Kos',
 				kosNumber: kos.id,
-				price: kos.price,
+				price: kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia'),
 				startDate: selectedDate,
 				duration: parseInt(selectedDuration),
 			});
 			setPaymentModalOpen(true);
 		}
 	};
+
+	const kosName = kos.name || kos.nama || 'Kos';
+	const kosLocation = kos.location || kos.alamat || '-';
+	const kosPrice = kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia');
+	const resolvedOwnerName = owner?.name || kos.owner?.name || 'Pemilik Kos';
+	const generalFacilities = kos.facilities?.umum || [];
+	const roomFacilities = kos.facilities?.kamar || [];
 
 	return (
 		<div className="min-h-screen bg-white dark:bg-slate-950">
@@ -105,7 +118,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 			<div className="relative h-96 w-full bg-slate-200 dark:bg-slate-800">
 				<Image
 					src={kos.images[currentImageIndex] || '/Asset/kamar/kamar1.svg'}
-					alt={kos.name || 'Kos image'}
+					alt={kosName || 'Kos image'}
 					fill
 					className="object-cover"
 				/>
@@ -170,10 +183,10 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 			<div className="space-y-6 px-6 py-8">
 				{/* Header Info */}
 				<div className="space-y-2">
-					<h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{kos.name}</h1>
-					<p className="text-sm text-slate-600 dark:text-slate-400">{kos.location}</p>
+					<h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{kosName}</h1>
+					<p className="text-sm text-slate-600 dark:text-slate-400">{kosLocation}</p>
 					<div className="flex items-baseline gap-2">
-						<span className="text-3xl font-bold text-[#c86654]">{kos.price}</span>
+						<span className="text-3xl font-bold text-[#c86654]">{kosPrice}</span>
 						<span className="text-sm text-slate-600 dark:text-slate-400">{kos.period}</span>
 					</div>
 				</div>
@@ -185,17 +198,21 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 						<h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
 							Peraturan Kos
 						</h3>
-						<ul className="space-y-3">
-							{kos.rules.map((rule, index) => (
-								<li
-									key={index}
-									className="flex gap-3 text-sm text-slate-700 dark:text-slate-300"
-								>
-									<span className="mt-0.5 flex-shrink-0">•</span>
-									<span>{rule}</span>
-								</li>
-							))}
-						</ul>
+						{kos.rules.length > 0 ? (
+							<ul className="space-y-3">
+								{kos.rules.map((rule, index) => (
+									<li
+										key={index}
+										className="flex gap-3 text-sm text-slate-700 dark:text-slate-300"
+									>
+										<span className="mt-0.5 flex-shrink-0">•</span>
+										<span>{rule}</span>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className="text-sm text-slate-500 dark:text-slate-400">Peraturan kos belum tersedia</p>
+						)}
 					</div>
 
 					{/* Middle Column - Facilities */}
@@ -206,7 +223,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 								Fasilitas Umum
 							</h3>
 							<div className="grid grid-cols-3 gap-3">
-								{kos.facilities.umum.map((facility) => (
+								{generalFacilities.length > 0 ? generalFacilities.map((facility) => (
 									<div
 										key={facility}
 										className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-white p-3 dark:bg-slate-700"
@@ -223,7 +240,9 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 											{capitalizeFacility(facility)}
 										</span>
 									</div>
-								))}
+							)) : (
+								<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas umum belum tersedia</p>
+							)}
 							</div>
 						</div>
 
@@ -233,7 +252,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 								Fasilitas Kamar
 							</h3>
 							<div className="grid grid-cols-3 gap-3">
-								{kos.facilities.kamar.map((facility) => (
+								{roomFacilities.length > 0 ? roomFacilities.map((facility) => (
 									<div
 										key={facility}
 										className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-white p-3 dark:bg-slate-700"
@@ -250,7 +269,9 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 											{capitalizeFacility(facility)}
 										</span>
 									</div>
-								))}
+							)) : (
+								<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas kamar belum tersedia</p>
+							)}
 							</div>
 						</div>
 					</div>
@@ -272,7 +293,7 @@ export default function KosDetailPage({ kos, owner = { name: 'Budi T.' }, onBack
 									<div>
 										<p className="text-sm text-slate-600 dark:text-slate-400">Pemilik Kos</p>
 										<h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-											{owner?.name}
+											{resolvedOwnerName}
 										</h4>
 									</div>
 								</div>

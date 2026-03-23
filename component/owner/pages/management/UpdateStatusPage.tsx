@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Plus, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/core/services/api';
+import { useKos } from '@/core/hooks/useKos';
 
 type AmenityKey = 'wifi' | 'cctv' | 'kulkas' | 'laundry' | 'ruangTamu' | 'dapur' | 'lemari' | 'meja' | 'kursi' | 'kasur' | 'kamarMandiDalam' | 'kamarMandiLuar';
 
@@ -16,6 +17,7 @@ interface UpdateStatusPageProps {
 }
 
 export default function UpdateStatusPage({ onBack, kosList, roomsList, amenitiesIcons }: UpdateStatusPageProps) {
+	const { fetchKos, fetchRooms } = useKos();
 	const [selectedKos, setSelectedKos] = useState<string | null>(null);
 	const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
 	const [selectedFasilitasUmum, setSelectedFasilitasUmum] = useState<string[]>([]);
@@ -61,6 +63,13 @@ export default function UpdateStatusPage({ onBack, kosList, roomsList, amenities
 				Putri: 'Putri',
 				Campur: 'Campur',
 			};
+			const fasilitasUmum = selectedFasilitasUmum.filter((a) => ['wifi', 'cctv', 'kulkas', 'laundry', 'ruangTamu', 'dapur', 'kamarMandiLuar'].includes(a));
+			const fasilitasKamar = selectedFasilitasKamar.filter((a) => ['lemari', 'meja', 'kursi', 'kasur', 'kamarMandiDalam'].includes(a));
+			const hargaKamar = parseInt(formData.hargaKamar.replace(/\D/g, ''), 10);
+
+			if (Number.isNaN(hargaKamar)) {
+				throw new Error('Harga Kamar tidak valid');
+			}
 
 			const kosId = selectedKos;
 			const roomId = selectedRoom;
@@ -68,17 +77,19 @@ export default function UpdateStatusPage({ onBack, kosList, roomsList, amenities
 			// Update kos with type and amenities - use correct field names
 			const kosUpdateData = {
 				gender: genderMap[selectedType] || 'Campur',
+				fasilitas_umum: fasilitasUmum,
 			};
 
 			await api.kos.update(kosId, kosUpdateData);
 
 			// Update room with price and amenities
 			const roomUpdateData = {
-				harga: parseInt(formData.hargaKamar.replace(/\D/g, ''), 10),
-				fasilitas_kamar: selectedFasilitasKamar.filter((a) => ['lemari', 'meja', 'kursi', 'kasur', 'kamarMandiDalam'].includes(a)),
+				harga: hargaKamar,
+				fasilitas_kamar: fasilitasKamar,
 			};
 
 			await api.rooms.update(roomId, roomUpdateData);
+			await Promise.all([fetchKos(), fetchRooms()]);
 
 			toast.success('Status Kos berhasil diperbarui!');
 			onBack();

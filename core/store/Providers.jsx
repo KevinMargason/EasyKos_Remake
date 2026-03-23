@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Provider } from 'react-redux';
+import { Toaster } from 'sonner';
 import { setRole } from '@/core/feature/role/roleSlice';
 import { setToken } from '@/core/feature/token/tokenSlice';
 import { setUser, setUserPenpos } from '@/core/feature/user/userSlice';
@@ -12,6 +13,7 @@ export default function Providers({ children }) {
     return (
         <Provider store={store}>
             <AuthHydrator>{children}</AuthHydrator>
+            <Toaster position="top-right" richColors closeButton />
         </Provider>
     );
 }

@@ -123,33 +123,43 @@ export default function HomeContent() {
 	// Get real data from Redux and hooks
 	const user = useAppSelector((state: any) => state.user.user);
 	const { totalKoin } = useWallet();
-	const { kosList, fetchKos, isLoading } = useKos();
+	const { kosList, roomsList, fetchKos, fetchRooms, isLoading } = useKos();
 	
 	useEffect(() => {
 		// Fetch kos data on component mount
 		fetchKos();
-	}, [fetchKos]);
+		fetchRooms();
+	}, [fetchKos, fetchRooms]);
 
 	const normalizeText = (value: any) => String(value ?? '').toLowerCase();
 
-	const mapKosForCard = (property: any) => ({
-		id: String(property.id),
-		name: property.nama || property.name || 'Kos',
-		location: property.alamat || property.location || '-',
-		price: property.harga ? `Rp ${Number(property.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia',
-		period: property.period || '/ Bulan',
-		image: property.image || '/Asset/kamar/kamar1.svg',
-		description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
-		images: property.images || ['/Asset/kamar/kamar1.svg', '/Asset/kamar/kamar2.svg', '/Asset/kamar/kamar3.svg'],
-		facilities: {
-			umum: property.fasilitas_umum || [],
-			kamar: property.fasilitas_kamar || [],
-		},
-		rules: property.peraturan ? [property.peraturan] : [],
-	});
+	const mapKosForCard = (property: any, room: any = null) => {
+		const fasilitasUmum = property.fasilitas_umum || property.fasilitasUmum || property.facilities?.umum || room?.fasilitas_umum || [];
+		const fasilitasKamar = property.fasilitas_kamar || property.fasilitasKamar || property.facilities?.kamar || room?.fasilitas_kamar || [];
+		const ownerName = property.owner?.name || property.owner_name || room?.owner?.name || room?.user?.name || room?.users?.name || room?.users?.nama || 'Pemilik Kos';
+		const roomPrice = room?.harga ?? property.harga;
+
+		return {
+			id: String(property.id),
+			name: property.nama || property.name || 'Kos',
+			location: property.alamat || property.location || '-',
+			price: roomPrice ? `Rp ${Number(roomPrice).toLocaleString('id-ID')}` : 'Harga belum tersedia',
+			period: property.period || '/ Bulan',
+			image: property.image || '/Asset/kamar/kamar1.svg',
+			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
+			images: property.images || ['/Asset/kamar/kamar1.svg', '/Asset/kamar/kamar2.svg', '/Asset/kamar/kamar3.svg'],
+			facilities: {
+				umum: fasilitasUmum,
+				kamar: fasilitasKamar,
+			},
+			rules: property.peraturan ? [property.peraturan] : [],
+			owner: { name: ownerName },
+		};
+	};
 
 	const selectedKos = activeKosId && kosList ? kosList.find((p: any) => String(p.id) === String(activeKosId)) : null;
-	const selectedKosView = selectedKos ? mapKosForCard(selectedKos) : null;
+	const selectedRoom = selectedKos && roomsList ? roomsList.find((room: any) => String(room.kos_id) === String(selectedKos.id) || String(room.kosId) === String(selectedKos.id)) : null;
+	const selectedKosView = selectedKos ? mapKosForCard(selectedKos, selectedRoom) : null;
 
 	const filteredProperties = useMemo(() => {
 		if (!kosList || !Array.isArray(kosList)) return [];
@@ -189,6 +199,14 @@ export default function HomeContent() {
 		});
 	}, [kosList, searchQuery, activeFilter]);
 
+	const filteredPropertiesWithRooms = useMemo(
+		() => filteredProperties.map((property: any) => ({
+			property,
+			room: roomsList.find((room: any) => String(room.kos_id) === String(property.id) || String(room.kosId) === String(property.id)) || null,
+		})),
+		[filteredProperties, roomsList]
+	);
+
 	// Show loading skeleton while data is loading
 	if (isLoading) {
 		return (
@@ -210,7 +228,7 @@ export default function HomeContent() {
 			{activeKosId && selectedKosView ? (
 				<KosDetailPage
 					kos={selectedKosView}
-					owner={{ name: 'Budi T.' }}
+					owner={selectedKosView.owner}
 					onBack={() => setActiveKosId(null)}
 				/>
 			) : (
@@ -288,9 +306,9 @@ export default function HomeContent() {
 			<section className="space-y-4">
 				<UserSectionTitle title="Rekomendasi untuk Anda" action={<button className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#b85d47] dark:text-slate-400 dark:hover:text-[#f0b2a7]"><Bell size={16} /><span>Lihat semua</span></button>} />
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{filteredProperties.length > 0 ? (
-						filteredProperties.map((property: any, index: any) => (
-							<PropertyCard key={`search-${property.id}-${index}`} {...mapKosForCard(property)} onClick={() => setActiveKosId(String(property.id))} />
+					{filteredPropertiesWithRooms.length > 0 ? (
+						filteredPropertiesWithRooms.map(({ property, room }: any, index: any) => (
+							<PropertyCard key={`search-${property.id}-${index}`} {...mapKosForCard(property, room)} onClick={() => setActiveKosId(String(property.id))} />
 						))
 					) : (
 						<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
@@ -301,9 +319,9 @@ export default function HomeContent() {
 			<section className="space-y-4 pb-8">
 				<UserSectionTitle title="Populer" />
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{filteredProperties.length > 0 ? (
-						filteredProperties.map((property: any, index: any) => (
-							<PropertyCard key={`popular-search-${property.id}-${index}`} {...mapKosForCard(property)} onClick={() => setActiveKosId(String(property.id))} />
+					{filteredPropertiesWithRooms.length > 0 ? (
+						filteredPropertiesWithRooms.map(({ property, room }: any, index: any) => (
+							<PropertyCard key={`popular-search-${property.id}-${index}`} {...mapKosForCard(property, room)} onClick={() => setActiveKosId(String(property.id))} />
 						))
 					) : (
 						<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
