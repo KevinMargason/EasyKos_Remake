@@ -6,39 +6,43 @@ import { ChevronLeft, ChevronRight, MessageCircle, X } from 'lucide-react';
 import PaymentModal from './PaymentModal';
 import { useAppSelector } from '@/core/store/hooks';
 
-interface KosDetailPageProps {
-	kos: {
-		id: string;
+interface KosDetailPageBase {
+	id: string;
+	name?: string;
+	nama?: string;
+	location?: string;
+	alamat?: string;
+	price?: string;
+	harga?: number | string;
+	period: string;
+	images: string[];
+	description: string;
+	facilities?: {
+		umum?: string[];
+		kamar?: string[];
+	};
+	fasilitas?: {
+		umum?: string[];
+		kamar?: string[];
+	};
+	fasilitas_umum?: string[] | string;
+	fasilitas_kamar?: string[] | string;
+	peraturan?: string[] | string;
+	aturan?: string[] | string;
+	rules?: string[];
+	owner?: {
+		id?: number | string;
 		name?: string;
 		nama?: string;
-		location?: string;
-		alamat?: string;
-		price?: string;
-		harga?: number | string;
-		period: string;
-		images: string[];
-		description: string;
-		facilities?: {
-			umum?: string[];
-			kamar?: string[];
-		};
-		fasilitas?: {
-			umum?: string[];
-			kamar?: string[];
-		};
-		fasilitas_umum?: string[] | string;
-		fasilitas_kamar?: string[] | string;
-		peraturan?: string[] | string;
-		aturan?: string[] | string;
-		rules?: string[];
-		owner?: {
-			id?: number | string;
-			name?: string;
-			nama?: string;
-			email?: string;
-			no_hp?: string;
-		} | null;
-	};
+		email?: string;
+		no_hp?: string;
+	} | null;
+	[key: string]: any;
+};
+
+interface KosDetailPageProps {
+	kos: KosDetailPageBase;
+
 	owner?: {
 		id?: number | string;
 		name?: string;
