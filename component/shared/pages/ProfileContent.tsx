@@ -13,7 +13,7 @@ import {
   CreditCard,
   Plus,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UserSectionTitle from "@/component/shared/UserSectionTitle";
 import { useAppSelector, useAppDispatch } from "@/core/store/hooks";
 import { toast } from "sonner";
@@ -129,6 +129,40 @@ export default function ProfileContent() {
       }
     },
   });
+
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+
+  const fetchPaymentMethods = async () => {
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("token")?.replace(/['"]+/g, "")
+          : null;
+      if (!token) return;
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payment-methods`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setPaymentMethods(data.data);
+      }
+    } catch (error) {
+      console.error("Gagal menarik data pembayaran:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "owner") {
+      fetchPaymentMethods();
+    }
+  }, [user]);
 
   const {
     handleSubmit,
@@ -272,21 +306,48 @@ export default function ProfileContent() {
                   Tambah Metode Pembayaran
                 </button>
               </div>
-              <div className="rounded-[18px] border-2 border-dashed border-[#e6b3a8] bg-[#fff8f5] px-4 py-5 dark:border-slate-700 dark:bg-slate-800/50">
-                <div className="flex items-start gap-3">
-                  <CreditCard size={22} className="mt-0.5 text-[#c35f46]" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Belum ada metode pembayaran yang tersimpan
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                      Bagian ini tetap tersedia untuk owner agar nanti bisa
-                      menerima pembayaran dari tenant. Backend untuk penyimpanan
-                      metode pembayaran masih menunggu.
-                    </p>
+              {paymentMethods.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {paymentMethods.map((method: any) => (
+                    <div
+                      key={method.id}
+                      className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff3ef] dark:bg-slate-700">
+                          <CreditCard size={20} className="text-[#c35f46]" />
+                        </div>
+                        <div>
+                          <p className="font-semibold uppercase text-slate-900 dark:text-slate-100">
+                            {method.nama_metode}
+                          </p>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                            {method.nomor_rekening}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            a.n {method.atas_nama}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[18px] border-2 border-dashed border-[#e6b3a8] bg-[#fff8f5] px-4 py-5 dark:border-slate-700 dark:bg-slate-800/50">
+                  <div className="flex items-start gap-3">
+                    <CreditCard size={22} className="mt-0.5 text-[#c35f46]" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        Belum ada metode pembayaran yang tersimpan
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        Tambahkan rekening Bank atau E-Wallet untuk menerima
+                        pembayaran dari anak kos.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
