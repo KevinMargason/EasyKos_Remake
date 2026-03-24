@@ -70,21 +70,27 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 		if (!pet) return null;
 
 		const now = new Date().getTime();
-		const decayRate = 1;
+		const decayRate = 0.03; // Kamu bisa sesuaikan seberapa cepat mereka lapar
 
-		let kenyangValue = 100;
-		if (pet.last_fed_at) {
-			const timeSinceFed = (now - new Date(pet.last_fed_at).getTime()) / 60000;
-			kenyangValue = Math.max(0, 100 - (timeSinceFed * decayRate));
+		// Ambil nilai dasar dari database (level_lapar & level_stamina)
+		// Lalu kurangi berdasarkan waktu yang lewat sejak terakhir_makan/tidur
+
+		let kenyangValue = pet.level_lapar || 100;
+		if (pet.terakhir_makan) {
+			const timeSinceFed = (now - new Date(pet.terakhir_makan).getTime()) / 60000; // dalam menit
+			kenyangValue = Math.max(0, kenyangValue - (timeSinceFed * decayRate));
 		}
 
-		let segarValue = 100;
-		if (pet.last_slept_at) {
-			const timeSinceSlept = (now - new Date(pet.last_slept_at).getTime()) / 60000;
-			segarValue = Math.max(0, 100 - (timeSinceSlept * decayRate));
+		let segarValue = pet.level_stamina || 100;
+		if (pet.terakhir_tidur) {
+			const timeSinceSlept = (now - new Date(pet.terakhir_tidur).getTime()) / 60000; // dalam menit
+			segarValue = Math.max(0, segarValue - (timeSinceSlept * decayRate));
 		}
 
-		return { kenyang: kenyangValue, segar: segarValue };
+		return {
+			kenyang: Math.round(kenyangValue),
+			segar: Math.round(segarValue)
+		};
 	};
 
 	const getPetExpression = (metrics: any) => {

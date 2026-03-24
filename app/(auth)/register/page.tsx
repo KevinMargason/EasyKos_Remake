@@ -35,7 +35,9 @@ export default function RegisterPage() {
     const { name, value } = e.target;
 
     if (name === 'no_hp') {
-      setFormData({ ...formData, [name]: value.replace(/[^0-9]/g, '') });
+      const cleanedValue = value.replace(/[^0-9]/g, '');
+      const limitedValue = cleanedValue.slice(0, 13);
+      setFormData({ ...formData, [name]: limitedValue });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -102,7 +104,7 @@ export default function RegisterPage() {
     } catch (error: any) {
       console.error('Registrasi gagal:', error);
       let errorMsg = 'Pendaftaran gagal. Silakan coba lagi.';
-      
+
       if (error?.response?.data?.message) {
         errorMsg = error.response.data.message;
       } else if (error?.response?.data?.error) {
@@ -114,7 +116,7 @@ export default function RegisterPage() {
       } else if (error?.message) {
         errorMsg = error.message;
       }
-      
+
       setError(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -240,7 +242,7 @@ export default function RegisterPage() {
                 {/* Phone */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Nomor HP (10-20 digit)
+                    Nomor HP (10-13 digit)
                   </label>
                   <input
                     type="tel"
