@@ -101,7 +101,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const kosName = kos.name || kos.nama || 'Kos';
 	const kosLocation = kos.location || kos.alamat || '-';
 	const kosPrice = kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia');
-	const resolvedOwnerName = (kos.owner && kos.owner.name) ? kos.owner.name : (owner?.name || kos.owner?.name || 'Nama pemilik belum tersedia');
+	const resolvedOwnerName = kos.owner?.name || kos.owner?.nama || owner?.name || 'Nama pemilik belum tersedia';
 	const generalFacilities = kos.facilities?.umum || [];
 	const roomFacilities = kos.facilities?.kamar || [];
 

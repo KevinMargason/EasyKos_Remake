@@ -197,35 +197,38 @@ export default function HomeContent() {
 	const normalizeText = (value: any) => String(value ?? '').toLowerCase();
 
 	const mapKosForCard = (property: any, room: any = null) => {
-		// Map fasilitas dari API response
-		const fasilitasFromApi = Array.isArray(property.fasilitas) ? property.fasilitas : [];
-		const fasilitasUmum = fasilitasFromApi
-			.filter((f: any) => String(f.kategori || '').toLowerCase() === 'publik' && f.status !== false)
+		// Map fasilitas dari API response - filter by kategori
+		const kosiFasilitas = Array.isArray(property.fasilitas) ? property.fasilitas : [];
+		const fasilitasUmum = kosiFasilitas
+			.filter((f: any) => f && String(f.kategori || '').toLowerCase() === 'publik' && f.status !== false)
 			.map((f: any) => f.nama_fasilitas || f.nama || '')
 			.filter(Boolean);
-		const fasilitasKamar = fasilitasFromApi
-			.filter((f: any) => String(f.kategori || '').toLowerCase() === 'privat' && f.status !== false)
+		const fasilitasKamar = kosiFasilitas
+			.filter((f: any) => f && String(f.kategori || '').toLowerCase() === 'privat' && f.status !== false)
 			.map((f: any) => f.nama_fasilitas || f.nama || '')
 			.filter(Boolean);
 
-		// Fallback ke fasilitas backend jika tidak ada di kos
-		const finalFasilitasUmum = fasilitasUmum.length > 0 ? fasilitasUmum : fasilitasUmumBackend.length > 0 ? fasilitasUmumBackend : activeFasilitas;
-		const finalFasilitasKamar = fasilitasKamar.length > 0 ? fasilitasKamar : fasilitasKamarBackend.length > 0 ? fasilitasKamarBackend : activeFasilitas;
+		// Fallback ke backend fasilitas jika kosong
+		const finalFasilitasUmum = fasilitasUmum.length > 0 ? fasilitasUmum : (fasilitasUmumBackend.length > 0 ? fasilitasUmumBackend : activeFasilitas);
+		const finalFasilitasKamar = fasilitasKamar.length > 0 ? fasilitasKamar : (fasilitasKamarBackend.length > 0 ? fasilitasKamarBackend : activeFasilitas);
 
-		// Map aturan/peraturan dari API response
-		const ruleValues = Array.isArray(property.aturans)
-			? property.aturans
+		// Map aturan/peraturan - prioritize aturans dari API response
+		let ruleValues: string[] = [];
+		if (Array.isArray(property.aturans) && property.aturans.length > 0) {
+			ruleValues = property.aturans
 				.filter((a: any) => a && a.status !== false)
-				.map((a: any) => a.nama_aturan || a.nama || '')
-				.filter(Boolean)
-			: Array.isArray(property.peraturan)
-				? property.peraturan
-				: property.peraturan
-					? String(property.peraturan)
-						.split(/\r?\n|,/)
-						.map((item: string) => item.trim())
-						.filter(Boolean)
-					: activeAturan;
+				.map((a: any) => a.nama_aturan || '')
+				.filter(Boolean);
+		} else if (Array.isArray(property.peraturan) && property.peraturan.length > 0) {
+			ruleValues = property.peraturan;
+		} else if (property.peraturan && typeof property.peraturan === 'string') {
+			ruleValues = property.peraturan
+				.split(/\r?\n|,/)
+				.map((item: string) => item.trim())
+				.filter(Boolean);
+		} else if (activeAturan.length > 0) {
+			ruleValues = activeAturan;
+		}
 
 		const roomPrice = room?.harga ?? property.harga;
 
@@ -244,7 +247,6 @@ export default function HomeContent() {
 			},
 			rules: ruleValues,
 			owner: property.owner || null,
-			regionId: property.region_idregion || property.regionId || 0,
 		};
 	};
 
