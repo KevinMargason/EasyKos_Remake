@@ -592,6 +592,7 @@ export default function ProfileContent() {
                             phoneNumber: "",
                             accountHolder: "",
                           });
+                          fetchPaymentMethods();
                         } else {
                           toast.error(
                             data.message ||
