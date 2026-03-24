@@ -105,6 +105,13 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const generalFacilities = kos.facilities?.umum || [];
 	const roomFacilities = kos.facilities?.kamar || [];
 
+	// DEBUG
+	console.log('KosDetailPage - owner data:', {
+		kosOwner: kos.owner,
+		propOwner: owner,
+		resolvedName: resolvedOwnerName,
+	});
+
 	return (
 		<div className="min-h-screen bg-white dark:bg-slate-950">
 			{/* Header with Back Button */}
