@@ -197,37 +197,26 @@ export default function HomeContent() {
 	const normalizeText = (value: any) => String(value ?? '').toLowerCase();
 
 	const mapKosForCard = (property: any, room: any = null) => {
-		// Map fasilitas dari API response - filter by kategori
+		// Map HANYA dari API response - NO FALLBACK
+		
+		// Fasilitas dari API response kos - filter by kategori
 		const kosiFasilitas = Array.isArray(property.fasilitas) ? property.fasilitas : [];
 		const fasilitasUmum = kosiFasilitas
 			.filter((f: any) => f && String(f.kategori || '').toLowerCase() === 'publik' && f.status !== false)
-			.map((f: any) => f.nama_fasilitas || f.nama || '')
+			.map((f: any) => f.nama_fasilitas || '')
 			.filter(Boolean);
 		const fasilitasKamar = kosiFasilitas
 			.filter((f: any) => f && String(f.kategori || '').toLowerCase() === 'privat' && f.status !== false)
-			.map((f: any) => f.nama_fasilitas || f.nama || '')
+			.map((f: any) => f.nama_fasilitas || '')
 			.filter(Boolean);
 
-		// Fallback ke backend fasilitas jika kosong
-		const finalFasilitasUmum = fasilitasUmum.length > 0 ? fasilitasUmum : (fasilitasUmumBackend.length > 0 ? fasilitasUmumBackend : activeFasilitas);
-		const finalFasilitasKamar = fasilitasKamar.length > 0 ? fasilitasKamar : (fasilitasKamarBackend.length > 0 ? fasilitasKamarBackend : activeFasilitas);
-
-		// Map aturan/peraturan - prioritize aturans dari API response
+		// Aturan HANYA dari API response kos - NO FALLBACK
 		let ruleValues: string[] = [];
-		if (Array.isArray(property.aturans) && property.aturans.length > 0) {
+		if (Array.isArray(property.aturans)) {
 			ruleValues = property.aturans
-				.filter((a: any) => a && a.status !== false)
-				.map((a: any) => a.nama_aturan || '')
+				.filter((a: any) => a && a.status !== false && a.nama_aturan)
+				.map((a: any) => a.nama_aturan)
 				.filter(Boolean);
-		} else if (Array.isArray(property.peraturan) && property.peraturan.length > 0) {
-			ruleValues = property.peraturan;
-		} else if (property.peraturan && typeof property.peraturan === 'string') {
-			ruleValues = property.peraturan
-				.split(/\r?\n|,/)
-				.map((item: string) => item.trim())
-				.filter(Boolean);
-		} else if (activeAturan.length > 0) {
-			ruleValues = activeAturan;
 		}
 
 		const roomPrice = room?.harga ?? property.harga;
@@ -242,8 +231,8 @@ export default function HomeContent() {
 			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
 			images: property.images || (property.foto ? [property.foto] : ['/Asset/kamar/kamar1.svg']),
 			facilities: {
-				umum: finalFasilitasUmum,
-				kamar: finalFasilitasKamar,
+				umum: fasilitasUmum,
+				kamar: fasilitasKamar,
 			},
 			rules: ruleValues,
 			owner: property.owner || null,
