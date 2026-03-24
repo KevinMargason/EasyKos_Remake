@@ -119,7 +119,7 @@ export default function HomeContent() {
 	const [activeFilter, setActiveFilter] = useState(filters[0]);
 	const [activeKosId, setActiveKosId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState('');
-	
+
 	// Get real data from Redux and hooks
 	const user = useAppSelector((state: any) => state.user.user);
 	const { totalKoin } = useWallet();
@@ -133,7 +133,7 @@ export default function HomeContent() {
 			fetchAturan(),
 		]);
 	}, [fetchKos, fetchRooms, fetchFasilitas, fetchAturan]);
-	
+
 	useEffect(() => {
 		void loadHomeData();
 	}, [loadHomeData]);
@@ -260,7 +260,15 @@ export default function HomeContent() {
 					);
 				}
 				if (activeFilter === 'Surabaya') {
-					const regionId = Number(prop.region_idregion || prop.regionId || prop.region?.id || 0);
+					const regionId = Number(
+						prop.region_idregion ||
+						prop.regionId ||
+						prop.region?.id ||
+						prop.region?.idregion ||
+						prop.region?.region_id ||
+						prop.region_id ||
+						0
+					);
 					return regionId === 1 || alamat.includes('surabaya');
 				}
 				if (activeFilter === 'Terjangkau') return harga ? harga <= 1500000 : true;
@@ -304,102 +312,101 @@ export default function HomeContent() {
 				/>
 			) : (
 				<>
-				<header className="flex flex-col gap-4 rounded-[28px] bg-transparent sm:flex-row sm:items-start sm:justify-between">
-					<div className="flex items-center gap-4">
-						<Image src="/Asset/icon/icon-person.svg" alt="Akun pengguna" width={90} height={90} />
-						<div className='mb-5'>
-							<p className="text-[14px] text-slate-500 dark:text-slate-400">{getFullGreeting(user?.name).greeting}</p>
-							<h1 className="text-[26px] font-bold leading-none text-slate-900 dark:text-slate-100">{getFullGreeting(user?.name).userName}</h1>
+					<header className="flex flex-col gap-4 rounded-[28px] bg-transparent sm:flex-row sm:items-start sm:justify-between">
+						<div className="flex items-center gap-4">
+							<Image src="/Asset/icon/icon-person.svg" alt="Akun pengguna" width={90} height={90} />
+							<div className='mb-5'>
+								<p className="text-[14px] text-slate-500 dark:text-slate-400">{getFullGreeting(user?.name).greeting}</p>
+								<h1 className="text-[26px] font-bold leading-none text-slate-900 dark:text-slate-100">{getFullGreeting(user?.name).userName}</h1>
+							</div>
 						</div>
+
+						<div className="flex items-center gap-3 self-start sm:pt-1">
+							<div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
+								<Image src="/Asset/icon/icon-fire.svg" alt="Streak" width={18} height={18} />
+								<span>--</span>
+							</div>
+							<div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
+								<Image src="/Asset/icon/icon-coin.svg" alt="Koin" width={18} height={18} />
+								<span>{totalKoin || 0} Koin</span>
+							</div>
+						</div>
+					</header>
+
+					<div className="grid gap-3 md:grid-cols-[1fr_auto]">
+						<div className="glass-card flex items-center gap-3 rounded-full border border-slate-200 bg-white px-5 py-3 shadow-[0_6px_18px_rgba(15,23,42,0.05)] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_6px_18px_rgba(0,0,0,0.25)]">
+							<Search size={20} className="text-slate-400 dark:text-slate-500" />
+							<input
+								type="text"
+								placeholder="Cari kos berdasarkan nama atau alamat..."
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+							/>
+						</div>
+
+						<button
+							onClick={() => {
+								setSearchQuery('');
+								setActiveFilter('Semua');
+							}}
+							className="glass-card rounded-full border border-transparent px-8 py-3 text-[15px] font-semibold shadow-[0_4px_10px_rgba(15,23,42,0.06)] transition bg-[linear-gradient(rgba(255,255,255,0.78),rgba(255,255,255,0.78)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] bg-origin-[padding-box,border-box] bg-clip-[padding-box,border-box] text-[#b86552] hover:bg-[linear-gradient(rgba(255,248,246,0.84),rgba(255,248,246,0.84)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] dark:bg-[linear-gradient(rgba(15,23,42,0.75),rgba(15,23,42,0.75)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] dark:bg-origin-[padding-box,border-box] dark:bg-clip-[padding-box,border-box] dark:text-[#f0b2a7] dark:hover:bg-[linear-gradient(rgba(30,41,59,0.8),rgba(30,41,59,0.8)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)]"
+						>
+							Reset
+						</button>
 					</div>
 
-					<div className="flex items-center gap-3 self-start sm:pt-1">
-						<div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
-							<Image src="/Asset/icon/icon-fire.svg" alt="Streak" width={18} height={18} />
-							<span>--</span>
-						</div>
-						<div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
-							<Image src="/Asset/icon/icon-coin.svg" alt="Koin" width={18} height={18} />
-							<span>{totalKoin || 0} Koin</span>
-						</div>
+					<Link href={ROUTES.USER.MYPET} className="block overflow-hidden rounded-[18px] bg-[#9f5845]">
+						<Image
+							src="/Asset/iklan-pet.svg"
+							alt="Iklan pet"
+							width={929}
+							height={224}
+							unoptimized
+							priority
+							className="block h-auto w-full object-contain"
+						/>
+					</Link>
+
+					<div className="flex flex-wrap gap-3">
+						{filters.map((item) => (
+							<button
+								key={item}
+								onClick={() => setActiveFilter(item)}
+								className={`glass-chip rounded-full px-5 py-2.5 text-[15px] font-semibold transition ${activeFilter === item ? 'is-active' : 'hover:border-[#eec18a]'
+									}`}
+							>
+								{item}
+							</button>
+						))}
 					</div>
-				</header>
 
-			<div className="grid gap-3 md:grid-cols-[1fr_auto]">
-				<div className="glass-card flex items-center gap-3 rounded-full border border-slate-200 bg-white px-5 py-3 shadow-[0_6px_18px_rgba(15,23,42,0.05)] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_6px_18px_rgba(0,0,0,0.25)]">
-					<Search size={20} className="text-slate-400 dark:text-slate-500" />
-					<input
-						type="text"
-						placeholder="Cari kos berdasarkan nama atau alamat..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
-					/>
-				</div>
+					<section className="space-y-4">
+						<UserSectionTitle title="Rekomendasi untuk Anda" action={<button className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#b85d47] dark:text-slate-400 dark:hover:text-[#f0b2a7]"><Bell size={16} /><span>Lihat semua</span></button>} />
+						<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+							{filteredPropertiesWithRooms.length > 0 ? (
+								filteredPropertiesWithRooms.map(({ property, room }: any, index: any) => (
+									<PropertyCard key={`search-${property.id}-${index}`} {...mapKosForCard(property, room)} onClick={() => setActiveKosId(String(property.id))} />
+								))
+							) : (
+								<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
+							)}
+						</div>
+					</section>
 
-				<button
-					onClick={() => {
-						setSearchQuery('');
-						setActiveFilter('Semua');
-					}}
-					className="glass-card rounded-full border border-transparent px-8 py-3 text-[15px] font-semibold shadow-[0_4px_10px_rgba(15,23,42,0.06)] transition bg-[linear-gradient(rgba(255,255,255,0.78),rgba(255,255,255,0.78)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] bg-origin-[padding-box,border-box] bg-clip-[padding-box,border-box] text-[#b86552] hover:bg-[linear-gradient(rgba(255,248,246,0.84),rgba(255,248,246,0.84)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] dark:bg-[linear-gradient(rgba(15,23,42,0.75),rgba(15,23,42,0.75)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)] dark:bg-origin-[padding-box,border-box] dark:bg-clip-[padding-box,border-box] dark:text-[#f0b2a7] dark:hover:bg-[linear-gradient(rgba(30,41,59,0.8),rgba(30,41,59,0.8)),linear-gradient(90deg,#b87a69_0%,#d78758_50%,#e0a0a5_100%)]"
-				>
-					Reset
-				</button>
-			</div>
-
-			<Link href={ROUTES.USER.MYPET} className="block overflow-hidden rounded-[18px] bg-[#9f5845]">
-				<Image
-					src="/Asset/iklan-pet.svg"
-					alt="Iklan pet"
-					width={929}
-					height={224}
-					unoptimized
-					priority
-					className="block h-auto w-full object-contain"
-				/>
-			</Link>
-
-			<div className="flex flex-wrap gap-3">
-				{filters.map((item) => (
-					<button
-						key={item}
-						onClick={() => setActiveFilter(item)}
-						className={`glass-chip rounded-full px-5 py-2.5 text-[15px] font-semibold transition ${
-							activeFilter === item ? 'is-active' : 'hover:border-[#eec18a]'
-						}`}
-					>
-						{item}
-					</button>
-				))}
-			</div>
-
-			<section className="space-y-4">
-				<UserSectionTitle title="Rekomendasi untuk Anda" action={<button className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#b85d47] dark:text-slate-400 dark:hover:text-[#f0b2a7]"><Bell size={16} /><span>Lihat semua</span></button>} />
-				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{filteredPropertiesWithRooms.length > 0 ? (
-						filteredPropertiesWithRooms.map(({ property, room }: any, index: any) => (
-							<PropertyCard key={`search-${property.id}-${index}`} {...mapKosForCard(property, room)} onClick={() => setActiveKosId(String(property.id))} />
-						))
-					) : (
-						<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
-					)}
-				</div>
-			</section>
-
-			<section className="space-y-4 pb-8">
-				<UserSectionTitle title="Populer" />
-				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{filteredPropertiesWithRooms.length > 0 ? (
-						filteredPropertiesWithRooms.map(({ property, room }: any, index: any) => (
-							<PropertyCard key={`popular-search-${property.id}-${index}`} {...mapKosForCard(property, room)} onClick={() => setActiveKosId(String(property.id))} />
-						))
-					) : (
-						<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
-					)}
-				</div>
-			</section>
-			</>
+					<section className="space-y-4 pb-8">
+						<UserSectionTitle title="Populer" />
+						<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+							{filteredPropertiesWithRooms.length > 0 ? (
+								filteredPropertiesWithRooms.map(({ property, room }: any, index: any) => (
+									<PropertyCard key={`popular-search-${property.id}-${index}`} {...mapKosForCard(property, room)} onClick={() => setActiveKosId(String(property.id))} />
+								))
+							) : (
+								<p className="col-span-full text-center text-slate-500">Tidak ada hasil pencarian atau filter yang cocok</p>
+							)}
+						</div>
+					</section>
+				</>
 			)}
 		</div>
 	);
