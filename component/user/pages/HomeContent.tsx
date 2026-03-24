@@ -268,12 +268,16 @@ export default function HomeContent() {
       return [];
     };
 
-    const fasilitasUmum = parseData(property.fasilitas_umum);
+    const fasilitasUmum = parseData(
+      property.fasilitas_umum || property.fasilitas?.umum || property.fasilitas || activeFasilitas || [],
+    );
     const fasilitasKamar = parseData(
-      room?.fasilitas_kamar || property.fasilitas_kamar,
+      room?.fasilitas_kamar || property.fasilitas_kamar || property.fasilitas?.kamar || property.fasilitas || activeFasilitas || [],
     );
 
-    const ruleValues = parseData(property.peraturan);
+    const ruleValues = parseData(
+      property.peraturan || property.rules || property.aturan || activeAturan || [],
+    );
 
     const rawPhotos = parseData(room?.foto || property.foto);
     const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace("/api", "");

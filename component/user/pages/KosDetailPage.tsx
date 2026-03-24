@@ -18,11 +18,19 @@ interface KosDetailPageProps {
 		period: string;
 		images: string[];
 		description: string;
-		facilities: {
-			umum: string[];
-			kamar: string[];
+		facilities?: {
+			umum?: string[];
+			kamar?: string[];
 		};
-		rules: string[];
+		fasilitas?: {
+			umum?: string[];
+			kamar?: string[];
+		};
+		fasilitas_umum?: string[] | string;
+		fasilitas_kamar?: string[] | string;
+		peraturan?: string[] | string;
+		aturan?: string[] | string;
+		rules?: string[];
 		owner?: {
 			id?: number | string;
 			name?: string;
@@ -62,6 +70,34 @@ const capitalizeFacility = (text: string): string => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ")
     .trim();
+};
+
+const parseArrayField = (value: any): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+    } catch {
+      // ignore non-JSON strings
+    }
+    return trimmed
+      .split(/\r?\n|,/) // split by newline or comma
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === 'object') {
+    return Object.values(value)
+      .flat()
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+  return [];
 };
 
 export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps) {
@@ -135,9 +171,21 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const kosLocation = kos.location || kos.alamat || '-';
 	const kosPrice = kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia');
 	const resolvedOwnerName = kos.owner?.name || kos.owner?.nama || owner?.name || 'Nama pemilik belum tersedia';
-	const generalFacilities = kos.facilities?.umum || [];
-	const roomFacilities = kos.facilities?.kamar || [];
-	const rulesList = kos.rules || [];
+	const generalFacilities = parseArrayField(
+		kos.facilities?.umum ||
+		kos.fasilitas_umum ||
+		kos.fasilitas?.umum ||
+		kos.fasilitas ||
+		[],
+	);
+	const roomFacilities = parseArrayField(
+		kos.facilities?.kamar ||
+		kos.fasilitas_kamar ||
+		kos.fasilitas?.kamar ||
+		kos.fasilitas ||
+		[],
+	);
+	const rulesList = parseArrayField(kos.rules || kos.peraturan || kos.aturan || []);
 	const finalImages = kos.images && kos.images.length ? kos.images : ['/Asset/kamar/kamar1.svg'];
 
   // DEBUG
