@@ -139,7 +139,7 @@ export default function HomeContent() {
 	useEffect(() => {
 		if (!activeKosId) return;
 
-		fetchKosDetail(activeKosId).catch((error: any) => {
+		fetchKosDetail(activeKosId).catch((error:any) => {
 			console.warn('fetchKosDetail failed', error);
 		});
 	}, [activeKosId, fetchKosDetail]);
