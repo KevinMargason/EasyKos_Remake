@@ -259,7 +259,10 @@ export default function HomeContent() {
 						kosName.includes(keyword) || alamat.includes(keyword)
 					);
 				}
-				if (activeFilter === 'Surabaya') return kosName.includes('surabaya') || alamat.includes('surabaya');
+				if (activeFilter === 'Surabaya') {
+					const regionId = Number(prop.region_idregion || prop.regionId || prop.region?.id || 0);
+					return regionId === 1 || alamat.includes('surabaya');
+				}
 				if (activeFilter === 'Terjangkau') return harga ? harga <= 1500000 : true;
 				return true;
 			})();
