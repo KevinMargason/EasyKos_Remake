@@ -9,13 +9,15 @@ interface PaymentModalProps {
 	booking: {
 		kosName: string;
 		kosNumber: string;
-		price: string;
+		price: number;
+		totalPrice: number;
 		startDate: string;
 		duration: number;
+		roomsId?: string;
 	};
 	onClose: () => void;
 	onBack: () => void;
-	onConfirm: (data: { paymentMethod: string }) => void;
+	onConfirm: (data: { paymentMethod: string; roomsId: string; amount: number }) => void;
 }
 
 interface PaymentMethod {
@@ -38,24 +40,29 @@ const paymentMethods: PaymentMethod[] = [
 
 export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfirm }: PaymentModalProps) {
 	const [selectedPayment, setSelectedPayment] = useState<string>('');
+	const [selectedRoomId, setSelectedRoomId] = useState<string>('');
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [promoCode, setPromoCode] = useState('');
 
 	if (!isOpen) return null;
 
 	const handleConfirm = async () => {
-		if (selectedPayment) {
+		if (selectedPayment && selectedRoomId) {
 			setIsProcessing(true);
 			// Simulasi processing
 			setTimeout(() => {
-				onConfirm({ paymentMethod: selectedPayment });
+				onConfirm({
+					paymentMethod: selectedPayment,
+					roomsId: selectedRoomId,
+					amount: booking.totalPrice,
+				});
 				setIsProcessing(false);
 			}, 1000);
 		}
 	};
 
-	// Parse price
-	const priceNumeric = booking.price.replace(/[^0-9]/g, '');
+	const priceFormatted = `Rp ${Number(booking.price).toLocaleString('id-ID')}`;
+	const totalPriceFormatted = `Rp ${Number(booking.totalPrice).toLocaleString('id-ID')}`;
 
 	return (
 		<div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
@@ -94,7 +101,7 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 									</div>
 									<div className="text-right">
 										<p className="text-xs text-slate-600 dark:text-slate-400">Total Harga</p>
-										<p className="text-2xl font-bold text-[#c86654]">{booking.price}</p>
+										<p className="text-2xl font-bold text-[#c86654]">{totalPriceFormatted}</p>
 									</div>
 								</div>
 							</div>
@@ -160,6 +167,20 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 							</div>
 						</div>
 
+						{/* Room ID Selection */}
+						<div className="space-y-2">
+							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+								ID Kamar (Room ID)
+							</label>
+							<input
+								type="text"
+								placeholder="Masukkan Room ID"
+								value={selectedRoomId}
+								onChange={(e) => setSelectedRoomId(e.target.value)}
+								className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+							/>
+						</div>
+
 						{/* Promo Code Section (Optional) */}
 						<div className="space-y-2">
 							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -190,14 +211,22 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 						{/* Price Breakdown */}
 						<div className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700">
 							<div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-								<span>Total Harga</span>
-								<span>{booking.price}</span>
+								<span>Harga per Bulan</span>
+								<span>{priceFormatted}</span>
+							</div>
+							<div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+								<span>Durasi ({booking.duration} Bulan)</span>
+								<span>x {booking.duration}</span>
 							</div>
 							<div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
 								<span>Biaya Admin</span>
 								<span>Rp 0</span>
 							</div>
 							<div className="flex justify-between pt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+								<span>Total Pembayaran</span>
+								<span>{totalPriceFormatted}</span>
+							</div>
+						</div>
 								<span>Total Pembayaran</span>
 								<span>{booking.price}</span>
 							</div>
@@ -206,7 +235,7 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 						{/* Confirm Button */}
 						<button
 							onClick={handleConfirm}
-							disabled={!selectedPayment || isProcessing}
+							disabled={!selectedPayment || !selectedRoomId || isProcessing}
 							className="w-full rounded-xl bg-[#c86654] px-6 py-3 font-semibold text-white transition hover:bg-[#b85d47] disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{isProcessing ? 'Memproses...' : 'Bayar Sekarang'}
@@ -217,7 +246,5 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 						</p>
 					</div>
 				</div>
-			</div>
-		</div>
 	);
 }

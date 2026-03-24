@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, MessageCircle, X } from 'lucide-react';
 import PaymentModal from './PaymentModal';
+import { useAppSelector } from '@/core/store/hooks';
 
 interface KosDetailPageProps {
 	kos: {
@@ -64,6 +65,7 @@ const capitalizeFacility = (text: string): string => {
 };
 
 export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps) {
+	const user = useAppSelector((state: any) => state.user.user);
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 	const [selectedDate, setSelectedDate] = useState('');
 	const [selectedDuration, setSelectedDuration] = useState('1');
@@ -72,10 +74,13 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const [bookingData, setBookingData] = useState<{
 		kosName: string;
 		kosNumber: string;
-		price: string;
+		price: number;
+		totalPrice: number;
 		startDate: string;
 		duration: number;
+		roomsId?: string;
 	} | null>(null);
+	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
 	const handleNext = () => {
 		setCurrentImageIndex((prev) => (prev + 1) % kos.images.length);
@@ -87,12 +92,18 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 
 	const handleBook = () => {
 		if (selectedDate && selectedDuration) {
+			const pricePerMonth = Number(kos.harga || 0);
+			const duration = parseInt(selectedDuration);
+			const totalPrice = pricePerMonth * duration;
+			
 			setBookingData({
 				kosName: kos.name || kos.nama || 'Kos',
 				kosNumber: kos.id,
-				price: kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia'),
+				price: pricePerMonth,
+				totalPrice: totalPrice,
 				startDate: selectedDate,
-				duration: parseInt(selectedDuration),
+				duration: duration,
+				roomsId: '', // Will be selected in payment modal
 			});
 			setPaymentModalOpen(true);
 		}
@@ -388,11 +399,81 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 					onBack={() => {
 						setPaymentModalOpen(false);
 					}}
-					onConfirm={(data) => {
-						console.log('Payment confirmed:', data);
-						setPaymentModalOpen(false);
-						setBookingData(null);
-						// TODO: Process payment
+					onConfirm={async (data) => {
+						try {
+							setIsProcessingPayment(true);
+							console.log('Payment confirmation:', data);
+
+							// 1. Save payment record
+							const paymentPayload = {
+								rooms_id: data.roomsId,
+								tenant: user?.name || 'User',
+								jenis_pembayaran: 'bulanan',
+								voucher_id: null,
+								amount: data.amount,
+								payment_method: data.paymentMethod,
+								start_date: bookingData.startDate,
+								duration: bookingData.duration,
+							};
+
+							console.log('Saving payment with payload:', paymentPayload);
+							const paymentResponse = await fetch('/api/payments', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify(paymentPayload),
+							});
+
+							if (!paymentResponse.ok) {
+								throw new Error('Gagal menyimpan pembayaran');
+							}
+
+							const paymentData = await paymentResponse.json();
+							const paymentId = paymentData?.data?.[0]?.id || paymentData?.id;
+
+							if (!paymentId) {
+								throw new Error('Payment ID tidak ditemukan dari response');
+							}
+
+							console.log('Payment saved with ID:', paymentId);
+
+							// 2. Check room capacity
+							const roomsCheckResponse = await fetch(`/api/kos/${kos.id}/rooms`);
+							if (!roomsCheckResponse.ok) {
+								throw new Error('Gagal mengecek data kamar');
+							}
+
+							const roomsData = await roomsCheckResponse.json();
+							const totalRooms = roomsData?.data?.length || 0;
+							const bookedRooms = roomsData?.data?.filter((r: any) => r.status === 'booked' || r.status === 'occupied')?.length || 0;
+
+							console.log(`Total rooms: ${totalRooms}, Booked: ${bookedRooms}`);
+
+							// 3. Update payment status
+							const updatePaymentResponse = await fetch(`/api/payments/${paymentId}/pay`, {
+								method: 'PATCH',
+								headers: { 'Content-Type': 'application/json' },
+							});
+
+							if (!updatePaymentResponse.ok) {
+								throw new Error('Gagal mengupdate status pembayaran');
+							}
+
+							// 4. Check if full and show notification
+							if (bookedRooms >= totalRooms) {
+								alert('⚠️ Kamar sudah penuh!');
+							} else {
+								alert('✅ Pembayaran berhasil! Kamar masih tersedia.');
+							}
+
+							// Close modal
+							setPaymentModalOpen(false);
+							setBookingData(null);
+						} catch (error) {
+							console.error('Payment error:', error);
+							alert(`❌ Error: ${error instanceof Error ? error.message : 'Terjadi kesalahan'}`);
+						} finally {
+							setIsProcessingPayment(false);
+						}
 					}}
 				/>
 			)}
