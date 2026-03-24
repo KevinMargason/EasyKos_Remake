@@ -92,9 +92,27 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 
 	const handleBook = () => {
 		if (selectedDate && selectedDuration) {
-			const pricePerMonth = Number(kos.harga || 0);
+			// Extract price - coba dari harga first, jika tidak ada extract dari price string
+			let pricePerMonth = 0;
+			
+			if (kos.harga) {
+				pricePerMonth = Number(kos.harga);
+			} else if (kos.price && typeof kos.price === 'string') {
+				// Extract dari format "Rp 1.500.000"
+				const priceString = kos.price.replace(/[^0-9]/g, '');
+				pricePerMonth = parseInt(priceString, 10);
+			}
+
 			const duration = parseInt(selectedDuration);
 			const totalPrice = pricePerMonth * duration;
+			
+			console.log('handleBook - harga calculation:', {
+				kosHarga: kos.harga,
+				kosPrice: kos.price,
+				extracted: pricePerMonth,
+				duration,
+				totalPrice
+			});
 			
 			setBookingData({
 				kosName: kos.name || kos.nama || 'Kos',
