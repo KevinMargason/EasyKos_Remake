@@ -123,20 +123,26 @@ export default function HomeContent() {
 	// Get real data from Redux and hooks
 	const user = useAppSelector((state: any) => state.user.user);
 	const { totalKoin } = useWallet();
-	const { kosList, roomsList, fasilitas, aturan, fetchKos, fetchRooms, fetchFasilitas, fetchAturan, isLoading } = useKos();
+	const { kosList, currentKos, roomsList, fasilitas, aturan, fetchKos, fetchKosDetail, fetchRooms, fetchFasilitas, fetchAturan, isLoading } = useKos();
 
 	const loadHomeData = useCallback(async () => {
-		await Promise.all([
-			fetchKos(),
-			fetchRooms(),
-			fetchFasilitas(),
-			fetchAturan(),
-		]);
+		await fetchKos();
+		await fetchRooms();
+		await fetchFasilitas();
+		await fetchAturan();
 	}, [fetchKos, fetchRooms, fetchFasilitas, fetchAturan]);
 
 	useEffect(() => {
 		void loadHomeData();
 	}, [loadHomeData]);
+
+	useEffect(() => {
+		if (!activeKosId) return;
+
+		fetchKosDetail(activeKosId).catch((err) => {
+			console.warn('fetchKosDetail failed', err);
+		});
+	}, [activeKosId, fetchKosDetail]);
 
 	useEffect(() => {
 		const handleFocus = () => {
@@ -239,7 +245,8 @@ export default function HomeContent() {
 		};
 	};
 
-	const selectedKos = activeKosId && kosList ? kosList.find((p: any) => String(p.id) === String(activeKosId)) : null;
+	const selectedKosFromList = activeKosId && kosList ? kosList.find((p: any) => String(p.id) === String(activeKosId)) : null;
+	const selectedKos = activeKosId && currentKos && String(currentKos.id) === String(activeKosId) ? currentKos : selectedKosFromList;
 	const selectedRoom = selectedKos && roomsList ? roomsList.find((room: any) => String(room.kos_id) === String(selectedKos.id) || String(room.kosId) === String(selectedKos.id)) : null;
 	const selectedKosView = selectedKos ? mapKosForCard(selectedKos, selectedRoom) : null;
 
