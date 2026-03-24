@@ -197,17 +197,37 @@ export default function HomeContent() {
 	const normalizeText = (value: any) => String(value ?? '').toLowerCase();
 
 	const mapKosForCard = (property: any, room: any = null) => {
-		const fasilitasUmum = property.fasilitas_umum || property.fasilitasUmum || property.facilities?.umum || room?.fasilitas_umum || (fasilitasUmumBackend.length > 0 ? fasilitasUmumBackend : activeFasilitas);
-		const fasilitasKamar = property.fasilitas_kamar || property.fasilitasKamar || property.facilities?.kamar || room?.fasilitas_kamar || (fasilitasKamarBackend.length > 0 ? fasilitasKamarBackend : activeFasilitas);
+		// Map fasilitas dari API response
+		const fasilitasFromApi = Array.isArray(property.fasilitas) ? property.fasilitas : [];
+		const fasilitasUmum = fasilitasFromApi
+			.filter((f: any) => String(f.kategori || '').toLowerCase() === 'publik' && f.status !== false)
+			.map((f: any) => f.nama_fasilitas || f.nama || '')
+			.filter(Boolean);
+		const fasilitasKamar = fasilitasFromApi
+			.filter((f: any) => String(f.kategori || '').toLowerCase() === 'privat' && f.status !== false)
+			.map((f: any) => f.nama_fasilitas || f.nama || '')
+			.filter(Boolean);
+
+		// Fallback ke fasilitas backend jika tidak ada di kos
+		const finalFasilitasUmum = fasilitasUmum.length > 0 ? fasilitasUmum : fasilitasUmumBackend.length > 0 ? fasilitasUmumBackend : activeFasilitas;
+		const finalFasilitasKamar = fasilitasKamar.length > 0 ? fasilitasKamar : fasilitasKamarBackend.length > 0 ? fasilitasKamarBackend : activeFasilitas;
+
+		// Map aturan/peraturan dari API response
+		const ruleValues = Array.isArray(property.aturans)
+			? property.aturans
+				.filter((a: any) => a && a.status !== false)
+				.map((a: any) => a.nama_aturan || a.nama || '')
+				.filter(Boolean)
+			: Array.isArray(property.peraturan)
+				? property.peraturan
+				: property.peraturan
+					? String(property.peraturan)
+						.split(/\r?\n|,/)
+						.map((item: string) => item.trim())
+						.filter(Boolean)
+					: activeAturan;
+
 		const roomPrice = room?.harga ?? property.harga;
-		const ruleValues = Array.isArray(property.peraturan)
-			? property.peraturan
-			: property.peraturan
-				? String(property.peraturan)
-					.split(/\r?\n|,/)
-					.map((item: string) => item.trim())
-					.filter(Boolean)
-				: activeAturan;
 
 		return {
 			id: String(property.id),
@@ -219,10 +239,12 @@ export default function HomeContent() {
 			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
 			images: property.images || (property.foto ? [property.foto] : ['/Asset/kamar/kamar1.svg']),
 			facilities: {
-				umum: fasilitasUmum,
-				kamar: fasilitasKamar,
+				umum: finalFasilitasUmum,
+				kamar: finalFasilitasKamar,
 			},
 			rules: ruleValues,
+			owner: property.owner || null,
+			regionId: property.region_idregion || property.regionId || 0,
 		};
 	};
 
@@ -260,15 +282,7 @@ export default function HomeContent() {
 					);
 				}
 				if (activeFilter === 'Surabaya') {
-					const regionId = Number(
-						prop.region_idregion ||
-						prop.regionId ||
-						prop.region?.id ||
-						prop.region?.idregion ||
-						prop.region?.region_id ||
-						prop.region_id ||
-						0
-					);
+					const regionId = Number(prop.region_idregion || 0);
 					return regionId === 1 || alamat.includes('surabaya');
 				}
 				if (activeFilter === 'Terjangkau') return harga ? harga <= 1500000 : true;
