@@ -232,6 +232,7 @@ export default function HomeContent() {
 			name: property.nama || property.name || 'Kos',
 			location: property.alamat || property.location || '-',
 			price: roomPrice ? `Rp ${Number(roomPrice).toLocaleString('id-ID')}` : 'Harga belum tersedia',
+			harga: Number(roomPrice) || 0,
 			period: property.period || '/ Bulan',
 			image: property.foto || property.image || '/Asset/kamar/kamar1.svg',
 			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',

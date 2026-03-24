@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, MessageCircle, X } from 'lucide-react';
 import PaymentModal from './PaymentModal';
 import { useAppSelector } from '@/core/store/hooks';
@@ -14,7 +14,7 @@ interface KosDetailPageProps {
 		location?: string;
 		alamat?: string;
 		price?: string;
-		harga?: number | string;
+		harga: number;
 		period: string;
 		images: string[];
 		description: string;
@@ -71,6 +71,8 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const [selectedDuration, setSelectedDuration] = useState('1');
 	const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 	const [showContactModal, setShowContactModal] = useState(false);
+	const [availableRooms, setAvailableRooms] = useState<Array<{id:string|number; nomor_kamar?:string;}>>([]);
+	const [loadingRooms, setLoadingRooms] = useState(false);
 	const [bookingData, setBookingData] = useState<{
 		kosName: string;
 		kosNumber: string;
@@ -92,27 +94,9 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 
 	const handleBook = () => {
 		if (selectedDate && selectedDuration) {
-			// Extract price - coba dari harga first, jika tidak ada extract dari price string
-			let pricePerMonth = 0;
-			
-			if (kos.harga) {
-				pricePerMonth = Number(kos.harga);
-			} else if (kos.price && typeof kos.price === 'string') {
-				// Extract dari format "Rp 1.500.000"
-				const priceString = kos.price.replace(/[^0-9]/g, '');
-				pricePerMonth = parseInt(priceString, 10);
-			}
-
+			const pricePerMonth = Number(kos.harga) || 0;
 			const duration = parseInt(selectedDuration);
 			const totalPrice = pricePerMonth * duration;
-			
-			console.log('handleBook - harga calculation:', {
-				kosHarga: kos.harga,
-				kosPrice: kos.price,
-				extracted: pricePerMonth,
-				duration,
-				totalPrice
-			});
 			
 			setBookingData({
 				kosName: kos.name || kos.nama || 'Kos',
@@ -133,6 +117,30 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const resolvedOwnerName = kos.owner?.name || kos.owner?.nama || owner?.name || 'Nama pemilik belum tersedia';
 	const generalFacilities = kos.facilities?.umum || [];
 	const roomFacilities = kos.facilities?.kamar || [];
+
+	const fetchRoomsForKos = async () => {
+		if (!kos.id) return;
+
+		setLoadingRooms(true);
+		try {
+			const response = await fetch(`/api/kos/${kos.id}/rooms`);
+			if (!response.ok) throw new Error('Gagal load rooms');
+			const body = await response.json();
+			// Assuming response format { data: [...] }
+			setAvailableRooms(Array.isArray(body.data) ? body.data : []);
+		} catch (error) {
+			console.error('fetchRoomsForKos error: ', error);
+			setAvailableRooms([]);
+		} finally {
+			setLoadingRooms(false);
+		}
+	};
+
+	useEffect(() => {
+		if (paymentModalOpen) {
+			fetchRoomsForKos();
+		}
+	}, [paymentModalOpen, kos.id]);
 
 	// DEBUG
 	console.log('KosDetailPage - owner data:', {
@@ -410,6 +418,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 				<PaymentModal
 					isOpen={paymentModalOpen}
 					booking={bookingData}
+					availableRooms={availableRooms}
 					onClose={() => {
 						setPaymentModalOpen(false);
 						setBookingData(null);

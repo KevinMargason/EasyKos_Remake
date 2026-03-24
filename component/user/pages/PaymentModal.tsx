@@ -4,6 +4,12 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { ChevronLeft, X } from 'lucide-react';
 
+interface RoomOption {
+	id: number | string;
+	nomor_kamar?: string;
+	harga?: number;
+}
+
 interface PaymentModalProps {
 	isOpen: boolean;
 	booking: {
@@ -13,8 +19,8 @@ interface PaymentModalProps {
 		totalPrice: number;
 		startDate: string;
 		duration: number;
-		roomsId?: string;
 	};
+	availableRooms: RoomOption[];
 	onClose: () => void;
 	onBack: () => void;
 	onConfirm: (data: { paymentMethod: string; roomsId: string; amount: number }) => void;
@@ -38,7 +44,7 @@ const paymentMethods: PaymentMethod[] = [
 	{ id: 'gopay', name: 'GoPay', logo: '/Asset/gopay-logo.svg', text: '/Asset/gopay-teks.svg', logoSize: 25, textSize: 70 },
 ];
 
-export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfirm }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, booking, availableRooms, onClose, onBack, onConfirm }: PaymentModalProps) {
 	const [selectedPayment, setSelectedPayment] = useState<string>('');
 	const [selectedRoomId, setSelectedRoomId] = useState<string>('');
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -169,23 +175,27 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 
 						{/* Room ID Selection */}
 						<div className="space-y-2">
-							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-								ID Kamar (Room ID)
-							</label>
-							<input
-								type="text"
-								placeholder="Masukkan Room ID"
+							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">ID Kamar (Room ID)</label>
+							<select
 								value={selectedRoomId}
 								onChange={(e) => setSelectedRoomId(e.target.value)}
-								className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
-							/>
+								className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+							>
+								<option value="">Pilih kamar</option>
+								{availableRooms.map((room:any) => (
+									<option key={room.id} value={String(room.id)}>
+										{room.nomor_kamar ? `Kamar ${room.nomor_kamar}` : `Kamar ID ${room.id}`}
+									</option>
+								))}
+							</select>
+							{availableRooms.length === 0 && (
+								<p className="text-xs text-red-500">Tidak ada kamar tersedia. Silakan hubungi owner.</p>
+							)}
 						</div>
 
 						{/* Promo Code Section (Optional) */}
 						<div className="space-y-2">
-							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-								Kode Promo (Opsional)
-							</label>
+							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Kode Promo (Opsional)</label>
 							<div className="flex gap-2">
 								<input
 									type="text"
@@ -194,14 +204,13 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 									onChange={(e) => setPromoCode(e.target.value)}
 									className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
 								/>
-								<button 
+								<button
 									onClick={() => {
-										if (promoCode.trim()) {
-											console.log('Applying promo code:', promoCode);
-											// TODO: Validate promo code with API
-										}
-									}}
-									className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+									if (promoCode.trim()) {
+										console.log('Applying promo code:', promoCode);
+									}
+								}}
+								className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
 								>
 									Terapkan
 								</button>
@@ -227,24 +236,20 @@ export default function PaymentModal({ isOpen, booking, onClose, onBack, onConfi
 								<span>{totalPriceFormatted}</span>
 							</div>
 						</div>
-								<span>Total Pembayaran</span>
-								<span>{booking.price}</span>
-							</div>
-						</div>
 
 						{/* Confirm Button */}
 						<button
 							onClick={handleConfirm}
-							disabled={!selectedPayment || !selectedRoomId || isProcessing}
+							disabled={!selectedPayment || !selectedRoomId || isProcessing || availableRooms.length === 0}
 							className="w-full rounded-xl bg-[#c86654] px-6 py-3 font-semibold text-white transition hover:bg-[#b85d47] disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{isProcessing ? 'Memproses...' : 'Bayar Sekarang'}
 						</button>
 
-						<p className="text-center text-xs text-slate-500 dark:text-slate-400">
-							Dengan melanjutkan, Anda menyetujui syarat dan ketentuan kami.
-						</p>
+						<p className="text-center text-xs text-slate-500 dark:text-slate-400">Dengan melanjutkan, Anda menyetujui syarat dan ketentuan kami.</p>
 					</div>
 				</div>
+			</div>
+		</div>
 	);
 }
