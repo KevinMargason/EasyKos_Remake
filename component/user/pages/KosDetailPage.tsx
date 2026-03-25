@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, MessageCircle, X } from 'lucide-react';
-import PaymentModal from './PaymentModal';
+import { PaymentModal } from './PaymentModal';
 import { useAppSelector } from '@/core/store/hooks';
 
 interface KosDetailPageProps {
@@ -471,7 +471,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 					onBack={() => {
 						setPaymentModalOpen(false);
 					}}
-					onConfirm={async (data) => {
+					onConfirm={async (data:any) => {
 						try {
 							setIsProcessingPayment(true);
 							console.log('Payment confirmation:', data);

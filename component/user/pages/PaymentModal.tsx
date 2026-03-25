@@ -1,256 +1,156 @@
-'use client';
+import React, { useState, useEffect } from 'react';
+import { X, ChevronLeft } from 'lucide-react';
 
-import Image from 'next/image';
-import { useState } from 'react';
-import { ChevronLeft, X } from 'lucide-react';
-
-interface RoomOption {
-	id: number | string;
-	nomor_kamar?: string;
-	harga?: number;
+interface Room {
+  id: number;
+  nomor_kamar: string;
+  harga: number;
+  users_id: number | null;
 }
 
 interface PaymentModalProps {
-	isOpen: boolean;
-	booking: {
-		kosName: string;
-		kosNumber: string;
-		price: number;
-		totalPrice: number;
-		startDate: string;
-		duration: number;
-	};
-	availableRooms: RoomOption[];
-	onClose: () => void;
-	onBack: () => void;
-	onConfirm: (data: { paymentMethod: string; roomsId: string; amount: number }) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onBack: () => void;
+  onConfirm: (data: any) => Promise<void>;
+  availableRooms: any[]; // <--- Ubah ini dari Room[] ke any[]
+  booking: {
+    kosName: string;
+    kosNumber: string;
+    price: number;
+    totalPrice: number;
+    startDate: string;
+    duration: number;
+    roomsId?: string;
+  } | null;
 }
 
-interface PaymentMethod {
-	id: string;
-	name: string;
-	icon?: string;
-	iconSize?: number;
-	logo?: string;
-	text?: string;
-	logoSize?: number;
-	textSize?: number;
-}
+export const PaymentModal: React.FC<PaymentModalProps> = ({
+  isOpen,
+  onClose,
+  onBack,
+  onConfirm,
+  availableRooms,
+  booking
+}) => {
+  const [selectedRoomId, setSelectedRoomId] = useState<string>("");
+  const [selectedPayment, setSelectedPayment] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-const paymentMethods: PaymentMethod[] = [
-	{ id: 'ovo', name: 'OVO', icon: '/Asset/ovo.svg', iconSize: 60 },
-	{ id: 'qris', name: 'QRIS', icon: '/Asset/qris.svg', iconSize: 60 },
-	{ id: 'transfer', name: 'Transfer Bank', icon: '/Asset/icon/icon-transfer.svg', iconSize: 24 },
-	{ id: 'gopay', name: 'GoPay', logo: '/Asset/gopay-logo.svg', text: '/Asset/gopay-teks.svg', logoSize: 25, textSize: 70 },
-];
+  // Reset pilihan saat modal dibuka
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedRoomId("");
+      setSelectedPayment("");
+    }
+  }, [isOpen]);
 
-export default function PaymentModal({ isOpen, booking, availableRooms, onClose, onBack, onConfirm }: PaymentModalProps) {
-	const [selectedPayment, setSelectedPayment] = useState<string>('');
-	const [selectedRoomId, setSelectedRoomId] = useState<string>('');
-	const [isProcessing, setIsProcessing] = useState(false);
-	const [promoCode, setPromoCode] = useState('');
+  if (!isOpen || !booking) return null;
 
-	if (!isOpen) return null;
+  const handleConfirmClick = async () => {
+    if (selectedPayment && selectedRoomId) {
+      setIsProcessing(true);
+      try {
+        await onConfirm({
+          paymentMethod: selectedPayment,
+          roomsId: selectedRoomId,
+          // Mengirim data tambahan jika diperlukan oleh parent
+        });
+      } catch (error) {
+        console.error("Payment failed:", error);
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
 
-	const handleConfirm = async () => {
-		if (selectedPayment && selectedRoomId) {
-			setIsProcessing(true);
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="bg-[#0f172a] w-full max-w-md rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+          <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors">
+            <ChevronLeft size={24} />
+          </button>
+          <h2 className="text-lg font-bold text-white">Pembayaran</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
+        </div>
 
-			// Cari data kamar yang dipilih untuk mendapatkan harga spesifik kamar itu
-			const selectedRoom = availableRooms.find(r => String(r.id) === selectedRoomId);
-			const finalPrice = selectedRoom?.harga ? Number(selectedRoom.harga) * booking.duration : booking.totalPrice;
+        <div className="p-6 space-y-6">
+          {/* Info Kos & Harga */}
+          <div className="bg-[#1e293b] border border-gray-700 rounded-xl p-4">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">Kos {booking.kosNumber}</p>
+                <p className="text-lg font-bold text-white">{booking.kosName}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">Total Harga</p>
+                <p className="text-xl font-bold text-orange-500">
+                  Rp {booking.totalPrice.toLocaleString('id-ID')}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-400">Durasi: <span className="text-white font-medium">{booking.duration} Bulan</span></p>
+          </div>
 
-			setTimeout(() => {
-				onConfirm({
-					paymentMethod: selectedPayment,
-					roomsId: selectedRoomId,
-					amount: finalPrice, // Mengirim harga yang sesuai kamar dipilih
-				});
-				setIsProcessing(false);
-			}, 1000);
-		}
-	};
+          {/* Metode Pembayaran */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300">Pilih Metode Pembayaran</p>
+            <div className="grid grid-cols-2 gap-3">
+              {['OVO', 'QRIS', 'Transfer Bank', 'GoPay'].map((method) => (
+                <button
+                  key={method}
+                  onClick={() => setSelectedPayment(method)}
+                  className={`p-3 rounded-lg border text-sm font-semibold transition-all ${
+                    selectedPayment === method 
+                    ? 'border-blue-500 bg-blue-500/20 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
+                    : 'border-gray-700 bg-[#0f172a] text-gray-400 hover:border-gray-600'
+                  }`}
+                >
+                  {method}
+                </button>
+              ))}
+            </div>
+          </div>
 
-	const priceFormatted = `Rp ${Number(booking.price).toLocaleString('id-ID')}`;
-	const totalPriceFormatted = `Rp ${Number(booking.totalPrice).toLocaleString('id-ID')}`;
+          {/* Pilih Kamar (Data dari API) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-300">ID Kamar (Room ID)</label>
+            <select
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(e.target.value)}
+              className="w-full bg-[#1e293b] text-white border border-gray-700 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Pilih kamar</option>
+              {availableRooms.map((room) => (
+                <option key={room.id} value={String(room.id)}>
+                  Kamar {room.nomor_kamar} - Rp {Number(room.harga).toLocaleString('id-ID')}
+                </option>
+              ))}
+            </select>
+            {availableRooms.length === 0 && (
+              <p className="text-xs text-red-400 italic font-medium">* Tidak ada kamar tersedia</p>
+            )}
+          </div>
 
-	return (
-		<div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
-			<div className="flex min-h-screen items-center justify-center p-4">
-				<div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl dark:bg-slate-900">
-					{/* Header */}
-					<div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-						<button
-							onClick={onBack}
-							className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-						>
-							<ChevronLeft size={24} />
-						</button>
-						<h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Pembayaran</h2>
-						<button
-							onClick={onClose}
-							className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-						>
-							<X size={24} />
-						</button>
-					</div>
-
-					<div className="space-y-6 p-6">
-						{/* Booking Summary */}
-						<div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-							<div className="space-y-3">
-								<div>
-									<p className="text-xs text-slate-600 dark:text-slate-400">Kos {booking.kosNumber}</p>
-									<p className="font-semibold text-slate-900 dark:text-slate-100">{booking.kosName}</p>
-								</div>
-
-								<div className="flex items-end justify-between">
-									<div>
-										<p className="text-xs text-slate-600 dark:text-slate-400">Durasi</p>
-										<p className="font-semibold text-slate-900 dark:text-slate-100">{booking.duration} Bulan</p>
-									</div>
-									<div className="text-right">
-										<p className="text-xs text-slate-600 dark:text-slate-400">Total Harga</p>
-										<p className="text-2xl font-bold text-[#c86654]">{totalPriceFormatted}</p>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						{/* Payment Methods */}
-						<div className="space-y-3">
-							<h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Pilih Metode Pembayaran</h3>
-
-							<div className="grid grid-cols-2 gap-3">
-								{paymentMethods.map((method) => (
-									<button
-										key={method.id}
-										onClick={() => setSelectedPayment(method.id)}
-										className={`rounded-xl border-2 px-4 py-6 transition ${selectedPayment === method.id
-												? 'border-[#c86654] bg-[#fff5f0] dark:bg-slate-800'
-												: 'border-slate-200 hover:border-[#c86654] dark:border-slate-700 dark:hover:border-[#c86654]'
-											}`}
-									>
-										<div
-											className={`flex items-center justify-center gap-2 ${method.id === 'transfer' ? 'flex-row' : 'flex-col'
-												}`}
-										>
-											{method.id === 'gopay' ? (
-												<div className="flex flex-row items-center justify-center gap-2">
-													<Image
-														src={method.logo!}
-														alt="GoPay Logo"
-														width={method.logoSize!}
-														height={method.logoSize!}
-													/>
-													<Image
-														src={method.text!}
-														alt="GoPay Text"
-														width={method.textSize!}
-														height={method.textSize!}
-														className="dark:brightness-0 dark:invert"
-													/>
-												</div>
-											) : (
-												<Image
-													src={method.icon!}
-													alt={method.name}
-													width={method.iconSize!}
-													height={method.iconSize!}
-													className={`${method.id === 'qris' || method.id === 'transfer'
-															? 'dark:brightness-0 dark:invert'
-															: 'dark:brightness-150'
-														}`}
-												/>
-											)}
-											{method.id === 'transfer' && (
-												<span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-													{method.name}
-												</span>
-											)}
-										</div>
-									</button>
-								))}
-							</div>
-						</div>
-
-						{/* Room ID Selection */}
-						<div className="space-y-2">
-							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">ID Kamar (Room ID)</label>
-							<select
-								value={selectedRoomId}
-								onChange={(e) => setSelectedRoomId(e.target.value)}
-								className="..."
-							>
-								<option value="">Pilih nomor kamar</option>
-								{availableRooms.map((room: any) => (
-									<option key={room.id} value={String(room.id)}>
-										Kamar {room.nomor_kamar} - Rp {Number(room.harga).toLocaleString('id-ID')}
-									</option>
-								))}
-							</select>
-							{availableRooms.length === 0 && (
-								<p className="text-xs text-red-500">Tidak ada kamar tersedia. Silakan hubungi owner.</p>
-							)}
-						</div>
-
-						{/* Promo Code Section (Optional) */}
-						<div className="space-y-2">
-							<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Kode Promo (Opsional)</label>
-							<div className="flex gap-2">
-								<input
-									type="text"
-									placeholder="Masukkan kode promo"
-									value={promoCode}
-									onChange={(e) => setPromoCode(e.target.value)}
-									className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
-								/>
-								<button
-									onClick={() => {
-										if (promoCode.trim()) {
-											console.log('Applying promo code:', promoCode);
-										}
-									}}
-									className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-								>
-									Terapkan
-								</button>
-							</div>
-						</div>
-
-						{/* Price Breakdown */}
-						<div className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-							<div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-								<span>Harga per Bulan</span>
-								<span>{priceFormatted}</span>
-							</div>
-							<div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-								<span>Durasi ({booking.duration} Bulan)</span>
-								<span>x {booking.duration}</span>
-							</div>
-							<div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-								<span>Biaya Admin</span>
-								<span>Rp 0</span>
-							</div>
-							<div className="flex justify-between pt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
-								<span>Total Pembayaran</span>
-								<span>{totalPriceFormatted}</span>
-							</div>
-						</div>
-
-						{/* Confirm Button */}
-						<button
-							onClick={handleConfirm}
-							disabled={!selectedPayment || !selectedRoomId || isProcessing || availableRooms.length === 0}
-							className="w-full rounded-xl bg-[#c86654] px-6 py-3 font-semibold text-white transition hover:bg-[#b85d47] disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{isProcessing ? 'Memproses...' : 'Bayar Sekarang'}
-						</button>
-
-						<p className="text-center text-xs text-slate-500 dark:text-slate-400">Dengan melanjutkan, Anda menyetujui syarat dan ketentuan kami.</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
+          {/* Konfirmasi */}
+          <button
+            onClick={handleConfirmClick}
+            disabled={!selectedRoomId || !selectedPayment || isProcessing}
+            className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${
+              !selectedRoomId || !selectedPayment || isProcessing
+              ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
+              : 'bg-[#ff6b3d] text-white hover:bg-[#e85a2c] active:scale-[0.98]'
+            }`}
+          >
+            {isProcessing ? 'Memproses...' : 'Konfirmasi Pembayaran'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
