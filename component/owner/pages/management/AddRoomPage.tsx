@@ -169,7 +169,7 @@ export default function AddRoomPage({
 
       const roomPayload = new FormData();
       roomPayload.append("kos_id", kosId);
-      roomPayload.append("nomor_kamar", formData.jumlahKamar);
+      roomPayload.append("jumlah_kamar_loop", formData.jumlahKamar.toString());
       roomPayload.append("harga", hargaKamar.toString());
       roomPayload.append("ukuran_kamar", "3x3");
       roomPayload.append("listrik", "token");
