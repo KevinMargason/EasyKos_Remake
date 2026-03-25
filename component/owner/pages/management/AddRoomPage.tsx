@@ -4,10 +4,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { Plus, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/core/services/api";
 import { useAppSelector } from "@/core/store/hooks";
 import { useKos } from "@/core/hooks/useKos";
-import { unwrapApiData } from "@/core/utils/apiResponse";
 
 type AmenityKey =
   | "wifi"
@@ -38,20 +36,19 @@ export default function AddRoomPage({
   const { fetchKos, fetchRooms, fetchFasilitas, fetchAturan } = useKos();
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState("Putra");
-  const [selectedRegion, setSelectedRegion] = useState("1"); // Default region ID
+  const [selectedRegion, setSelectedRegion] = useState("1");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form state
+  // STATE SUDAH BERSIH DARI NOMORKAMAR
   const [formData, setFormData] = useState({
     namaKos: "",
     alamat: "",
     peraturan: "",
     jumlahLantai: "",
-    jumlahKamar: "1",
+    jumlahKamar: "1", // DEFAULT 1
     hargaKamar: "",
   });
 
-  // Common regions
   const regions = [
     { id: "1", name: "Jakarta" },
     { id: "2", name: "Surabaya" },
@@ -88,7 +85,7 @@ export default function AddRoomPage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // VALIDASI AMAN
     if (!formData.namaKos.trim()) {
       toast.error("Nama Kos harus diisi");
       return;
@@ -101,8 +98,8 @@ export default function AddRoomPage({
       toast.error("Harga Kamar harus diisi");
       return;
     }
-    if (!formData.jumlahKamar.trim()) {
-      toast.error("Nomor Kamar harus diisi");
+    if (!formData.jumlahKamar || parseInt(formData.jumlahKamar) < 1) {
+      toast.error("Jumlah Kamar minimal 1");
       return;
     }
 
@@ -135,20 +132,19 @@ export default function AddRoomPage({
         ),
       );
       const hargaKamar = parseInt(formData.hargaKamar.replace(/\D/g, ""), 10);
-
       if (Number.isNaN(hargaKamar)) throw new Error("Harga Kamar tidak valid");
 
+      // BIKIN KOS DULU
       const kosPayload = new FormData();
       kosPayload.append("nama", formData.namaKos);
       kosPayload.append("alamat", formData.alamat);
       kosPayload.append("gender", genderMap[selectedType] || "Campur");
       kosPayload.append("region_idregion", selectedRegion);
-      kosPayload.append("jumlah_kamar", "1");
+      kosPayload.append("jumlah_kamar", formData.jumlahKamar.toString()); // Update jumlah kamar kos
       kosPayload.append("rating", "0");
 
       if (formData.peraturan.trim())
         kosPayload.append("peraturan", formData.peraturan.trim());
-
       fasilitasUmum.forEach((fas) =>
         kosPayload.append("fasilitas_umum[]", fas),
       );
@@ -167,9 +163,13 @@ export default function AddRoomPage({
 
       const kosId = kosDataRes.data?.id || kosDataRes.id;
 
+      // BIKIN KAMAR (KIRIM JUMLAH KAMAR LOOP KE LARAVEL)
       const roomPayload = new FormData();
       roomPayload.append("kos_id", kosId);
+
+      // INI SABUK PENGAMAN ANTI BADAI NYA:
       roomPayload.append("jumlah_kamar_loop", formData.jumlahKamar.toString());
+
       roomPayload.append("harga", hargaKamar.toString());
       roomPayload.append("ukuran_kamar", "3x3");
       roomPayload.append("listrik", "token");
@@ -178,7 +178,6 @@ export default function AddRoomPage({
       fasilitasKamar.forEach((fas) =>
         roomPayload.append("fasilitas_kamar[]", fas),
       );
-
       photos.forEach((photo) => roomPayload.append("foto[]", photo));
 
       const roomRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rooms`, {
@@ -189,6 +188,7 @@ export default function AddRoomPage({
         },
         body: roomPayload,
       });
+
       const roomDataRes = await roomRes.json();
       if (!roomRes.ok)
         throw new Error(
@@ -204,14 +204,10 @@ export default function AddRoomPage({
       ]);
       await onSaved?.();
 
-      toast.success("Kos dan Kamar berhasil ditambahkan! 🚀");
+      toast.success(`${formData.jumlahKamar} Kamar berhasil ditambahkan! 🚀`);
       onBack();
     } catch (error: any) {
       console.error("❌ Submit error:", error);
-      console.error("Status code:", error.response?.status);
-      console.error("Error response:", error.response?.data);
-
-      // Detailed error message for 422
       if (error.response?.status === 422) {
         const validationErrors =
           error.response?.data?.errors || error.response?.data?.message;
@@ -219,15 +215,9 @@ export default function AddRoomPage({
           typeof validationErrors === "string"
             ? validationErrors
             : JSON.stringify(validationErrors, null, 2);
-
         toast.error(`Validasi gagal:\n${errorMsg}`);
-        console.error("Validation details:", validationErrors);
       } else {
-        toast.error(
-          error.response?.data?.message ||
-            error.message ||
-            "Gagal menambahkan kos",
-        );
+        toast.error(error.message || "Gagal menambahkan kos");
       }
     } finally {
       setIsLoading(false);
@@ -344,27 +334,26 @@ export default function AddRoomPage({
 
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Fasilitas
+              Fasilitas & Kamar
             </h3>
-
             <div className="mt-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Jumlah Lantai
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="jumlahLantai"
                   value={formData.jumlahLantai}
                   onChange={handleInputChange}
-                  placeholder="Masukkan Jumlah Lantai Kos Anda"
+                  placeholder="Misal: 2"
                   className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Jumlah Kamar yang Dibuat
+                  Jumlah Kamar
                 </label>
                 <input
                   type="number"
@@ -395,7 +384,7 @@ export default function AddRoomPage({
                       key={amenity}
                       onClick={() => handleAmenityToggle(amenity)}
                       type="button"
-                      className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? "is-active" : ""} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]`}
+                      className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? "is-active" : ""} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)]`}
                     >
                       <Image
                         src={amenitiesIcons[amenity as AmenityKey].icon}
@@ -409,24 +398,6 @@ export default function AddRoomPage({
                       </span>
                     </button>
                   ))}
-                  <button
-                    onClick={() =>
-                      toast.info("Fitur tambah fasilitas akan segera tersedia")
-                    }
-                    className="glass-chip inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]"
-                    type="button"
-                  >
-                    <Image
-                      src="/Asset/icon/icon-add.svg"
-                      alt="Tambah"
-                      width={28}
-                      height={28}
-                      className="h-7 w-7 object-contain"
-                    />
-                    <span className="text-center text-[10px] font-semibold leading-tight">
-                      Tambah
-                    </span>
-                  </button>
                 </div>
               </div>
 
@@ -441,7 +412,7 @@ export default function AddRoomPage({
                         key={amenity}
                         onClick={() => handleAmenityToggle(amenity)}
                         type="button"
-                        className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? "is-active" : ""} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]`}
+                        className={`glass-chip group relative ${selectedAmenities.includes(amenity) ? "is-active" : ""} inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)]`}
                       >
                         <Image
                           src={amenitiesIcons[amenity as AmenityKey].icon}
@@ -456,26 +427,9 @@ export default function AddRoomPage({
                       </button>
                     ),
                   )}
-                  <button
-                    onClick={() =>
-                      toast.info("Fitur tambah fasilitas akan segera tersedia")
-                    }
-                    type="button"
-                    className="glass-chip inline-flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-full p-0 shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_6px_16px_rgba(0,0,0,0.20)]"
-                  >
-                    <Image
-                      src="/Asset/icon/icon-add.svg"
-                      alt="Tambah"
-                      width={28}
-                      height={28}
-                      className="h-7 w-7 object-contain"
-                    />
-                    <span className="text-center text-[10px] font-semibold leading-tight">
-                      Tambah
-                    </span>
-                  </button>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Harga Kamar
@@ -487,7 +441,7 @@ export default function AddRoomPage({
                     name="hargaKamar"
                     value={formData.hargaKamar}
                     onChange={handleInputChange}
-                    placeholder="Masukkan Harga Kamar Kos Anda"
+                    placeholder="Masukkan Harga Kamar"
                     className="flexgrow w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
                   />
                 </div>
@@ -497,56 +451,47 @@ export default function AddRoomPage({
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Unggah Foto Kamar Kos
                 </label>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Unggah Foto Kamar Kos
-                  </label>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {photos.map((photo, i) => (
-                      <div
-                        key={i}
-                        className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800"
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {photos.map((photo, i) => (
+                    <div
+                      key={i}
+                      className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800"
+                    >
+                      <img
+                        src={URL.createObjectURL(photo)}
+                        alt="preview"
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPhotos(photos.filter((_, index) => index !== i))
+                        }
+                        className="absolute right-0 top-0 bg-red-500/80 p-1 text-white hover:bg-red-500"
                       >
-                        <img
-                          src={URL.createObjectURL(photo)}
-                          alt="preview"
-                          className="h-full w-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPhotos(photos.filter((_, index) => index !== i))
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {photos.length < 5 && (
+                    <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-[#c86654] bg-white transition hover:bg-[#fef8f6] dark:border-slate-600 dark:bg-slate-800">
+                      <Plus size={24} className="text-[#c86654]" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            const newFiles = Array.from(e.target.files);
+                            setPhotos((prev) =>
+                              [...prev, ...newFiles].slice(0, 5),
+                            );
                           }
-                          className="absolute right-0 top-0 bg-red-500/80 p-1 text-white hover:bg-red-500"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-
-                    {photos.length < 5 && (
-                      <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-[#c86654] bg-white transition hover:bg-[#fef8f6] dark:border-slate-600 dark:bg-slate-800">
-                        <Plus size={24} className="text-[#c86654]" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files) {
-                              const newFiles = Array.from(e.target.files);
-                              setPhotos((prev) =>
-                                [...prev, ...newFiles].slice(0, 5),
-                              );
-                            }
-                          }}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Maksimal 5 foto. Format: JPG, PNG.
-                  </p>
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
