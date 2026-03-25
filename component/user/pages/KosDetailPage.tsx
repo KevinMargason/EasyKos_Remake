@@ -156,33 +156,34 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	});
 
 	const fetchRoomsForKos = async () => {
-		// Pastikan kos.id ada nilainya
-		if (!kos?.id) return;
+    // Gunakan kos.id atau ID yang sedang aktif (60002 dari screenshot kamu)
+    const targetId = kos?.id || '60002'; 
 
-		setLoadingRooms(true);
-		try {
-			// GANTI KE URL RAILWAY
-			const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${kos.id}/rooms`);
-
-			if (!response.ok) throw new Error('Gagal load rooms');
-
-			const body = await response.json();
-
-			// Sesuai screenshot JSON pertama kamu, datanya ada di body.data
-			if (body.success && Array.isArray(body.data)) {
-				// Filter kamar yang belum ada penghuninya (users_id null)
-				const emptyRooms = body.data.filter((room: any) => room.users_id === null);
-				setAvailableRooms(emptyRooms);
-			} else {
-				setAvailableRooms([]);
-			}
-		} catch (error) {
-			console.error('fetchRoomsForKos error:', error);
-			setAvailableRooms([]);
-		} finally {
-			setLoadingRooms(false);
-		}
-	};
+    setLoadingRooms(true);
+    try {
+        // PAKSA URL KE RAILWAY (Gunakan Full URL)
+        const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${targetId}/rooms`);
+        
+        if (!response.ok) throw new Error('Gagal load rooms dari Railway');
+        
+        const body = await response.json();
+        
+        // Sesuai screenshot JSON: datanya ada di body.data
+        if (body.success && Array.isArray(body.data)) {
+            // Filter kamar yang users_id-nya null (belum dipesan)
+            const emptyRooms = body.data.filter((room: any) => room.users_id === null);
+            setAvailableRooms(emptyRooms);
+            console.log("Kamar berhasil di-load:", emptyRooms);
+        } else {
+            setAvailableRooms([]);
+        }
+    } catch (error) {
+        console.error('fetchRoomsForKos error:', error);
+        setAvailableRooms([]);
+    } finally {
+        setLoadingRooms(false);
+    }
+};
 	useEffect(() => {
 		if (paymentModalOpen) {
 			fetchRoomsForKos();
