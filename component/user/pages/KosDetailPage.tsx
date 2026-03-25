@@ -156,34 +156,33 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	});
 
 	const fetchRoomsForKos = async () => {
-		if (!kos.id) return;
+		// Pastikan kos.id ada nilainya
+		if (!kos?.id) return;
 
 		setLoadingRooms(true);
 		try {
-			const response = await fetch(`/api/kos/${kos.id}/rooms`);
+			// GANTI KE URL RAILWAY
+			const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${kos.id}/rooms`);
+
 			if (!response.ok) throw new Error('Gagal load rooms');
 
 			const body = await response.json();
 
-			// Sesuai screenshot: datanya ada di body.data
+			// Sesuai screenshot JSON pertama kamu, datanya ada di body.data
 			if (body.success && Array.isArray(body.data)) {
-				// Opsional: Filter hanya yang users_id-nya null (belum ada penghuni)
+				// Filter kamar yang belum ada penghuninya (users_id null)
 				const emptyRooms = body.data.filter((room: any) => room.users_id === null);
 				setAvailableRooms(emptyRooms);
-
-				// Jika mau tampilkan semua (termasuk yang ada user), gunakan:
-				// setAvailableRooms(body.data); 
 			} else {
 				setAvailableRooms([]);
 			}
 		} catch (error) {
-			console.error('fetchRoomsForKos error: ', error);
+			console.error('fetchRoomsForKos error:', error);
 			setAvailableRooms([]);
 		} finally {
 			setLoadingRooms(false);
 		}
 	};
-
 	useEffect(() => {
 		if (paymentModalOpen) {
 			fetchRoomsForKos();
@@ -243,8 +242,8 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 									key={index}
 									onClick={() => setCurrentImageIndex(index)}
 									className={`h-2 rounded-full transition ${index === currentImageIndex
-											? 'w-8 bg-[#c86654]'
-											: 'w-2 bg-white/60'
+										? 'w-8 bg-[#c86654]'
+										: 'w-2 bg-white/60'
 										}`}
 								/>
 							))}
@@ -259,8 +258,8 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 							key={index}
 							onClick={() => setCurrentImageIndex(index)}
 							className={`relative h-16 w-20 overflow-hidden rounded-lg border-2 transition ${index === currentImageIndex
-									? 'border-[#c86654]'
-									: 'border-transparent hover:border-white/50'
+								? 'border-[#c86654]'
+								: 'border-transparent hover:border-white/50'
 								}`}
 						>
 							<Image
@@ -433,8 +432,8 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 												key={duration}
 												onClick={() => setSelectedDuration(duration)}
 												className={`rounded-lg px-2 py-2 text-xs font-semibold transition ${selectedDuration === duration
-														? 'bg-[#c86654] text-white'
-														: 'border border-slate-300 text-slate-900 hover:border-[#c86654] dark:border-slate-600 dark:text-slate-100'
+													? 'bg-[#c86654] text-white'
+													: 'border border-slate-300 text-slate-900 hover:border-[#c86654] dark:border-slate-600 dark:text-slate-100'
 													}`}
 											>
 												{duration}
@@ -471,7 +470,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 					onBack={() => {
 						setPaymentModalOpen(false);
 					}}
-					onConfirm={async (data:any) => {
+					onConfirm={async (data: any) => {
 						try {
 							setIsProcessingPayment(true);
 							console.log('Payment confirmation:', data);
