@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Flame, Wallet, TrendingUp } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAppSelector } from "@/core/store/hooks";
 import { useWallet } from "@/core/hooks/useWallet";
 import { useKos } from "@/core/hooks/useKos";
@@ -16,7 +16,85 @@ export default function OwnerHomeContent() {
   const { invoices, fetchPayments } = usePayments();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [streak, setStreak] = useState(0);
+
+  // State baru untuk Daily Login (Backend real data)
+  const [streakCount, setStreakCount] = useState<number>(0);
+  const [isClaimedToday, setIsClaimedToday] = useState<boolean>(false);
+  const [isClaiming, setIsClaiming] = useState<boolean>(false);
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+
+  // 1. Fungsi Cek Status Streak & Koin dari Backend
+  const fetchStreakStatus = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${baseUrl}/daily-login/status?user_id=${user.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        setStreakCount(result.data.streak_count);
+
+        const lastLogin = result.data.last_login_date;
+        const today = new Date().toISOString().split("T")[0];
+
+        setIsClaimedToday(lastLogin === today);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil status streak:", error);
+    }
+  }, [user?.id, baseUrl]);
+
+  // 2. Fungsi Tombol Klaim Koin
+  const handleClaimDaily = async () => {
+    if (isClaimedToday || isClaiming || !user?.id) return;
+
+    setIsClaiming(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${baseUrl}/daily-login/claim`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setStreakCount(result.data.streak_hari_ini);
+        setIsClaimedToday(true);
+
+        // Panggil fungsi update koin bawaan hook useWallet kamu
+        if (fetchBalance) {
+          await fetchBalance(user.id);
+        }
+
+        alert(
+          `Mantap Juragan! Berhasil klaim ${result.data.koin_didapat} Koin 🔥`,
+        );
+      } else {
+        alert(result.message || "Gagal klaim koin hari ini.");
+      }
+    } catch (error) {
+      console.error("Error claim daily:", error);
+      alert("Terjadi kesalahan jaringan");
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -29,17 +107,8 @@ export default function OwnerHomeContent() {
           fetchRooms(),
           fetchPayments(),
           fetchBalance(user.id),
+          fetchStreakStatus(), // <-- Masukin ke antrean loading
         ]);
-
-        if (user && user.created_at) {
-          const createdDate = new Date(user.created_at);
-          const today = new Date();
-          const daysDiff =
-            Math.floor(
-              (today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24),
-            ) + 1;
-          setStreak(Math.min(daysDiff, 30));
-        }
       } catch (err) {
         console.error("Gagal load data dashboard:", err);
       } finally {
@@ -47,16 +116,21 @@ export default function OwnerHomeContent() {
       }
     };
     loadData();
-  }, [user?.id, fetchKos, fetchRooms, fetchPayments, fetchBalance]);
+  }, [
+    user?.id,
+    fetchKos,
+    fetchRooms,
+    fetchPayments,
+    fetchBalance,
+    fetchStreakStatus,
+  ]);
 
   // Calculate owner statistics
   const stats = useMemo(() => {
-    // Get current month start and end
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    // Calculate total monthly revenue (sum of paid payments this month)
     const monthlyRevenue =
       invoices
         ?.filter((inv: any) => {
@@ -72,7 +146,6 @@ export default function OwnerHomeContent() {
         })
         .reduce((sum: number, inv: any) => sum + (inv.nominal || 0), 0) || 0;
 
-    // Count pending payments
     const pendingCount =
       invoices?.filter(
         (inv: any) =>
@@ -80,7 +153,6 @@ export default function OwnerHomeContent() {
           String(inv.status || "").toLowerCase() === "pending",
       ).length || 0;
 
-    // Calculate occupancy from actual room data
     const totalRooms =
       roomsList.length ||
       kosList.reduce(
@@ -152,24 +224,49 @@ export default function OwnerHomeContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-start">
-          <div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
+        <div className="flex items-center gap-3 self-start sm:pt-1">
+          {/* Tombol Streak Interaktif */}
+          <button
+            onClick={handleClaimDaily}
+            disabled={isClaimedToday || isClaiming}
+            className={`glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition ${
+              isClaimedToday
+                ? "opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-800"
+                : "hover:bg-orange-50 dark:hover:bg-orange-900/30 cursor-pointer shadow-sm hover:shadow-md"
+            }`}
+          >
             <Image
               src="/Asset/icon/icon-fire.svg"
               alt="Streak"
               width={18}
               height={18}
+              className={!isClaimedToday ? "animate-pulse" : "grayscale"}
             />
-            <span>{streak} Hari</span>
-          </div>
-          <div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition">
+            <span
+              className={
+                isClaimedToday
+                  ? "text-slate-500"
+                  : "text-orange-600 dark:text-orange-400"
+              }
+            >
+              {isClaiming
+                ? "Mengklaim..."
+                : isClaimedToday
+                  ? `${streakCount} Hari`
+                  : "Klaim Koin!"}
+            </span>
+          </button>
+
+          <div className="glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition bg-yellow-50/50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/30">
             <Image
               src="/Asset/icon/icon-coin.svg"
               alt="Koin"
               width={18}
               height={18}
             />
-            <span>{totalKoin} Koin</span>
+            <span className="text-yellow-700 dark:text-yellow-400">
+              {totalKoin || 0} Koin
+            </span>
           </div>
         </div>
       </header>
@@ -203,7 +300,7 @@ export default function OwnerHomeContent() {
             </h2>
             <p className="mt-2 max-w-[440px] text-[16px] leading-7 text-white/85">
               Pasang kos Anda di bagian teratas hasil pencarian agar kamar
-              kosong lebih cepat terisi.
+              kosong lebih cepat terisi. Nanti bisa dibayar pakai Koin lho!
             </p>
           </div>
           <button className="rounded-lg bg-white px-8 py-3 text-[15px] font-semibold text-[#c86654] shadow-[0_6px_14px_rgba(15,23,42,0.08)] transition hover:bg-[#fff7f5]">
