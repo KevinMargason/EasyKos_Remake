@@ -17,7 +17,6 @@ export async function GET(
     ];
 
     // Uncomment below when backend endpoint is ready
-    /*
     const backendUrl = process.env.BACKEND_URL || 'https://easykosbackend-production.up.railway.app/api';
     const response = await fetch(`${backendUrl}/kos/${kosId}/rooms`, {
       method: 'GET',
@@ -31,7 +30,6 @@ export async function GET(
     }
 
     const data = await response.json();
-    */
 
     return NextResponse.json({
       success: true,
