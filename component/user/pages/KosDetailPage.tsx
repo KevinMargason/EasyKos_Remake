@@ -156,34 +156,34 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	});
 
 	const fetchRoomsForKos = async () => {
-    // Gunakan kos.id atau ID yang sedang aktif (60002 dari screenshot kamu)
-    const targetId = kos?.id || '60002'; 
+		// Gunakan kos.id atau ID yang sedang aktif (60002 dari screenshot kamu)
+		const targetId = kos?.id || '60002';
 
-    setLoadingRooms(true);
-    try {
-        // PAKSA URL KE RAILWAY (Gunakan Full URL)
-        const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${targetId}/rooms`);
-        
-        if (!response.ok) throw new Error('Gagal load rooms dari Railway');
-        
-        const body = await response.json();
-        
-        // Sesuai screenshot JSON: datanya ada di body.data
-        if (body.success && Array.isArray(body.data)) {
-            // Filter kamar yang users_id-nya null (belum dipesan)
-            const emptyRooms = body.data.filter((room: any) => room.users_id === null);
-            setAvailableRooms(emptyRooms);
-            console.log("Kamar berhasil di-load:", emptyRooms);
-        } else {
-            setAvailableRooms([]);
-        }
-    } catch (error) {
-        console.error('fetchRoomsForKos error:', error);
-        setAvailableRooms([]);
-    } finally {
-        setLoadingRooms(false);
-    }
-};
+		setLoadingRooms(true);
+		try {
+			// PAKSA URL KE RAILWAY (Gunakan Full URL)
+			const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${targetId}/rooms`);
+
+			if (!response.ok) throw new Error('Gagal load rooms dari Railway');
+
+			const body = await response.json();
+
+			// Sesuai screenshot JSON: datanya ada di body.data
+			if (body.success && Array.isArray(body.data)) {
+				// Filter kamar yang users_id-nya null (belum dipesan)
+				const emptyRooms = body.data.filter((room: any) => room.users_id === null);
+				setAvailableRooms(emptyRooms);
+				console.log("Kamar berhasil di-load:", emptyRooms);
+			} else {
+				setAvailableRooms([]);
+			}
+		} catch (error) {
+			console.error('fetchRoomsForKos error:', error);
+			setAvailableRooms([]);
+		} finally {
+			setLoadingRooms(false);
+		}
+	};
 	useEffect(() => {
 		if (paymentModalOpen) {
 			fetchRoomsForKos();
@@ -474,9 +474,9 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 					onConfirm={async (data: any) => {
 						try {
 							setIsProcessingPayment(true);
-							console.log('Payment confirmation:', data);
+							const RAILWAY_BASE = "https://easykosbackend-production.up.railway.app";
 
-							// 1. Save payment record
+							// 1. Save payment record - TEMBAK LANGSUNG KE RAILWAY
 							const paymentPayload = {
 								rooms_id: data.roomsId,
 								tenant: user?.name || 'User',
@@ -488,61 +488,45 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 								duration: bookingData.duration,
 							};
 
-							console.log('Saving payment with payload:', paymentPayload);
-							const paymentResponse = await fetch('/api/payments', {
+							const paymentResponse = await fetch(`${RAILWAY_BASE}/api/payments`, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
 								body: JSON.stringify(paymentPayload),
 							});
 
-							if (!paymentResponse.ok) {
-								throw new Error('Gagal menyimpan pembayaran');
-							}
+							if (!paymentResponse.ok) throw new Error('Gagal menyimpan pembayaran ke Railway');
 
 							const paymentData = await paymentResponse.json();
+							// Ambil ID payment dari response Railway
 							const paymentId = paymentData?.data?.[0]?.id || paymentData?.id;
 
-							if (!paymentId) {
-								throw new Error('Payment ID tidak ditemukan dari response');
-							}
+							if (!paymentId) throw new Error('Payment ID tidak ditemukan');
 
-							console.log('Payment saved with ID:', paymentId);
-
-							// 2. Check room capacity
-							const roomsCheckResponse = await fetch(`/api/kos/${kos.id}/rooms`);
-							if (!roomsCheckResponse.ok) {
-								throw new Error('Gagal mengecek data kamar');
-							}
-
-							const roomsData = await roomsCheckResponse.json();
-							const totalRooms = roomsData?.data?.length || 0;
-							const bookedRooms = roomsData?.data?.filter((r: any) => r.status === 'booked' || r.status === 'occupied')?.length || 0;
-
-							console.log(`Total rooms: ${totalRooms}, Booked: ${bookedRooms}`);
-
-							// 3. Update payment status
-							const updatePaymentResponse = await fetch(`/api/payments/${paymentId}/pay`, {
+							// 2. Update payment status - TEMBAK LANGSUNG KE RAILWAY
+							const updatePaymentResponse = await fetch(`${RAILWAY_BASE}/api/payments/${paymentId}/pay`, {
 								method: 'PATCH',
 								headers: { 'Content-Type': 'application/json' },
 							});
 
-							if (!updatePaymentResponse.ok) {
-								throw new Error('Gagal mengupdate status pembayaran');
-							}
+							if (!updatePaymentResponse.ok) throw new Error('Gagal update status pembayaran di Railway');
 
-							// 4. Check if full and show notification
+							// 3. Cek sisa kamar (Opsional untuk alert)
+							const roomsCheckResponse = await fetch(`${RAILWAY_BASE}/api/kos/${kos.id}/rooms`);
+							const roomsData = await roomsCheckResponse.json();
+							const totalRooms = roomsData?.data?.length || 0;
+							const bookedRooms = roomsData?.data?.filter((r: any) => r.status === 'booked' || r.status === 'occupied')?.length || 0;
+
 							if (bookedRooms >= totalRooms) {
-								alert('⚠️ Kamar sudah penuh!');
+								alert('✅ Pembayaran Berhasil, tapi kamar ini baru saja penuh!');
 							} else {
-								alert('✅ Pembayaran berhasil! Kamar masih tersedia.');
+								alert('✅ Pembayaran Berhasil!');
 							}
 
-							// Close modal
 							setPaymentModalOpen(false);
 							setBookingData(null);
 						} catch (error) {
-							console.error('Payment error:', error);
-							alert(`❌ Error: ${error instanceof Error ? error.message : 'Terjadi kesalahan'}`);
+							console.error('Payment process error:', error);
+							alert(`❌ Error: ${error instanceof Error ? error.message : 'Terjadi kesalahan server'}`);
 						} finally {
 							setIsProcessingPayment(false);
 						}
