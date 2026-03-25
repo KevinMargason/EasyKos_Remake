@@ -160,11 +160,28 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 
 		setLoadingRooms(true);
 		try {
-			const response = await fetch(`/api/kos/${kos.id}/rooms`);
-			if (!response.ok) throw new Error('Gagal load rooms');
+			const apiBaseUrl =
+				process.env.NEXT_PUBLIC_API_URL ||
+				process.env.BACKEND_URL ||
+				'https://easykosbackend-production.up.railway.app/api';
+
+			let response = await fetch(`/api/kos/${kos.id}/rooms`);
+			if (!response.ok) {
+				console.warn('Local API /api/kos/[id]/rooms failed, fallback to backend');
+				response = await fetch(`${apiBaseUrl}/kos/${kos.id}/rooms`, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
+			if (!response.ok) {
+				throw new Error(`Gagal load rooms (${response.status})`);
+			}
+
 			const body = await response.json();
-			// Assuming response format { data: [...] }
-			setAvailableRooms(Array.isArray(body.data) ? body.data : []);
+			const roomsData = Array.isArray(body.data) ? body.data : Array.isArray(body) ? body : [];
+			setAvailableRooms(roomsData);
+			console.log('Available rooms loaded:', roomsData);
 		} catch (error) {
 			console.error('fetchRoomsForKos error: ', error);
 			setAvailableRooms([]);
@@ -501,15 +518,27 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 							console.log('Payment saved with ID:', paymentId);
 
 							// 2. Check room capacity
-							const roomsCheckResponse = await fetch(`/api/kos/${kos.id}/rooms`);
-							if (!roomsCheckResponse.ok) {
-								throw new Error('Gagal mengecek data kamar');
-							}
+				const apiBaseUrl =
+					process.env.NEXT_PUBLIC_API_URL ||
+					process.env.BACKEND_URL ||
+					'https://easykosbackend-production.up.railway.app/api';
 
-							const roomsData = await roomsCheckResponse.json();
-							const totalRooms = roomsData?.data?.length || 0;
-							const bookedRooms = roomsData?.data?.filter((r: any) => r.status === 'booked' || r.status === 'occupied')?.length || 0;
+				const roomsCheckResponse = await fetch(`${apiBaseUrl}/kos/${kos.id}/rooms`, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' },
+				});
+				if (!roomsCheckResponse.ok) {
+					throw new Error('Gagal mengecek data kamar');
+				}
 
+				const roomsDataRaw = await roomsCheckResponse.json();
+				const roomsData = Array.isArray(roomsDataRaw.data)
+					? roomsDataRaw.data
+					: Array.isArray(roomsDataRaw)
+					? roomsDataRaw
+					: [];
+				const totalRooms = roomsData.length;
+				const bookedRooms = roomsData.filter((r: any) => r.status === 'booked' || r.status === 'occupied').length || 0;
 							console.log(`Total rooms: ${totalRooms}, Booked: ${bookedRooms}`);
 
 							// 3. Update payment status
