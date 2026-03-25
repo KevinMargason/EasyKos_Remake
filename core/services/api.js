@@ -1,14 +1,17 @@
 import { createAxiosInstance } from './axiosInstances';
+import axios from 'axios';
 
-const axiosInstance = createAxiosInstance();
-
+// 1. Define the config first
 export const apiConfig = {
   mode: 'PRODUCTION',
-  note: 'API successfully integrated with Railway backend',
-  ready: true,
   baseUrl: 'https://easykosbackend-production.up.railway.app/api',
 };
 
+// 2. Create the instance and MANUALLY set the baseURL
+const axiosInstance = createAxiosInstance();
+axiosInstance.defaults.baseURL = apiConfig.baseUrl; // This forces the Railway URL
+
+export default axiosInstance;
 // ======================== AUTH ENDPOINTS ========================
 
 export const auth = {

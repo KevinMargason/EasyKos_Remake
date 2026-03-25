@@ -95,13 +95,6 @@ function PropertyCard({
 			className="glass-card group overflow-hidden rounded-[24px] shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_30px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_30px_rgba(0,0,0,0.32)] text-left"
 		>
 			<div className="relative h-[165px] w-full overflow-hidden bg-[#d9aa7d]">
-				<Image
-					src={image || '/Asset/kamar/kamar1.svg'}
-					alt={name || 'Gambar kos'}
-					fill
-					className="object-cover transition duration-500 group-hover:scale-105"
-					sizes="(max-width: 1280px) 100vw, 33vw"
-				/>
 			</div>
 			<div className="space-y-1 px-4 py-4">
 				<h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">{name}</h3>

@@ -2,595 +2,301 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, MessageCircle, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { PaymentModal } from './PaymentModal';
 import { useAppSelector } from '@/core/store/hooks';
 
 interface KosDetailPageProps {
-	kos: {
-		id: string;
-		name?: string;
-		nama?: string;
-		location?: string;
-		alamat?: string;
-		price?: string;
-		harga?: number | string;
-		period: string;
-		images: string[];
-		description: string;
-		facilities: {
-			umum: string[];
-			kamar: string[];
-		};
-		rules: string[];
-		owner?: {
-			id?: number | string;
-			name?: string;
-			nama?: string;
-			email?: string;
-			no_hp?: string;
-		} | null;
-	};
-	owner?: {
-		id?: number | string;
-		name?: string;
-		avatar?: string;
-	};
-	onBack: () => void;
+    kos: {
+        id: string;
+        name?: string;
+        nama?: string;
+        location?: string;
+        alamat?: string;
+        price?: string;
+        harga?: number | string;
+        period: string;
+        images: string[];
+        description: string;
+        facilities: {
+            umum: string[];
+            kamar: string[];
+        };
+        rules: string[];
+        owner?: {
+            id?: number | string;
+            name?: string;
+            nama?: string;
+            avatar?: string;
+        } | null;
+    };
+    onBack: () => void;
 }
 
 const facilityIcons: Record<string, string> = {
-	wifi: '/Asset/icon/icon-wifi.svg',
-	cctv: '/Asset/icon/icon-cctv.svg',
-	kulkas: '/Asset/icon/icon-fridge.svg',
-	laundry: '/Asset/icon/icon-laundry.svg',
-	ruangTamu: '/Asset/icon/icon-sofa.svg',
-	dapur: '/Asset/icon/icon-kitchen-set.svg',
-	kamarMandiLuar: '/Asset/icon/icon-bathroom.svg',
-	lemari: '/Asset/icon/icon-wardrobe.svg',
-	meja: '/Asset/icon/icon-table.svg',
-	kursi: '/Asset/icon/icon-chair.svg',
-	kasur: '/Asset/icon/icon-bed.svg',
-	kamarMandiDalam: '/Asset/icon/icon-bathroom.svg',
+    wifi: '/Asset/icon/icon-wifi.svg',
+    cctv: '/Asset/icon/icon-cctv.svg',
+    kulkas: '/Asset/icon/icon-fridge.svg',
+    laundry: '/Asset/icon/icon-laundry.svg',
+    ruangTamu: '/Asset/icon/icon-sofa.svg',
+    dapur: '/Asset/icon/icon-kitchen-set.svg',
+    kamarMandiLuar: '/Asset/icon/icon-bathroom.svg',
+    lemari: '/Asset/icon/icon-wardrobe.svg',
+    meja: '/Asset/icon/icon-table.svg',
+    kursi: '/Asset/icon/icon-chair.svg',
+    kasur: '/Asset/icon/icon-bed.svg',
+    kamarMandiDalam: '/Asset/icon/icon-bathroom.svg',
 };
 
-// Helper function to capitalize facility names
 const capitalizeFacility = (text: string): string => {
-	return text
-		.replace(/([A-Z])/g, ' $1')
-		.split(' ')
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-		.join(' ')
-		.trim();
+    return text
+        .replace(/([A-Z])/g, ' $1')
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
+        .trim();
 };
 
-const parseArrayField = (value: any): string[] => {
-	if (!value) return [];
-	if (Array.isArray(value)) return value.filter(Boolean);
-	if (typeof value === 'string') {
-		const trimmed = value.trim();
-		if (!trimmed) return [];
-		try {
-			const parsed = JSON.parse(trimmed);
-			if (Array.isArray(parsed)) {
-				return parsed.filter(Boolean);
-			}
-		} catch {
-			// ignore non-JSON strings
-		}
-		return trimmed
-			.split(/\r?\n|,/) // split by newline or comma
-			.map((item) => item.trim())
-			.filter(Boolean);
-	}
-	if (typeof value === 'object') {
-		return Object.values(value)
-			.flat()
-			.map((item) => String(item).trim())
-			.filter(Boolean);
-	}
-	return [];
-};
+export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
+    const user = useAppSelector((state: any) => state.user.user);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedDuration, setSelectedDuration] = useState('1');
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [availableRooms, setAvailableRooms] = useState<any[]>([]);
+    const [bookingData, setBookingData] = useState<any>(null);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps) {
-	const user = useAppSelector((state: any) => state.user.user);
-	const [currentImageIndex, setCurrentImageIndex] = useState(0);
-	const [selectedDate, setSelectedDate] = useState('');
-	const [selectedDuration, setSelectedDuration] = useState('1');
-	const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-	const [showContactModal, setShowContactModal] = useState(false);
-	const [availableRooms, setAvailableRooms] = useState<Array<{ id: string | number; nomor_kamar?: string; }>>([]);
-	const [loadingRooms, setLoadingRooms] = useState(false);
-	const [bookingData, setBookingData] = useState<{
-		kosName: string;
-		kosNumber: string;
-		price: number;
-		totalPrice: number;
-		startDate: string;
-		duration: number;
-		roomsId?: string;
-	} | null>(null);
-	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    // Resolving Data
+    const kosName = kos.name || kos.nama || 'Kos';
+    const kosLocation = kos.location || kos.alamat || '-';
+    const pricePerMonth = Number(kos.harga) || 0;
+    const resolvedOwnerName = kos.owner?.name || kos.owner?.nama || 'Pemilik';
+    const finalImages = kos.images?.length ? kos.images : ['/Asset/kamar/kamar1.svg'];
+    const rulesList = kos.rules || [];
 
-	const handleNext = () => {
-		setCurrentImageIndex((prev) => (prev + 1) % kos.images.length);
-	};
+    // Fetch rooms saat modal dibuka
+    const fetchRoomsForKos = async () => {
+        try {
+            const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${kos.id}/rooms`);
+            const body = await response.json();
+            if (body.success && Array.isArray(body.data)) {
+                // Hanya ambil yang users_id null (kosong)
+                const emptyRooms = body.data.filter((room: any) => !room.users_id);
+                setAvailableRooms(emptyRooms);
+            }
+        } catch (error) {
+            console.error('Fetch rooms error:', error);
+        }
+    };
 
-	const handlePrev = () => {
-		setCurrentImageIndex((prev) => (prev - 1 + kos.images.length) % kos.images.length);
-	};
+    useEffect(() => {
+        if (paymentModalOpen) fetchRoomsForKos();
+    }, [paymentModalOpen, kos.id]);
 
-	const handleBook = () => {
-		if (selectedDate && selectedDuration) {
-			const pricePerMonth = Number(kos.harga) || 0;
-			const duration = parseInt(selectedDuration);
-			const totalPrice = pricePerMonth * duration;
+    const handleBook = () => {
+        if (selectedDate && selectedDuration) {
+            const duration = parseInt(selectedDuration);
+            setBookingData({
+                kosName,
+                kosId: kos.id,
+                price: pricePerMonth,
+                totalPrice: pricePerMonth * duration,
+                startDate: selectedDate,
+                duration: duration,
+            });
+            setPaymentModalOpen(true);
+        }
+    };
 
-			setBookingData({
-				kosName: kos.name || kos.nama || 'Kos',
-				kosNumber: kos.id,
-				price: pricePerMonth,
-				totalPrice: totalPrice,
-				startDate: selectedDate,
-				duration: duration,
-				roomsId: '', // Will be selected in payment modal
-			});
-			setPaymentModalOpen(true);
-		}
-	};
+    const handleConfirmPayment = async (modalData: any) => {
+        if (!modalData.roomsId) {
+            alert("Pilih nomor kamar terlebih dahulu!");
+            return;
+        }
 
-	const kosName = kos.name || kos.nama || 'Kos';
-	const kosLocation = kos.location || kos.alamat || '-';
-	const kosPrice = kos.price || (kos.harga ? `Rp ${Number(kos.harga).toLocaleString('id-ID')}` : 'Harga belum tersedia');
-	const resolvedOwnerName = kos.owner?.name || kos.owner?.nama || owner?.name || 'Nama pemilik belum tersedia';
-	const generalFacilities = kos.facilities?.umum || [];
-	const roomFacilities = kos.facilities?.kamar || [];
-	const rulesList = kos.rules || [];
-	const finalImages = kos.images && kos.images.length ? kos.images : ['/Asset/kamar/kamar1.svg'];
+        setIsProcessingPayment(true);
+        try {
+            const RAILWAY_BASE = "https://easykosbackend-production.up.railway.app";
 
-	// DEBUG
-	console.log("KosDetailPage - owner data:", {
-		kosOwner: kos.owner,
-		propOwner: owner,
-		resolvedName: resolvedOwnerName,
-	});
+            // Payload Diperbaiki: tenant & users_id menggunakan ID (Number)
+            const paymentPayload = {
+                rooms_id: parseInt(modalData.roomsId),
+                users_id: user?.id || 160423046, // NRP Erich fallback
+                tenant: user?.id || 160423046,   // Harus ID (Number)
+                jenis_pembayaran: 'bulanan',
+                amount: bookingData.totalPrice,
+                payment_method: modalData.paymentMethod,
+                start_date: bookingData.startDate,
+                duration: bookingData.duration,
+                voucher_id: null
+            };
 
-	const fetchRoomsForKos = async () => {
-		// Gunakan kos.id atau ID yang sedang aktif (60002 dari screenshot kamu)
-		const targetId = kos?.id || '60002';
+            const response = await fetch(`${RAILWAY_BASE}/api/payments`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(paymentPayload),
+            });
 
-		setLoadingRooms(true);
-		try {
-			// PAKSA URL KE RAILWAY (Gunakan Full URL)
-			const response = await fetch(`https://easykosbackend-production.up.railway.app/api/kos/${targetId}/rooms`);
+            if (!response.ok) throw new Error('Gagal membuat transaksi di server');
 
-			if (!response.ok) throw new Error('Gagal load rooms dari Railway');
+            const result = await response.json();
+            const paymentId = result?.data?.id || result?.id;
 
-			const body = await response.json();
+            // 2. Tandai sebagai Paid
+            if (paymentId) {
+                await fetch(`${RAILWAY_BASE}/api/payments/${paymentId}/pay`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+            }
 
-			// Sesuai screenshot JSON: datanya ada di body.data
-			if (body.success && Array.isArray(body.data)) {
-				// Filter kamar yang users_id-nya null (belum dipesan)
-				const emptyRooms = body.data.filter((room: any) => room.users_id === null);
-				setAvailableRooms(emptyRooms);
-				console.log("Kamar berhasil di-load:", emptyRooms);
-			} else {
-				setAvailableRooms([]);
-			}
-		} catch (error) {
-			console.error('fetchRoomsForKos error:', error);
-			setAvailableRooms([]);
-		} finally {
-			setLoadingRooms(false);
-		}
-	};
-	useEffect(() => {
-		if (paymentModalOpen) {
-			fetchRoomsForKos();
-		}
-	}, [paymentModalOpen, kos.id]);
+            alert('✅ Pembayaran Berhasil!');
+            setPaymentModalOpen(false);
+            onBack(); 
 
-	// DEBUG
-	console.log('KosDetailPage - owner data:', {
-		kosOwner: kos.owner,
-		propOwner: owner,
-		resolvedName: resolvedOwnerName,
-	});
+        } catch (error: any) {
+            alert(`❌ Error: ${error.message}`);
+        } finally {
+            setIsProcessingPayment(false);
+        }
+    };
 
-	return (
-		<div className="min-h-screen bg-white dark:bg-slate-950">
-			{/* Header with Back Button */}
-			<div className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
-				<button
-					onClick={onBack}
-					className="flex items-center gap-2 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-				>
-					<X size={24} />
-				</button>
-				<h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Detail Kos</h2>
-				<div className="w-10" /> {/* Spacer for alignment */}
-			</div>
+    return (
+        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-10">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <button onClick={onBack} className="p-3 bg-slate-800 rounded-full">
+                    <X size={24} />
+                </button>
+                <h1 className="text-2xl font-bold">Detail Kos</h1>
+                <div className="w-12" />
+            </div>
 
-			{/* Image Carousel */}
-			<div className="relative h-96 w-full bg-slate-200 dark:bg-slate-800">
-				<Image
-					src={kos.images[currentImageIndex] || '/Asset/kamar/kamar1.svg'}
-					alt={kosName || 'Kos image'}
-					fill
-					className="object-cover"
-				/>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Kiri - Info Utama */}
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Nama & Alamat */}
+                    <div>
+                        <h2 className="text-4xl font-bold">{kosName}</h2>
+                        <p className="text-slate-400 mt-1">{kosLocation}</p>
+                        <div className="mt-4 flex items-baseline gap-2">
+                            <span className="text-4xl font-bold text-[#ff6b3d]">
+                                Rp {pricePerMonth.toLocaleString('id-ID')}
+                            </span>
+                            <span className="text-slate-500">// {kos.period}</span>
+                        </div>
+                    </div>
 
-				{/* Navigation Buttons */}
-				{kos.images.length > 1 && (
-					<>
-						<button
-							onClick={handlePrev}
-							className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800"
-						>
-							<ChevronLeft size={24} />
-						</button>
-						<button
-							onClick={handleNext}
-							className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800"
-						>
-							<ChevronRight size={24} />
-						</button>
+                    {/* Fasilitas & Peraturan - Desain Kartu Sesuai Screenshot */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Fasilitas Umum */}
+                        <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
+                            <h3 className="text-lg font-bold mb-5">Fasilitas Umum</h3>
+                            <div className="grid grid-cols-3 gap-y-6 gap-x-2">
+                                {kos.facilities.umum.map(f => (
+                                    <div key={f} className="text-[10px] text-center">
+                                        <Image src={facilityIcons[f] || '/Asset/icon/icon-apartment.svg'} alt={f} width={28} height={28} className="mx-auto mb-2" />
+                                        <span className="text-slate-300">{capitalizeFacility(f)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Fasilitas Kamar */}
+                        <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
+                            <h3 className="text-lg font-bold mb-5">Fasilitas Kamar</h3>
+                            <div className="grid grid-cols-3 gap-y-6 gap-x-2">
+                                {kos.facilities.kamar.map(f => (
+                                    <div key={f} className="text-[10px] text-center">
+                                        <Image src={facilityIcons[f] || '/Asset/icon/icon-bed.svg'} alt={f} width={28} height={28} className="mx-auto mb-2" />
+                                        <span className="text-slate-300">{capitalizeFacility(f)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-						{/* Image indicators */}
-						<div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-							{kos.images.map((_, index) => (
-								<button
-									key={index}
-									onClick={() => setCurrentImageIndex(index)}
-									className={`h-2 rounded-full transition ${index === currentImageIndex
-										? 'w-8 bg-[#c86654]'
-										: 'w-2 bg-white/60'
-										}`}
-								/>
-							))}
-						</div>
-					</>
-				)}
+                    {/* Peraturan Kos - Muncul Kembali */}
+                    <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
+                        <h3 className="text-lg font-bold mb-4">Peraturan Kos</h3>
+                        {rulesList.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-2 text-sm text-slate-300">
+                                {rulesList.map((rule, index) => (
+                                    <li key={index}>{rule}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm text-slate-500 italic">Belum ada peraturan kos.</p>
+                        )}
+                    </div>
+                </div>
 
-				{/* Thumbnail Images */}
-				<div className="absolute bottom-0 left-0 right-0 flex gap-2 bg-gradient-to-t from-black/40 to-transparent px-4 pb-4 pt-12">
-					{kos.images.map((image, index) => (
-						<button
-							key={index}
-							onClick={() => setCurrentImageIndex(index)}
-							className={`relative h-16 w-20 overflow-hidden rounded-lg border-2 transition ${index === currentImageIndex
-								? 'border-[#c86654]'
-								: 'border-transparent hover:border-white/50'
-								}`}
-						>
-							<Image
-								src={image || '/Asset/kamar/kamar1.svg'}
-								alt={`thumbnail-${index}`}
-								fill
-								className="object-cover"
-							/>
-						</button>
-					))}
-				</div>
-			</div>
+                {/* Kanan - Booking Card (Desain PWA) */}
+                <div className="lg:col-span-1">
+                    <div className="sticky top-10 bg-[#1e293b] p-7 rounded-3xl border border-slate-800 shadow-xl space-y-6">
+                        {/* Profile Pemilik - Desain Diperbaiki */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 relative rounded-full overflow-hidden border-2 border-slate-700 bg-slate-800">
+                                <Image src={kos.owner?.avatar || '/Asset/icon/icon-person.svg'} alt="Owner" fill className="object-cover" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500">Pemilik</p>
+                                <p className="text-lg font-bold uppercase">{resolvedOwnerName}</p>
+                            </div>
+                        </div>
 
-			{/* Main Content */}
-			<div className="space-y-6 px-6 py-8">
-				{/* Header Info */}
-				<div className="space-y-2">
-					<h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{kosName}</h1>
-					<p className="text-sm text-slate-600 dark:text-slate-400">{kosLocation}</p>
-					<div className="flex items-baseline gap-2">
-						<span className="text-3xl font-bold text-[#c86654]">{kosPrice}</span>
-						<span className="text-sm text-slate-600 dark:text-slate-400">{kos.period}</span>
-					</div>
-				</div>
+                        {/* Form Booking */}
+                        <div className="space-y-5 pt-4 border-t border-slate-800">
+                            <div>
+                                <label className="text-sm font-semibold text-slate-300 block mb-2">Tanggal Mulai</label>
+                                <input 
+                                    type="date" 
+                                    value={selectedDate} 
+                                    onChange={(e) => setSelectedDate(e.target.value)} 
+                                    className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ff6b3d]" 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-semibold text-slate-300 block mb-2">Durasi (Bulan)</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {['1', '3', '6', '12'].map(d => (
+                                        <button 
+                                            key={d} 
+                                            onClick={() => setSelectedDuration(d)} 
+                                            className={`p-3 text-sm rounded-xl border transition ${selectedDuration === d ? 'bg-[#c86654] border-[#c86654] text-white font-bold' : 'border-slate-700 bg-slate-900 text-slate-400'}`}
+                                        >
+                                            {d}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handleBook}
+                                disabled={!selectedDate}
+                                className="w-full py-4 mt-2 bg-[#ff6b3d] text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] transition disabled:opacity-50"
+                            >
+                                Pesan Sekarang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-				{/* Content Grid - 3 Columns */}
-				<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-					{/* Left Column - Rules */}
-					<div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800">
-						<h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
-							Peraturan Kos
-						</h3>
-						{kos.rules.length > 0 ? (
-							<ul className="space-y-3">
-								{kos.rules.map((rule, index) => (
-									<li
-										key={index}
-										className="flex gap-3 text-sm text-slate-700 dark:text-slate-300"
-									>
-										<span className="mt-0.5 flex-shrink-0">•</span>
-										<span>{rule}</span>
-									</li>
-								))}
-							</ul>
-						) : (
-							<p className="text-sm text-slate-500 dark:text-slate-400">Peraturan kos belum tersedia</p>
-						)}
-					</div>
-
-					{/* Middle Column - Facilities */}
-					<div className="space-y-6">
-						{/* Fasilitas Umum */}
-						<div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800">
-							<h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
-								Fasilitas Umum
-							</h3>
-							<div className="grid grid-cols-3 gap-3">
-								{generalFacilities.length > 0 ? generalFacilities.map((facility) => (
-									<div
-										key={facility}
-										className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-white p-3 dark:bg-slate-700"
-									>
-										<div className="flex items-center justify-center">
-											<Image
-												src={facilityIcons[facility] || '/Asset/icon/icon-apartment.svg'}
-												alt={facility}
-												width={28}
-												height={28}
-											/>
-										</div>
-										<span className="w-full text-center text-xs font-medium text-slate-700 dark:text-slate-300 px-0.5">
-											{capitalizeFacility(facility)}
-										</span>
-									</div>
-								)) : (
-									<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas umum belum tersedia</p>
-								)}
-							</div>
-						</div>
-
-						{/* Fasilitas Kamar */}
-						<div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800">
-							<h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
-								Fasilitas Kamar
-							</h3>
-							<div className="grid grid-cols-3 gap-3">
-								{roomFacilities.length > 0 ? roomFacilities.map((facility) => (
-									<div
-										key={facility}
-										className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-white p-3 dark:bg-slate-700"
-									>
-										<div className="flex items-center justify-center">
-											<Image
-												src={facilityIcons[facility] || '/Asset/icon/icon-bed.svg'}
-												alt={facility}
-												width={28}
-												height={28}
-											/>
-										</div>
-										<span className="w-full text-center text-xs font-medium text-slate-700 dark:text-slate-300 px-0.5">
-											{capitalizeFacility(facility)}
-										</span>
-									</div>
-								)) : (
-									<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas kamar belum tersedia</p>
-								)}
-							</div>
-						</div>
-					</div>
-
-					{/* Right Column - Owner Card & Booking */}
-					<div className="space-y-4">
-						{/* Owner Card */}
-						<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-							<div className="mb-6 space-y-4">
-								<div className="flex items-center gap-4">
-									<div className=" relative mt-2 h-20 w-15 overflow-hidden">
-										<Image
-											src={owner?.avatar || '/Asset/icon/icon-person.svg'}
-											alt={resolvedOwnerName}
-											fill
-											className="object-cover"
-										/>
-									</div>
-									<div>
-										<p className="text-sm text-slate-600 dark:text-slate-400">Pemilik Kos</p>
-										<h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-											{resolvedOwnerName}
-										</h4>
-									</div>
-								</div>
-							</div>
-
-							{/* Contact Button */}
-							<button
-								onClick={() => setShowContactModal(true)}
-								className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
-								Contact Owner
-							</button>
-
-							{/* Booking Info */}
-							<div className="mb-4 space-y-3 border-b border-slate-200 pb-4 dark:border-slate-700">
-								<div>
-									<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-										Tanggal Mulai Pesan
-									</label>
-									<div className="mt-2 flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 dark:border-slate-600 dark:bg-slate-700">
-										<Image
-											src="/Asset/icon/icon-calendar.svg"
-											alt="Calendar"
-											width={18}
-											height={18}
-										/>
-										<input
-											type="date"
-											value={selectedDate}
-											onChange={(e) => setSelectedDate(e.target.value)}
-											className="w-full bg-transparent text-sm text-slate-900 outline-none dark:text-slate-100"
-										/>
-									</div>
-								</div>
-
-								<div>
-									<label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-										Durasi Pemesanan (Bulan)
-									</label>
-									<div className="mt-2 grid grid-cols-4 gap-2">
-										{['1', '3', '6', '12'].map((duration) => (
-											<button
-												key={duration}
-												onClick={() => setSelectedDuration(duration)}
-												className={`rounded-lg px-2 py-2 text-xs font-semibold transition ${selectedDuration === duration
-													? 'bg-[#c86654] text-white'
-													: 'border border-slate-300 text-slate-900 hover:border-[#c86654] dark:border-slate-600 dark:text-slate-100'
-													}`}
-											>
-												{duration}
-											</button>
-										))}
-									</div>
-								</div>
-							</div>
-
-							{/* Pesan Button */}
-							<button
-								onClick={handleBook}
-								disabled={!selectedDate || !selectedDuration}
-								className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#ff6b3d] px-4 py-3 font-semibold text-white transition hover:bg-[#e85a2f] disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								<Image src="/Asset/icon/icon-calendar.svg" alt="Calendar" width={20} height={20} />
-								Pesan Sekarang
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			{/* Payment Modal */}
-			{bookingData && (
-				<PaymentModal
-					isOpen={paymentModalOpen}
-					booking={bookingData}
-					availableRooms={availableRooms}
-					onClose={() => {
-						setPaymentModalOpen(false);
-						setBookingData(null);
-					}}
-					onBack={() => {
-						setPaymentModalOpen(false);
-					}}
-					onConfirm={async (data: any) => {
-						try {
-							setIsProcessingPayment(true);
-							const RAILWAY_BASE = "https://easykosbackend-production.up.railway.app";
-
-							// 1. Save payment record - TEMBAK LANGSUNG KE RAILWAY
-							const paymentPayload = {
-								rooms_id: data.roomsId,
-								tenant: user?.name || 'User',
-								jenis_pembayaran: 'bulanan',
-								voucher_id: null,
-								amount: data.amount,
-								payment_method: data.paymentMethod,
-								start_date: bookingData.startDate,
-								duration: bookingData.duration,
-							};
-
-							const paymentResponse = await fetch(`${RAILWAY_BASE}/api/payments`, {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify(paymentPayload),
-							});
-
-							if (!paymentResponse.ok) throw new Error('Gagal menyimpan pembayaran ke Railway');
-
-							const paymentData = await paymentResponse.json();
-							// Ambil ID payment dari response Railway
-							const paymentId = paymentData?.data?.[0]?.id || paymentData?.id;
-
-							if (!paymentId) throw new Error('Payment ID tidak ditemukan');
-
-							// 2. Update payment status - TEMBAK LANGSUNG KE RAILWAY
-							const updatePaymentResponse = await fetch(`${RAILWAY_BASE}/api/payments/${paymentId}/pay`, {
-								method: 'PATCH',
-								headers: { 'Content-Type': 'application/json' },
-							});
-
-							if (!updatePaymentResponse.ok) throw new Error('Gagal update status pembayaran di Railway');
-
-							// 3. Cek sisa kamar (Opsional untuk alert)
-							const roomsCheckResponse = await fetch(`${RAILWAY_BASE}/api/kos/${kos.id}/rooms`);
-							const roomsData = await roomsCheckResponse.json();
-							const totalRooms = roomsData?.data?.length || 0;
-							const bookedRooms = roomsData?.data?.filter((r: any) => r.status === 'booked' || r.status === 'occupied')?.length || 0;
-
-							if (bookedRooms >= totalRooms) {
-								alert('✅ Pembayaran Berhasil, tapi kamar ini baru saja penuh!');
-							} else {
-								alert('✅ Pembayaran Berhasil!');
-							}
-
-							setPaymentModalOpen(false);
-							setBookingData(null);
-						} catch (error) {
-							console.error('Payment process error:', error);
-							alert(`❌ Error: ${error instanceof Error ? error.message : 'Terjadi kesalahan server'}`);
-						} finally {
-							setIsProcessingPayment(false);
-						}
-					}}
-				/>
-			)}
-
-			{/* Contact Owner Modal */}
-			{showContactModal && (
-				<div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
-					<div className="flex min-h-screen items-center justify-center p-4">
-						<div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl dark:bg-slate-900">
-							<div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-								<h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Hubungi Pemilik</h2>
-								<button
-									onClick={() => setShowContactModal(false)}
-									className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-								>
-									<X size={24} />
-								</button>
-							</div>
-
-							<div className="space-y-6 p-6">
-								<div className="flex flex-col items-center gap-4">
-									<div className="relative h-20 w-20 overflow-hidden rounded-full">
-										<Image
-											src={owner?.avatar || '/Asset/icon/icon-person.svg'}
-											alt={resolvedOwnerName}
-											fill
-											className="object-cover"
-										/>
-									</div>
-									<div className="text-center">
-										<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{resolvedOwnerName}</h3>
-										<p className="text-sm text-slate-500 dark:text-slate-400">Pemilik Kos</p>
-									</div>
-								</div>
-
-								<div className="space-y-3">
-									<button
-										onClick={() => {
-											console.log('Open chat with', resolvedOwnerName);
-											setShowContactModal(false);
-											// TODO: Navigate to chat with owner
-										}}
-										className="w-full rounded-lg bg-[#c86654] px-4 py-3 font-semibold text-white transition hover:bg-[#b85d47]"
-									>
-										Buka Chat
-									</button>
-									<button
-										onClick={() => {
-											console.log('Call owner');
-											// TODO: Implement call functionality
-										}}
-										className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
-									>
-										Hubungi via WhatsApp
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
-		</div>
-	);
+            {/* Modals */}
+            {paymentModalOpen && (
+                <PaymentModal
+                    isOpen={paymentModalOpen}
+                    booking={bookingData}
+                    availableRooms={availableRooms || []}
+                    onClose={() => setPaymentModalOpen(false)}
+                    onConfirm={handleConfirmPayment}
+                    isProcessing={isProcessingPayment}
+					onBack={() => setPaymentModalOpen(false)}
+                />
+            )}
+        </div>
+    );
 }
