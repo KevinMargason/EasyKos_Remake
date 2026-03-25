@@ -31,10 +31,8 @@ export default function MobileNavBar({ role = 'tenant' }: MobileNavBarProps) {
 	const homePath = role === 'owner' ? ROUTES.OWNER.HOME : ROUTES.USER.HOME;
 
 	return (
-		<nav className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_-8px_24px_rgba(0,0,0,0.25)] lg:hidden">
-			<div className="flex items-center">
-				{/* Navigation Items - Keep all items visible so tour targets exist on mobile/tablet */}
-				<div className="flex w-full items-center justify-around gap-1 overflow-x-auto pr-1">
+		<nav className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-3 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_-8px_24px_rgba(0,0,0,0.25)] lg:hidden">
+			<div className="grid grid-cols-5 items-center gap-1">
 					{navItems.map(({ label, href, icon }) => {
 						const active = href === homePath ? pathname === homePath : pathname === href || pathname.startsWith(`${href}/`);
 						const getTourAttribute = () => {
@@ -58,7 +56,7 @@ export default function MobileNavBar({ role = 'tenant' }: MobileNavBarProps) {
 								key={label}
 								href={href}
 								data-tour={getTourAttribute()}
-								className={`flex min-w-[64px] flex-col items-center gap-1 rounded-lg px-2.5 py-2 text-[11px] font-medium transition ${
+								className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-medium transition ${
 									active
 										? 'text-[#BA6054] dark:text-[#e07b6d]'
 										: 'text-slate-600 dark:text-slate-400'
@@ -72,11 +70,10 @@ export default function MobileNavBar({ role = 'tenant' }: MobileNavBarProps) {
 									height={20}
 									className={active ? 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' : 'brightness-0 saturate-100 opacity-60 dark:brightness-0 dark:invert dark:opacity-80'}
 								/>
-								<span className="hidden xs:inline">{label}</span>
+								<span className="hidden text-[10px] leading-none sm:inline">{label}</span>
 							</Link>
 						);
 					})}
-				</div>
 			</div>
 		</nav>
 	);

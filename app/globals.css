@@ -59,6 +59,11 @@ body {
   background: #BA6054;
 }
 
+/* ─── Hide native date picker indicator ─── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
 /* ─── Keyframe animations ─── */
 @keyframes fadeInUp {
   from {

@@ -13,6 +13,27 @@ import { useWallet } from '@/core/hooks/useWallet';
 import { useKos } from '@/core/hooks/useKos';
 
 const filters = ['Semua', 'Putri', 'Putra', 'Campuran', 'Dekat Kampus', 'Surabaya', 'Terjangkau'];
+const placeholderKosImages = [
+	'/Asset/kamar/kamar1.svg',
+	'/Asset/kamar/kamar2.svg',
+	'/Asset/kamar/kamar3.svg',
+];
+
+const getPlaceholderKosImage = (seed: string | number) => {
+	const rawValue = String(seed ?? '0');
+	const numericValue = Number(rawValue);
+
+	if (Number.isFinite(numericValue)) {
+		return placeholderKosImages[Math.abs(numericValue) % placeholderKosImages.length];
+	}
+
+	let hash = 0;
+	for (const char of rawValue) {
+		hash = (hash * 31 + char.charCodeAt(0)) % placeholderKosImages.length;
+	}
+
+	return placeholderKosImages[Math.abs(hash) % placeholderKosImages.length];
+};
 
 const properties = [
 	{
@@ -94,7 +115,13 @@ function PropertyCard({
 			onClick={onClick}
 			className="glass-card group overflow-hidden rounded-[24px] shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_30px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_30px_rgba(0,0,0,0.32)] text-left"
 		>
-			<div className="relative h-[165px] w-full overflow-hidden bg-[#d9aa7d]">
+			<div className="relative h-[165px] w-full overflow-hidden bg-[#f4e4da]">
+				<Image
+						src={image}
+					alt={name}
+					fill
+					className="object-cover transition duration-300 group-hover:scale-105"
+				/>
 			</div>
 			<div className="space-y-1 px-4 py-4">
 				<h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">{name}</h3>
@@ -215,17 +242,10 @@ export default function HomeContent() {
     );
 
     const ruleValues = parseData(property.peraturan);
-
-    const rawPhotos = parseData(room?.foto || property.foto);
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace("/api", "");
-    const imagesList =
-      rawPhotos.length > 0
-        ? rawPhotos.map((img: string) =>
-            img.startsWith("http") || img.startsWith("/")
-              ? img
-              : `${baseUrl}/storage/${img}`,
-          )
-        : ["/Asset/kamar/kamar1.svg"];
+		const imageOne = getPlaceholderKosImage(property.id);
+		const imageTwo = placeholderKosImages[(placeholderKosImages.indexOf(imageOne) + 1) % placeholderKosImages.length];
+		const imageThree = placeholderKosImages[(placeholderKosImages.indexOf(imageTwo) + 1) % placeholderKosImages.length];
+		const imagesList = [imageOne, imageTwo, imageThree];
 
 		const roomPrice = room?.harga ?? property.harga;
 
@@ -236,9 +256,9 @@ export default function HomeContent() {
 			price: roomPrice ? `Rp ${Number(roomPrice).toLocaleString('id-ID')}` : 'Harga belum tersedia',
 			harga: Number(roomPrice) || 0,
 			period: property.period || '/ Bulan',
-			image: property.foto || property.image || '/Asset/kamar/kamar1.svg',
+			image: imagesList[0],
 			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
-			images: property.images || (property.foto ? [property.foto] : ['/Asset/kamar/kamar1.svg']),
+			images: imagesList,
 			facilities: {
 				umum: fasilitasUmum,
 				kamar: fasilitasKamar,

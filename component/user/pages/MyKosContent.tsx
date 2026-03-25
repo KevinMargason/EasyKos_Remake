@@ -1,11 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
+import { toast } from 'sonner';
 import UserSectionTitle from '@/component/shared/UserSectionTitle';
 import { useAppSelector } from '@/core/store/hooks';
 import { useKos } from '@/core/hooks/useKos';
+import { ROUTES } from '@/lib/routes';
 
 function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
     return (
@@ -61,13 +65,13 @@ export default function MyKosContent() {
             });
 
             if (response.ok) {
-                alert('Pembayaran Berhasil!');
+                toast.success('Pembayaran berhasil!');
                 fetchPaymentsInfo(); // Refresh data supaya status jadi PAID dan tombol hilang
             } else {
-                alert('Gagal memproses pembayaran.');
+                toast.error('Gagal memproses pembayaran.');
             }
         } catch (error) {
-            alert('Terjadi kesalahan koneksi.');
+            toast.error('Terjadi kesalahan koneksi.');
         } finally {
             setIsPaying(false);
         }
@@ -99,6 +103,37 @@ export default function MyKosContent() {
     const roomNumber = derivedRoom?.nomor_kamar || activePayment?.rooms_id || 'N/A';
     const paymentAmount = parseInt(activePayment?.amount) || 0;
     const isUnpaid = activePayment?.status?.toUpperCase() === 'UNPAID';
+    const hasBookedKos = Boolean(resolvedKos || activePayment);
+
+    if (!hasBookedKos) {
+        return (
+            <div className="mx-auto flex max-w-[1180px] flex-col gap-5">
+                <UserSectionTitle title="Kos Saya" />
+
+                <Card className="p-8 sm:p-10">
+                    <div className="flex flex-col items-center justify-center gap-4 text-center">
+                        <div className="grid h-16 w-16 place-items-center rounded-full bg-[#fff0eb] text-[#c35f46] shadow-[0_8px_20px_rgba(195,95,70,0.12)] dark:bg-[#2a1f1b] dark:text-[#f0b2a7]">
+                            <Search size={28} strokeWidth={2.4} />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-[20px] font-semibold text-slate-900 dark:text-slate-100">
+                                Anda belum pesan kos, silahkan pesan dulu
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Setelah Anda memesan kos, informasi kamar, tagihan, dan kontak pemilik akan muncul di halaman ini.
+                            </p>
+                        </div>
+                        <Link
+                            href={ROUTES.USER.HOME}
+                            className="mt-2 inline-flex items-center justify-center rounded-xl bg-[#c35f46] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(195,95,70,0.22)] transition hover:bg-[#b8533d] dark:bg-[#e07b6d] dark:text-slate-950 dark:hover:bg-[#f0b2a7]"
+                        >
+                            Cari Kos Sekarang
+                        </Link>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5">

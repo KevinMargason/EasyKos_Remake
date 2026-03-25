@@ -1,10 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { PaymentModal } from './PaymentModal';
 import { useAppSelector } from '@/core/store/hooks';
+import { ROUTES } from '@/lib/routes';
 
 interface KosDetailPageProps {
     kos: {
@@ -58,7 +61,9 @@ const capitalizeFacility = (text: string): string => {
 };
 
 export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
+    const router = useRouter();
     const user = useAppSelector((state: any) => state.user.user);
+    const dateInputRef = useRef<HTMLInputElement>(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedDuration, setSelectedDuration] = useState('1');
@@ -74,6 +79,26 @@ export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
     const resolvedOwnerName = kos.owner?.name || kos.owner?.nama || 'Pemilik';
     const finalImages = kos.images?.length ? kos.images : ['/Asset/kamar/kamar1.svg'];
     const rulesList = kos.rules || [];
+
+    useEffect(() => {
+        setCurrentImageIndex(0);
+    }, [kos.id]);
+
+    useEffect(() => {
+        if (currentImageIndex >= finalImages.length) {
+            setCurrentImageIndex(0);
+        }
+    }, [currentImageIndex, finalImages.length]);
+
+    const currentImage = finalImages[currentImageIndex] || finalImages[0];
+
+    const handlePreviousImage = () => {
+        setCurrentImageIndex((current) => (current - 1 + finalImages.length) % finalImages.length);
+    };
+
+    const handleNextImage = () => {
+        setCurrentImageIndex((current) => (current + 1) % finalImages.length);
+    };
 
     // Fetch rooms saat modal dibuka
     const fetchRoomsForKos = async () => {
@@ -109,9 +134,27 @@ export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
         }
     };
 
+    const handleContactOwner = () => {
+        router.push('/user/chat');
+    };
+
+    const openDatePicker = () => {
+        const input = dateInputRef.current;
+
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+            return;
+        }
+
+        input.focus();
+        input.click();
+    };
+
     const handleConfirmPayment = async (modalData: any) => {
         if (!modalData.roomsId) {
-            alert("Pilih nomor kamar terlebih dahulu!");
+            toast.error("Pilih nomor kamar terlebih dahulu!");
             return;
         }
 
@@ -154,136 +197,221 @@ export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
                 });
             }
 
-            alert('✅ Pembayaran Berhasil!');
+            toast.success('Pesanan berhasil dibuat!');
             setPaymentModalOpen(false);
-            onBack(); 
+            router.push(ROUTES.USER.MYKOS);
 
         } catch (error: any) {
-            alert(`❌ Error: ${error.message}`);
+            toast.error(error?.message || 'Terjadi kesalahan saat memproses pembayaran.');
         } finally {
             setIsProcessingPayment(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-10">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <button onClick={onBack} className="p-3 bg-slate-800 rounded-full">
-                    <X size={24} />
-                </button>
-                <h1 className="text-2xl font-bold">Detail Kos</h1>
-                <div className="w-12" />
-            </div>
+       
+            <div className="flex w-full flex-col gap-3">
+                <div className="flex items-center justify-between rounded-[22px] border border-[#ead9cf] bg-white px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_10px_28px_rgba(0,0,0,0.24)]">
+                    <button
+                        onClick={onBack}
+                        aria-label="Kembali"
+                        className="grid h-10 w-10 place-items-center rounded-full border border-[#ead9cf] bg-white text-slate-700 transition hover:border-[#c35f46] hover:text-[#c35f46] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-[#f0b2a7] dark:hover:text-[#f0b2a7]"
+                    >
+                        <X size={18} />
+                    </button>
+                    <h1 className="text-base font-semibold tracking-wide text-slate-800 dark:text-slate-100 sm:text-lg">Detail Kos</h1>
+                    <div className="w-10" />
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Kiri - Info Utama */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Nama & Alamat */}
-                    <div>
-                        <h2 className="text-4xl font-bold">{kosName}</h2>
-                        <p className="text-slate-400 mt-1">{kosLocation}</p>
-                        <div className="mt-4 flex items-baseline gap-2">
-                            <span className="text-4xl font-bold text-[#ff6b3d]">
+                <section className="relative overflow-hidden rounded-[22px] border border-[#ead9cf] bg-white shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_14px_36px_rgba(0,0,0,0.26)]">
+                    <div className="relative h-[220px] w-full sm:h-[300px] lg:h-[360px]">
+                        <Image src={currentImage} alt={kosName} fill priority className="object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent dark:from-slate-950/50" />
+
+                        <button
+                            onClick={handlePreviousImage}
+                            aria-label="Gambar sebelumnya"
+                            className="absolute left-4 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-slate-950/30 text-white backdrop-blur-md transition hover:bg-slate-950/55"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        <button
+                            onClick={handleNextImage}
+                            aria-label="Gambar berikutnya"
+                            className="absolute right-4 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-slate-950/35 text-white backdrop-blur-md transition hover:bg-slate-950/55"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+
+                        <div className="absolute left-4 bottom-4 flex gap-2 overflow-x-auto pr-4 sm:left-6 sm:bottom-6">
+                            {finalImages.slice(0, 4).map((image, index) => (
+                                <button
+                                    key={`${image}-${index}`}
+                                    onClick={() => setCurrentImageIndex(index)}
+                                    className={`relative h-12 w-12 overflow-hidden rounded-[12px] border-2 transition sm:h-14 sm:w-14 ${currentImageIndex === index
+                                        ? 'border-[#cf7461] shadow-[0_0_0_3px_rgba(207,116,97,0.20)]'
+                                        : 'border-white/35 opacity-75 hover:opacity-100'
+                                    }`}
+                                >
+                                    <Image src={image} alt={`Pratinjau ${index + 1}`} fill className="object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="rounded-[22px] border border-[#ead9cf] bg-white p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_14px_36px_rgba(0,0,0,0.24)] sm:p-7">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                            <h2 className="text-[30px] font-semibold leading-tight text-slate-950 dark:text-white sm:text-[38px]">{kosName}</h2>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{kosLocation}</p>
+                        </div>
+                        <div className="shrink-0 text-left sm:text-right">
+                            <span className="block text-[28px] font-semibold tracking-tight text-[#c55f4a] dark:text-[#f0b2a7] sm:text-[34px]">
                                 Rp {pricePerMonth.toLocaleString('id-ID')}
                             </span>
-                            <span className="text-slate-500">// {kos.period}</span>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">/ {kos.period?.replace(/^\//, '').trim() || 'Bulan'}</span>
                         </div>
                     </div>
+                </section>
 
-                    {/* Fasilitas & Peraturan - Desain Kartu Sesuai Screenshot */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Fasilitas Umum */}
-                        <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
-                            <h3 className="text-lg font-bold mb-5">Fasilitas Umum</h3>
-                            <div className="grid grid-cols-3 gap-y-6 gap-x-2">
-                                {kos.facilities.umum.map(f => (
-                                    <div key={f} className="text-[10px] text-center">
-                                        <Image src={facilityIcons[f] || '/Asset/icon/icon-apartment.svg'} alt={f} width={28} height={28} className="mx-auto mb-2" />
-                                        <span className="text-slate-300">{capitalizeFacility(f)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Fasilitas Kamar */}
-                        <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
-                            <h3 className="text-lg font-bold mb-5">Fasilitas Kamar</h3>
-                            <div className="grid grid-cols-3 gap-y-6 gap-x-2">
-                                {kos.facilities.kamar.map(f => (
-                                    <div key={f} className="text-[10px] text-center">
-                                        <Image src={facilityIcons[f] || '/Asset/icon/icon-bed.svg'} alt={f} width={28} height={28} className="mx-auto mb-2" />
-                                        <span className="text-slate-300">{capitalizeFacility(f)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Peraturan Kos - Muncul Kembali */}
-                    <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
-                        <h3 className="text-lg font-bold mb-4">Peraturan Kos</h3>
-                        {rulesList.length > 0 ? (
-                            <ul className="list-disc list-inside space-y-2 text-sm text-slate-300">
-                                {rulesList.map((rule, index) => (
-                                    <li key={index}>{rule}</li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-slate-500 italic">Belum ada peraturan kos.</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Kanan - Booking Card (Desain PWA) */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-10 bg-[#1e293b] p-7 rounded-3xl border border-slate-800 shadow-xl space-y-6">
-                        {/* Profile Pemilik - Desain Diperbaiki */}
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 relative rounded-full overflow-hidden border-2 border-slate-700 bg-slate-800">
-                                <Image src={kos.owner?.avatar || '/Asset/icon/icon-person.svg'} alt="Owner" fill className="object-cover" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-500">Pemilik</p>
-                                <p className="text-lg font-bold uppercase">{resolvedOwnerName}</p>
-                            </div>
-                        </div>
-
-                        {/* Form Booking */}
-                        <div className="space-y-5 pt-4 border-t border-slate-800">
-                            <div>
-                                <label className="text-sm font-semibold text-slate-300 block mb-2">Tanggal Mulai</label>
-                                <input 
-                                    type="date" 
-                                    value={selectedDate} 
-                                    onChange={(e) => setSelectedDate(e.target.value)} 
-                                    className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ff6b3d]" 
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-semibold text-slate-300 block mb-2">Durasi (Bulan)</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {['1', '3', '6', '12'].map(d => (
-                                        <button 
-                                            key={d} 
-                                            onClick={() => setSelectedDuration(d)} 
-                                            className={`p-3 text-sm rounded-xl border transition ${selectedDuration === d ? 'bg-[#c86654] border-[#c86654] text-white font-bold' : 'border-slate-700 bg-slate-900 text-slate-400'}`}
-                                        >
-                                            {d}
-                                        </button>
+                <div className="grid gap-3 lg:grid-cols-[1.05fr_1fr_0.95fr]">
+                    <section className="rounded-[22px] border border-[#ead9cf] bg-white p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_14px_36px_rgba(0,0,0,0.24)]">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Peraturan Kos</h3>
+                        <div className="mt-4">
+                            {rulesList.length > 0 ? (
+                                <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                                    {rulesList.map((rule, index) => (
+                                        <li key={`${rule}-${index}`} className="flex gap-3">
+                                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#c55f4a] dark:bg-[#f0b2a7]" />
+                                            <span>{rule}</span>
+                                        </li>
                                     ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-slate-500 italic dark:text-slate-400">Belum ada peraturan kos.</p>
+                            )}
+                        </div>
+                    </section>
+
+                    <div className="space-y-3">
+                        <section className="rounded-[22px] border border-[#ead9cf] bg-white p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_14px_36px_rgba(0,0,0,0.24)]">
+                            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Fasilitas Umum</h3>
+                            <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
+                                {kos.facilities.umum.map((facility) => (
+                                    <div
+                                        key={facility}
+                                        className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                                    >
+                                        <div className="grid h-12 w-12 place-items-center rounded-2xl  text-[#c55f4a]  dark:text-[#f0b2a7]">
+                                            <Image src={facilityIcons[facility] || '/Asset/icon/icon-apartment.svg'} alt={facility} width={24} height={24} />
+                                        </div>
+                                        <span className="text-[11px] font-medium leading-tight text-slate-600 dark:text-slate-300">{capitalizeFacility(facility)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="rounded-[22px] border border-[#ead9cf] bg-white p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_14px_36px_rgba(0,0,0,0.24)]">
+                            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Fasilitas Kamar</h3>
+                            <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
+                                {kos.facilities.kamar.map((facility) => (
+                                    <div
+                                        key={facility}
+                                        className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                                    >
+                                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#fff0eb] text-[#c55f4a] dark:bg-[#29374f] dark:text-[#f0b2a7]">
+                                            <Image src={facilityIcons[facility] || '/Asset/icon/icon-bed.svg'} alt={facility} width={24} height={24} />
+                                        </div>
+                                        <span className="text-[11px] font-medium leading-tight text-slate-600 dark:text-slate-300">{capitalizeFacility(facility)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+
+                    <aside className="lg:sticky lg:top-6">
+                        <div className="rounded-[22px] border border-[#ead9cf] bg-white p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_14px_36px_rgba(0,0,0,0.24)]">
+                            <div className="flex items-center gap-4">
+                                <div className="relative h-25 w-25 mt-4 shrink-0 overflow-hidden">
+                                    <Image src={kos.owner?.avatar || '/Asset/icon/icon-person.svg'} alt="Owner" fill className="object-cover" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Pemilik Kos</p>
+                                    <p className="mt-1 truncate text-lg font-semibold text-slate-950 dark:text-white">{resolvedOwnerName}</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={handleBook}
-                                disabled={!selectedDate}
-                                className="w-full py-4 mt-2 bg-[#ff6b3d] text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] transition disabled:opacity-50"
+
+                            <button
+                                type="button"
+                                onClick={handleContactOwner}
+                                className="mt-5 w-full rounded-2xl border border-[#ead9cf] bg-white py-3.5 text-sm font-semibold text-slate-800 shadow-[0_8px_20px_rgba(15,23,42,0.05)] transition hover:border-[#c35f46] hover:text-[#c35f46] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-[#f0b2a7] dark:hover:text-[#f0b2a7]"
                             >
-                                Pesan Sekarang
+                                Contact Owner
                             </button>
+
+                            <div className="mt-6 space-y-5 border-t border-[#ead9cf] pt-5 dark:border-slate-800">
+                                <div>
+                                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Tanggal Mulai Pesan</label>
+                                    <div className="relative">
+                                        <input
+                                            ref={dateInputRef}
+                                            type="date"
+                                            value={selectedDate}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            className="w-full rounded-xl border border-[#ead9cf] bg-[#fbf9f7] px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#c35f46] focus:ring-2 focus:ring-[#c35f46]/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:border-[#f0b2a7] dark:focus:ring-[#f0b2a7]/20"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={openDatePicker}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer transition hover:opacity-80 active:scale-95 text-black dark:text-white brightness-0 dark:brightness-100 dark:invert"
+                                        >
+                                            <Image
+                                                src="/Asset/icon/icon-calendar.svg"
+                                                alt="Tanggal"
+                                                width={18}
+                                                height={18}
+                                                className="w-[18px] h-[18px]"
+                                                unoptimized
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Durasi Pemesanan (Bulan)</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['1', '3', '6', '12'].map((duration) => {
+                                            const active = selectedDuration === duration;
+                                            return (
+                                                <button
+                                                    key={duration}
+                                                    type="button"
+                                                    onClick={() => setSelectedDuration(duration)}
+                                                    className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${active
+                                                        ? 'border-[#cf7461] bg-[#cf7461] text-white shadow-[0_8px_18px_rgba(207,116,97,0.25)] dark:border-[#f0b2a7] dark:bg-[#f0b2a7] dark:text-slate-950'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:border-[#d08b7d] hover:text-[#ba6054] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-[#f0b2a7] dark:hover:text-[#f0b2a7]'
+                                                    }`}
+                                                >
+                                                    {duration}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleBook}
+                                    disabled={!selectedDate}
+                                    className="w-full rounded-2xl bg-[#c35f46] py-3.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(195,95,70,0.24)] transition hover:bg-[#b8533d] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#e07b6d] dark:text-slate-950 dark:shadow-[0_12px_28px_rgba(224,123,109,0.20)] dark:hover:bg-[#f0b2a7]"
+                                >
+                                    Pesan Sekarang
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    </aside>
                 </div>
-            </div>
+            
 
             {/* Modals */}
             {paymentModalOpen && (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { X, ChevronLeft } from 'lucide-react';
 
 // 1. Definisikan Interface Kamar agar lebih rapi
@@ -59,6 +60,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     return booking?.totalPrice || 0;
   }, [selectedRoomData, booking]);
 
+  const paymentMethods = [
+    {
+      key: 'OVO',
+      label: 'OVO',
+      icon: '/Asset/ovo.svg',
+      iconClassName: 'h-8 w-auto',
+    },
+    {
+      key: 'Transfer Bank',
+      label: 'Transfer Bank',
+      icon: '/Asset/icon/icon-transfer.svg',
+      iconClassName: 'h-8 w-8',
+    },
+    {
+      key: 'QRIS',
+      label: 'QRIS',
+      icon: '/Asset/qris.svg',
+      iconClassName: 'h-10 w-auto',
+    },
+    {
+      key: 'GoPay',
+      label: 'GoPay',
+      icon: '/Asset/gopay-teks.svg',
+      logo: '/Asset/gopay-logo.svg',
+      iconClassName: 'h-8 w-auto',
+    },
+  ] as const;
+
   if (!isOpen || !booking) return null;
 
   const handleConfirmClick = async () => {
@@ -73,54 +102,86 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-[#0f172a] w-full max-w-md rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md dark:bg-black/70">
+      <div className="w-full max-w-md overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-slate-950 dark:shadow-[0_24px_70px_rgba(0,0,0,0.42)]">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
-          <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800">
+          <button onClick={onBack} className="text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
             <ChevronLeft size={24} />
           </button>
-          <h2 className="text-lg font-bold text-white">Pembayaran</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <h2 className="text-lg font-bold text-slate-950 dark:text-white">Pembayaran</h2>
+          <button onClick={onClose} className="text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 p-6">
           {/* Info Kos & Harga */}
-          <div className="bg-[#1e293b] border border-gray-700 rounded-xl p-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/90">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider">ID Kos: {booking.kosNumber}</p>
-                <p className="text-lg font-bold text-white">{booking.kosName}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">ID Kos: {booking.kosNumber}</p>
+                <p className="text-lg font-bold text-slate-950 dark:text-white">{booking.kosName}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-400">Total Harga</p>
-                <p className="text-xl font-bold text-orange-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Total Harga</p>
+                <p className="text-xl font-bold text-[#c55f4a] dark:text-[#f0b2a7]">
                   Rp {currentTotalPrice.toLocaleString('id-ID')}
                 </p>
               </div>
             </div>
-            <p className="text-sm text-gray-400">Durasi: <span className="text-white font-medium">{booking.duration} Bulan</span></p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Durasi: <span className="font-medium text-slate-800 dark:text-slate-100">{booking.duration} Bulan</span></p>
           </div>
 
           {/* Metode Pembayaran */}
           <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300">Pilih Metode Pembayaran</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Pilih Metode Pembayaran</p>
             <div className="grid grid-cols-2 gap-3">
-              {['OVO', 'QRIS', 'Transfer Bank', 'GoPay'].map((method) => (
+              {paymentMethods.map((method) => (
                 <button
-                  key={method}
+                  key={method.key}
                   type="button"
-                  onClick={() => setSelectedPayment(method)}
-                  className={`p-3 rounded-lg border text-sm font-semibold transition-all ${
-                    selectedPayment === method 
-                    ? 'border-blue-500 bg-blue-500/20 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
-                    : 'border-gray-700 bg-[#0f172a] text-gray-400 hover:border-gray-600'
+                  onClick={() => setSelectedPayment(method.key)}
+                  className={`flex h-[72px] items-center justify-center rounded-2xl border bg-white px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:bg-[#f8fafc] dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${
+                    selectedPayment === method.key
+                      ? 'border-[#c35f46] shadow-[0_0_0_1px_rgba(195,95,70,0.10),0_10px_24px_rgba(195,95,70,0.12)] dark:border-[#f0b2a7] dark:shadow-[0_0_0_1px_rgba(240,178,167,0.10),0_10px_24px_rgba(0,0,0,0.18)]'
+                      : 'border-slate-200 dark:border-slate-800'
                   }`}
                 >
-                  {method}
+                  <span className="sr-only">{method.label}</span>
+                  {method.key === 'GoPay' ? (
+                     <div className="flex items-center justify-center gap-2">
+                      <Image
+                        src={method.logo}
+                        alt="GoPay logo"
+                        width={26}
+                        height={26}
+                        className="h-9 w-9"
+                        unoptimized
+                      />
+                     
+                      <Image
+                        src={method.icon}
+                        alt={method.label}
+                        width={100}
+                        height={34}
+                        className="h-7 w-auto"
+                        unoptimized
+                      />
+                    </div>
+                  ) : (
+                   
+                      <Image
+                        src={method.icon}
+                        alt={method.label}
+                        width={160}
+                        height={56}
+                        className={method.iconClassName}
+                        unoptimized
+                      />
+
+                  )}
                 </button>
               ))}
             </div>
@@ -128,11 +189,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Pilih Kamar */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Pilih Kamar</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Pilih Kamar</label>
             <select
               value={selectedRoomId}
               onChange={(e) => setSelectedRoomId(e.target.value)}
-              className="w-full bg-[#1e293b] text-white border border-gray-700 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-[#cf7461]/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:ring-[#f0b2a7]/20"
             >
               <option value="">-- Pilih Kamar Tersedia --</option>
               {availableRooms.map((room) => (
@@ -147,19 +208,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <button
             onClick={handleConfirmClick}
             disabled={!selectedRoomId || !selectedPayment || isParentProcessing}
-            className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${
+            className={`w-full rounded-2xl py-4 text-lg font-bold transition-all shadow-lg ${
               !selectedRoomId || !selectedPayment || isParentProcessing
-              ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-              : 'bg-[#ff6b3d] text-white hover:bg-[#e85a2c] active:scale-[0.98]'
+              ? 'cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
+              : 'bg-[#c55f4a] text-white hover:bg-[#b95643] active:scale-[0.98] dark:bg-[#e07b6d] dark:text-slate-950 dark:hover:bg-[#f0b2a7]'
             }`}
           >
             {isParentProcessing ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <div className="h-5 w-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
                 <span>Memproses...</span>
               </div>
             ) : (
-              'Konfirmasi Pembayaran'
+              <span>Konfirmasi Pesanan</span>
             )}
           </button>
         </div>
