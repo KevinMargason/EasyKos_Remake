@@ -47,7 +47,7 @@ export default function AddRoomPage({
     alamat: "",
     peraturan: "",
     jumlahLantai: "",
-    nomorKamar: "",
+    jumlahKamar: "",
     hargaKamar: "",
   });
 
@@ -101,7 +101,7 @@ export default function AddRoomPage({
       toast.error("Harga Kamar harus diisi");
       return;
     }
-    if (!formData.nomorKamar.trim()) {
+    if (!formData.jumlahKamar.trim()) {
       toast.error("Nomor Kamar harus diisi");
       return;
     }
@@ -166,7 +166,7 @@ export default function AddRoomPage({
 
       const roomPayload = new FormData();
       roomPayload.append("kos_id", kosId);
-      roomPayload.append("nomor_kamar", formData.nomorKamar);
+      roomPayload.append("nomor_kamar", formData.jumlahKamar);
       roomPayload.append("harga", hargaKamar.toString());
       roomPayload.append("ukuran_kamar", "3x3");
       roomPayload.append("listrik", "token");
@@ -358,14 +358,15 @@ export default function AddRoomPage({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Nomor Kamar
+                  Jumlah Kamar yang Dibuat
                 </label>
                 <input
-                  type="text"
-                  name="nomorKamar"
-                  value={formData.nomorKamar}
+                  type="number"
+                  name="jumlahKamar"
+                  value={formData.jumlahKamar}
                   onChange={handleInputChange}
-                  placeholder="Masukkan Nomor Kamar Kos Anda"
+                  min="1"
+                  placeholder="Misal: 5"
                   className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#c86654] focus:outline-none focus:ring-1 focus:ring-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
                 />
               </div>
