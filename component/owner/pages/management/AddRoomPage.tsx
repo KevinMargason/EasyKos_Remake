@@ -155,7 +155,10 @@ export default function AddRoomPage({
 
       const kosRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/kos`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
         body: kosPayload,
       });
       const kosDataRes = await kosRes.json();
@@ -180,7 +183,10 @@ export default function AddRoomPage({
 
       const roomRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rooms`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
         body: roomPayload,
       });
       const roomDataRes = await roomRes.json();
