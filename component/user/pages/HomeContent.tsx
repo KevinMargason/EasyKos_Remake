@@ -14,6 +14,41 @@ import { useKos } from "@/core/hooks/useKos";
 
 const filters = ['Semua', 'Putri', 'Putra', 'Campuran', 'Dekat Kampus', 'Surabaya', 'Terjangkau'];
 
+const placeholderKosImages = [
+  "/Asset/kamar/kamar1.svg",
+  "/Asset/kamar/kamar2.svg",
+  "/Asset/kamar/kamar3.svg",
+];
+
+const getPlaceholderKosImage = (seed: string | number) => {
+  const numericSeed = Number(seed);
+
+  if (Number.isFinite(numericSeed)) {
+    return placeholderKosImages[Math.abs(numericSeed) % placeholderKosImages.length];
+  }
+
+  const textSeed = String(seed ?? "");
+  const hash = textSeed.split("").reduce((accumulator, char) => accumulator + char.charCodeAt(0), 0);
+
+  return placeholderKosImages[hash % placeholderKosImages.length];
+};
+
+const normalizeImageSrc = (value: unknown, fallback: string) => {
+  if (typeof value !== "string") return fallback;
+
+  const trimmed = value.trim();
+
+  if (!trimmed) return fallback;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  if (trimmed.startsWith("/Asset/")) {
+    return trimmed;
+  }
+
+  return fallback;
+};
+
 const properties = [
   {
     id: "1",
@@ -107,13 +142,22 @@ function PropertyCard({
   image: string;
   onClick: () => void;
 }) {
+  const displayedImage = normalizeImageSrc(image, getPlaceholderKosImage(id));
+
 	return (
 		<button
 			onClick={onClick}
 			className="glass-card group overflow-hidden rounded-[24px] shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_30px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_30px_rgba(0,0,0,0.32)] text-left"
 		>
-			<div className="relative h-[165px] w-full overflow-hidden bg-[#d9aa7d]">
-			</div>
+      <div className="relative h-[165px] w-full overflow-hidden bg-[#d9aa7d]">
+        <Image
+          src={displayedImage}
+          alt={name}
+          fill
+          className="object-cover transition duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
+      </div>
 			<div className="space-y-1 px-4 py-4">
 				<h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">{name}</h3>
 				<p className="text-sm text-slate-500 dark:text-slate-400">{location}</p>
@@ -300,12 +344,19 @@ export default function HomeContent() {
     );
 
     const ruleValues = parseData(property.peraturan);
-		const imageOne = getPlaceholderKosImage(property.id);
-		const imageTwo = placeholderKosImages[(placeholderKosImages.indexOf(imageOne) + 1) % placeholderKosImages.length];
-		const imageThree = placeholderKosImages[(placeholderKosImages.indexOf(imageTwo) + 1) % placeholderKosImages.length];
-		const imagesList = [imageOne, imageTwo, imageThree];
 
     const roomPrice = room?.harga ?? property.harga;
+
+    const primaryImage = normalizeImageSrc(
+      property.foto || property.image,
+      getPlaceholderKosImage(property.id),
+    );
+    const fallbackImages = placeholderKosImages.filter((image) => image !== primaryImage);
+    const sourceImages = Array.isArray(property.images)
+      ? property.images
+          .map((image: unknown) => normalizeImageSrc(image, primaryImage))
+          .filter((image: string, index: number, array: string[]) => array.indexOf(image) === index)
+      : [primaryImage, ...fallbackImages];
 
 		return {
 			id: String(property.id),
@@ -314,9 +365,9 @@ export default function HomeContent() {
 			price: roomPrice ? `Rp ${Number(roomPrice).toLocaleString('id-ID')}` : 'Harga belum tersedia',
 			harga: Number(roomPrice) || 0,
 			period: property.period || '/ Bulan',
-			image: property.foto || property.image || '/Asset/kamar/kamar1.svg',
+      image: primaryImage,
 			description: property.deskripsi || property.description || 'Detail kos belum lengkap dari backend',
-			images: property.images || (property.foto ? [property.foto] : ['/Asset/kamar/kamar1.svg']),
+      images: sourceImages.length > 0 ? sourceImages : [primaryImage, ...fallbackImages],
 			facilities: {
 				umum: fasilitasUmum,
 				kamar: fasilitasKamar,

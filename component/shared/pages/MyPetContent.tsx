@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
-import { Coins, Edit3, Flame, MoonStar, Sparkles, Utensils } from 'lucide-react';
+import { Edit3, MoonStar, Sparkles, Utensils } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppSelector } from '@/core/store/hooks';
 import { getFullGreeting } from '@/lib/greetings';
@@ -43,10 +43,20 @@ function StatProgress({ label, value }: { label: string; value: number }) {
     );
 }
 
-function MetricChip({ icon: Icon, label, accentClassName }: { icon: typeof Flame; label: string; accentClassName: string }) {
+function MetricChip({
+    iconSrc,
+    label,
+    textClassName,
+    chipClassName,
+}: {
+    iconSrc: string;
+    label: string;
+    textClassName: string;
+    chipClassName: string;
+}) {
     return (
-        <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold shadow-sm ${accentClassName}`}>
-            <Icon size={14} />
+        <div className={`glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition ${chipClassName}`}>
+            <Image src={iconSrc} alt="Icon chip" width={18} height={18} />
             <span>{label}</span>
         </div>
     );
@@ -211,14 +221,16 @@ export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
 
                 <div className="flex items-center gap-3 self-start xl:self-auto">
                     <MetricChip
-                        icon={Flame}
+                        iconSrc="/Asset/icon/icon-fire.svg"
                         label={`${petDays} Days`}
-                        accentClassName="border-[#f6cfab] bg-[#fff2e3] text-[#e48a44] dark:border-[#5b4432] dark:bg-[#2a1f1b] dark:text-[#f0b2a7]"
+                        textClassName="text-orange-600 dark:text-orange-400"
+                        chipClassName="hover:bg-orange-50 dark:hover:bg-orange-900/30 cursor-pointer shadow-sm hover:shadow-md border border-orange-200 bg-white text-[#e48a44] dark:border-orange-900/30 dark:bg-slate-900 dark:text-[#f0b2a7]"
                     />
                     <MetricChip
-                        icon={Coins}
+                        iconSrc="/Asset/icon/icon-coin.svg"
                         label={`${totalKoin || 0} Coins`}
-                        accentClassName="border-[#e1ab9d] bg-[#fff5f2] text-[#dd6f5d] dark:border-[#5b342f] dark:bg-[#2a1f1b] dark:text-[#f0b2a7]"
+                        textClassName="text-yellow-700 dark:text-yellow-400"
+                        chipClassName="border border-yellow-200 bg-yellow-50/50 text-yellow-700 dark:border-yellow-700/30 dark:bg-yellow-900/20 dark:text-yellow-400"
                     />
                 </div>
             </header>
