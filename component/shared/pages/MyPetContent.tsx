@@ -5,9 +5,13 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { useAppSelector } from '@/core/store/hooks';
 
-export default function MyPetContent() {
+type MyPetContentProps = {
+    mode?: 'user' | 'owner';
+};
+
+export default function MyPetContent({ mode = 'user' }: MyPetContentProps) {
     // Ambil data user dari Redux (Student ID: 160423046)
-    const user = useAppSelector((state: any) => state.auth.user); 
+    const user = useAppSelector((state: any) => state.user.user); 
     const [tupai, setTupai] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
@@ -16,7 +20,11 @@ export default function MyPetContent() {
 
     // 1. Fungsi untuk Fetch/Check Status Tupai
     const fetchTupaiStatus = useCallback(async () => {
-        if (!user?.id) return;
+        if (!user?.id) {
+            setTupai(null);
+            setLoading(false);
+            return;
+        }
         try {
             // Menggunakan endpoint index dengan query parameter users_id
             const res = await fetch(`${API_BASE}/mytupai?users_id=${user.id}`);
@@ -38,6 +46,11 @@ export default function MyPetContent() {
 
     // 2. Fungsi Adopsi (POST store)
     const handleAdopt = async () => {
+        if (!user?.id) {
+            toast.error('Silakan login terlebih dahulu.');
+            return;
+        }
+
         setIsActionLoading(true);
         try {
             const res = await fetch(`${API_BASE}/mytupai`, {
@@ -91,9 +104,13 @@ export default function MyPetContent() {
 
     if (loading) return <div className="p-20 text-center font-bold">Memanggil Tupai...</div>;
 
+    const pageTitle = mode === 'owner' ? 'My Pet Owner' : 'My Pet';
+    const emptyStateTitle = mode === 'owner' ? 'Kandang Masih Kosong' : 'Kandang Masih Kosong';
+    const adoptButtonLabel = mode === 'owner' ? 'Adopsi Sekarang' : 'Adopsi Sekarang';
+
     return (
         <div className="mx-auto max-w-[1200px] p-6">
-            <h1 className="mb-8 text-3xl font-extrabold text-slate-900 dark:text-white">My Pet</h1>
+            <h1 className="mb-8 text-3xl font-extrabold text-slate-900 dark:text-white">{pageTitle}</h1>
 
             {!tupai ? (
                 /* VIEW: BELUM PUNYA PET */
@@ -101,14 +118,14 @@ export default function MyPetContent() {
                     <div className="relative h-40 w-40 opacity-40 grayscale">
                         <Image src="/Asset/squirrel/squirrel-normal.svg" alt="Pet" fill />
                     </div>
-                    <h2 className="mt-6 text-2xl font-bold">Kandang Masih Kosong</h2>
+                    <h2 className="mt-6 text-2xl font-bold">{emptyStateTitle}</h2>
                     <p className="mt-2 text-slate-500">Kamu belum memiliki tupai. Adopsi sekarang untuk mulai petualangan!</p>
                     <button 
                         onClick={handleAdopt}
                         disabled={isActionLoading}
                         className="mt-8 rounded-full bg-orange-500 px-12 py-4 font-bold text-white shadow-lg hover:bg-orange-600 disabled:opacity-50"
                     >
-                        {isActionLoading ? 'Sedang Adopsi...' : 'Adopsi Sekarang'}
+                        {isActionLoading ? 'Sedang Adopsi...' : adoptButtonLabel}
                     </button>
                 </div>
             ) : (

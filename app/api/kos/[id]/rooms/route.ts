@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const kosId = params.id;
+    const { id: kosId } = await params;
 
     // For now, return mock data since backend endpoint might not exist yet
     // TODO: Replace with actual backend call when endpoint is ready
