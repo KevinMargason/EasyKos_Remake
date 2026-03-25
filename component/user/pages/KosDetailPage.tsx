@@ -65,31 +65,31 @@ const capitalizeFacility = (text: string): string => {
 };
 
 const parseArrayField = (value: any): string[] => {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.filter(Boolean);
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (!trimmed) return [];
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) {
-        return parsed.filter(Boolean);
-      }
-    } catch {
-      // ignore non-JSON strings
-    }
-    return trimmed
-      .split(/\r?\n|,/) // split by newline or comma
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-  if (typeof value === 'object') {
-    return Object.values(value)
-      .flat()
-      .map((item) => String(item).trim())
-      .filter(Boolean);
-  }
-  return [];
+	if (!value) return [];
+	if (Array.isArray(value)) return value.filter(Boolean);
+	if (typeof value === 'string') {
+		const trimmed = value.trim();
+		if (!trimmed) return [];
+		try {
+			const parsed = JSON.parse(trimmed);
+			if (Array.isArray(parsed)) {
+				return parsed.filter(Boolean);
+			}
+		} catch {
+			// ignore non-JSON strings
+		}
+		return trimmed
+			.split(/\r?\n|,/) // split by newline or comma
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
+	if (typeof value === 'object') {
+		return Object.values(value)
+			.flat()
+			.map((item) => String(item).trim())
+			.filter(Boolean);
+	}
+	return [];
 };
 
 export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps) {
@@ -99,7 +99,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const [selectedDuration, setSelectedDuration] = useState('1');
 	const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 	const [showContactModal, setShowContactModal] = useState(false);
-	const [availableRooms, setAvailableRooms] = useState<Array<{id:string|number; nomor_kamar?:string;}>>([]);
+	const [availableRooms, setAvailableRooms] = useState<Array<{ id: string | number; nomor_kamar?: string; }>>([]);
 	const [loadingRooms, setLoadingRooms] = useState(false);
 	const [bookingData, setBookingData] = useState<{
 		kosName: string;
@@ -125,7 +125,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 			const pricePerMonth = Number(kos.harga) || 0;
 			const duration = parseInt(selectedDuration);
 			const totalPrice = pricePerMonth * duration;
-			
+
 			setBookingData({
 				kosName: kos.name || kos.nama || 'Kos',
 				kosNumber: kos.id,
@@ -148,40 +148,34 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 	const rulesList = kos.rules || [];
 	const finalImages = kos.images && kos.images.length ? kos.images : ['/Asset/kamar/kamar1.svg'];
 
-  // DEBUG
-  console.log("KosDetailPage - owner data:", {
-    kosOwner: kos.owner,
-    propOwner: owner,
-    resolvedName: resolvedOwnerName,
-  });
+	// DEBUG
+	console.log("KosDetailPage - owner data:", {
+		kosOwner: kos.owner,
+		propOwner: owner,
+		resolvedName: resolvedOwnerName,
+	});
 
 	const fetchRoomsForKos = async () => {
 		if (!kos.id) return;
 
 		setLoadingRooms(true);
 		try {
-			const apiBaseUrl =
-				process.env.NEXT_PUBLIC_API_URL ||
-				process.env.BACKEND_URL ||
-				'https://easykosbackend-production.up.railway.app/api';
-
-			let response = await fetch(`/api/kos/${kos.id}/rooms`);
-			if (!response.ok) {
-				console.warn('Local API /api/kos/[id]/rooms failed, fallback to backend');
-				response = await fetch(`${apiBaseUrl}/kos/${kos.id}/rooms`, {
-					method: 'GET',
-					headers: { 'Content-Type': 'application/json' },
-				});
-			}
-
-			if (!response.ok) {
-				throw new Error(`Gagal load rooms (${response.status})`);
-			}
+			const response = await fetch(`/api/kos/${kos.id}/rooms`);
+			if (!response.ok) throw new Error('Gagal load rooms');
 
 			const body = await response.json();
-			const roomsData = Array.isArray(body.data) ? body.data : Array.isArray(body) ? body : [];
-			setAvailableRooms(roomsData);
-			console.log('Available rooms loaded:', roomsData);
+
+			// Sesuai screenshot: datanya ada di body.data
+			if (body.success && Array.isArray(body.data)) {
+				// Opsional: Filter hanya yang users_id-nya null (belum ada penghuni)
+				const emptyRooms = body.data.filter((room: any) => room.users_id === null);
+				setAvailableRooms(emptyRooms);
+
+				// Jika mau tampilkan semua (termasuk yang ada user), gunakan:
+				// setAvailableRooms(body.data); 
+			} else {
+				setAvailableRooms([]);
+			}
 		} catch (error) {
 			console.error('fetchRoomsForKos error: ', error);
 			setAvailableRooms([]);
@@ -248,11 +242,10 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 								<button
 									key={index}
 									onClick={() => setCurrentImageIndex(index)}
-									className={`h-2 rounded-full transition ${
-										index === currentImageIndex
+									className={`h-2 rounded-full transition ${index === currentImageIndex
 											? 'w-8 bg-[#c86654]'
 											: 'w-2 bg-white/60'
-									}`}
+										}`}
 								/>
 							))}
 						</div>
@@ -265,11 +258,10 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 						<button
 							key={index}
 							onClick={() => setCurrentImageIndex(index)}
-							className={`relative h-16 w-20 overflow-hidden rounded-lg border-2 transition ${
-								index === currentImageIndex
+							className={`relative h-16 w-20 overflow-hidden rounded-lg border-2 transition ${index === currentImageIndex
 									? 'border-[#c86654]'
 									: 'border-transparent hover:border-white/50'
-							}`}
+								}`}
 						>
 							<Image
 								src={image || '/Asset/kamar/kamar1.svg'}
@@ -343,9 +335,9 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 											{capitalizeFacility(facility)}
 										</span>
 									</div>
-							)) : (
-								<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas umum belum tersedia</p>
-							)}
+								)) : (
+									<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas umum belum tersedia</p>
+								)}
 							</div>
 						</div>
 
@@ -372,9 +364,9 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 											{capitalizeFacility(facility)}
 										</span>
 									</div>
-							)) : (
-								<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas kamar belum tersedia</p>
-							)}
+								)) : (
+									<p className="col-span-3 text-sm text-slate-500 dark:text-slate-400">Fasilitas kamar belum tersedia</p>
+								)}
 							</div>
 						</div>
 					</div>
@@ -388,7 +380,7 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 									<div className=" relative mt-2 h-20 w-15 overflow-hidden">
 										<Image
 											src={owner?.avatar || '/Asset/icon/icon-person.svg'}
-												alt={resolvedOwnerName}
+											alt={resolvedOwnerName}
 											fill
 											className="object-cover"
 										/>
@@ -403,9 +395,9 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 							</div>
 
 							{/* Contact Button */}
-						<button 
-							onClick={() => setShowContactModal(true)}
-							className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
+							<button
+								onClick={() => setShowContactModal(true)}
+								className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
 								Contact Owner
 							</button>
 
@@ -440,11 +432,10 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 											<button
 												key={duration}
 												onClick={() => setSelectedDuration(duration)}
-												className={`rounded-lg px-2 py-2 text-xs font-semibold transition ${
-													selectedDuration === duration
+												className={`rounded-lg px-2 py-2 text-xs font-semibold transition ${selectedDuration === duration
 														? 'bg-[#c86654] text-white'
 														: 'border border-slate-300 text-slate-900 hover:border-[#c86654] dark:border-slate-600 dark:text-slate-100'
-												}`}
+													}`}
 											>
 												{duration}
 											</button>
@@ -518,27 +509,15 @@ export default function KosDetailPage({ kos, owner, onBack }: KosDetailPageProps
 							console.log('Payment saved with ID:', paymentId);
 
 							// 2. Check room capacity
-				const apiBaseUrl =
-					process.env.NEXT_PUBLIC_API_URL ||
-					process.env.BACKEND_URL ||
-					'https://easykosbackend-production.up.railway.app/api';
+							const roomsCheckResponse = await fetch(`/api/kos/${kos.id}/rooms`);
+							if (!roomsCheckResponse.ok) {
+								throw new Error('Gagal mengecek data kamar');
+							}
 
-				const roomsCheckResponse = await fetch(`${apiBaseUrl}/kos/${kos.id}/rooms`, {
-					method: 'GET',
-					headers: { 'Content-Type': 'application/json' },
-				});
-				if (!roomsCheckResponse.ok) {
-					throw new Error('Gagal mengecek data kamar');
-				}
+							const roomsData = await roomsCheckResponse.json();
+							const totalRooms = roomsData?.data?.length || 0;
+							const bookedRooms = roomsData?.data?.filter((r: any) => r.status === 'booked' || r.status === 'occupied')?.length || 0;
 
-				const roomsDataRaw = await roomsCheckResponse.json();
-				const roomsData = Array.isArray(roomsDataRaw.data)
-					? roomsDataRaw.data
-					: Array.isArray(roomsDataRaw)
-					? roomsDataRaw
-					: [];
-				const totalRooms = roomsData.length;
-				const bookedRooms = roomsData.filter((r: any) => r.status === 'booked' || r.status === 'occupied').length || 0;
 							console.log(`Total rooms: ${totalRooms}, Booked: ${bookedRooms}`);
 
 							// 3. Update payment status

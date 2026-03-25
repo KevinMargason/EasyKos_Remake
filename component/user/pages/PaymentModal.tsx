@@ -55,12 +55,16 @@ export default function PaymentModal({ isOpen, booking, availableRooms, onClose,
 	const handleConfirm = async () => {
 		if (selectedPayment && selectedRoomId) {
 			setIsProcessing(true);
-			// Simulasi processing
+
+			// Cari data kamar yang dipilih untuk mendapatkan harga spesifik kamar itu
+			const selectedRoom = availableRooms.find(r => String(r.id) === selectedRoomId);
+			const finalPrice = selectedRoom?.harga ? Number(selectedRoom.harga) * booking.duration : booking.totalPrice;
+
 			setTimeout(() => {
 				onConfirm({
 					paymentMethod: selectedPayment,
 					roomsId: selectedRoomId,
-					amount: booking.totalPrice,
+					amount: finalPrice, // Mengirim harga yang sesuai kamar dipilih
 				});
 				setIsProcessing(false);
 			}, 1000);
@@ -122,46 +126,43 @@ export default function PaymentModal({ isOpen, booking, availableRooms, onClose,
 									<button
 										key={method.id}
 										onClick={() => setSelectedPayment(method.id)}
-										className={`rounded-xl border-2 px-4 py-6 transition ${
-											selectedPayment === method.id
+										className={`rounded-xl border-2 px-4 py-6 transition ${selectedPayment === method.id
 												? 'border-[#c86654] bg-[#fff5f0] dark:bg-slate-800'
 												: 'border-slate-200 hover:border-[#c86654] dark:border-slate-700 dark:hover:border-[#c86654]'
-										}`}
+											}`}
 									>
 										<div
-											className={`flex items-center justify-center gap-2 ${
-												method.id === 'transfer' ? 'flex-row' : 'flex-col'
-											}`}
-										>
-										{method.id === 'gopay' ? (
-											<div className="flex flex-row items-center justify-center gap-2">
-												<Image
-													src={method.logo!}
-													alt="GoPay Logo"
-													width={method.logoSize!}
-													height={method.logoSize!}
-												/>
-												<Image
-													src={method.text!}
-													alt="GoPay Text"
-													width={method.textSize!}
-													height={method.textSize!}
-													className="dark:brightness-0 dark:invert"
-												/>
-											</div>
-										) : (
-											<Image
-												src={method.icon!}
-												alt={method.name}
-												width={method.iconSize!}
-												height={method.iconSize!}
-												className={`${
-													method.id === 'qris' || method.id === 'transfer'
-														? 'dark:brightness-0 dark:invert'
-														: 'dark:brightness-150'
+											className={`flex items-center justify-center gap-2 ${method.id === 'transfer' ? 'flex-row' : 'flex-col'
 												}`}
-											/>
-										)}
+										>
+											{method.id === 'gopay' ? (
+												<div className="flex flex-row items-center justify-center gap-2">
+													<Image
+														src={method.logo!}
+														alt="GoPay Logo"
+														width={method.logoSize!}
+														height={method.logoSize!}
+													/>
+													<Image
+														src={method.text!}
+														alt="GoPay Text"
+														width={method.textSize!}
+														height={method.textSize!}
+														className="dark:brightness-0 dark:invert"
+													/>
+												</div>
+											) : (
+												<Image
+													src={method.icon!}
+													alt={method.name}
+													width={method.iconSize!}
+													height={method.iconSize!}
+													className={`${method.id === 'qris' || method.id === 'transfer'
+															? 'dark:brightness-0 dark:invert'
+															: 'dark:brightness-150'
+														}`}
+												/>
+											)}
 											{method.id === 'transfer' && (
 												<span className="text-sm font-medium text-slate-900 dark:text-slate-100">
 													{method.name}
@@ -179,12 +180,12 @@ export default function PaymentModal({ isOpen, booking, availableRooms, onClose,
 							<select
 								value={selectedRoomId}
 								onChange={(e) => setSelectedRoomId(e.target.value)}
-								className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#c86654] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+								className="..."
 							>
-								<option value="">Pilih kamar</option>
-								{availableRooms.map((room:any) => (
+								<option value="">Pilih nomor kamar</option>
+								{availableRooms.map((room: any) => (
 									<option key={room.id} value={String(room.id)}>
-										{room.nomor_kamar ? `Kamar ${room.nomor_kamar}` : `Kamar ID ${room.id}`}
+										Kamar {room.nomor_kamar} - Rp {Number(room.harga).toLocaleString('id-ID')}
 									</option>
 								))}
 							</select>
@@ -206,11 +207,11 @@ export default function PaymentModal({ isOpen, booking, availableRooms, onClose,
 								/>
 								<button
 									onClick={() => {
-									if (promoCode.trim()) {
-										console.log('Applying promo code:', promoCode);
-									}
-								}}
-								className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+										if (promoCode.trim()) {
+											console.log('Applying promo code:', promoCode);
+										}
+									}}
+									className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
 								>
 									Terapkan
 								</button>
