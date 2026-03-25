@@ -47,7 +47,7 @@ export default function AddRoomPage({
     alamat: "",
     peraturan: "",
     jumlahLantai: "",
-    jumlahKamar: "",
+    jumlahKamar: "1",
     hargaKamar: "",
   });
 
