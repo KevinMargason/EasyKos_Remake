@@ -1,34 +1,34 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { Menu, Moon, Sun, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useTheme } from '@/component/ThemeProvider';
-import { AUTH_ROUTES } from '@/lib/routes';
+import Image from "next/image";
+import Link from "next/link";
+import { Menu, Moon, Sun, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTheme } from "@/component/ThemeProvider";
+import { AUTH_ROUTES } from "@/lib/routes";
 
 const navItems = [
-  { label: 'Beranda', href: '#home' },
-  { label: 'Fitur', href: '#features' },
-  { label: 'Ulasan', href: '#reviews' },
-  { label: 'Tanya Jawab', href: '#faq' },
+  { label: "Beranda", href: "#home" },
+  { label: "Fitur", href: "#features" },
+  { label: "Ulasan", href: "#reviews" },
+  { label: "Tanya Jawab", href: "#faq" },
 ];
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+  const [activeSection, setActiveSection] = useState("home");
   const { toggle } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Scroll-spy: watch each section and mark it active when it occupies the top area
   useEffect(() => {
-    const sectionIds = navItems.map((item) => item.href.replace('#', ''));
+    const sectionIds = navItems.map((item) => item.href.replace("#", ""));
     const elements = sectionIds
       .map((id) => document.getElementById(id))
       .filter(Boolean) as HTMLElement[];
@@ -44,7 +44,7 @@ export default function Header() {
         });
       },
       // Fire when the top ~20% of the viewport is occupied by a section
-      { rootMargin: '-10% 0px -80% 0px', threshold: 0 },
+      { rootMargin: "-10% 0px -80% 0px", threshold: 0 },
     );
 
     elements.forEach((el) => observer.observe(el));
@@ -54,29 +54,41 @@ export default function Header() {
   return (
     <header
       className={`sticky top-0 z-50 w-full border-b border-slate-100 bg-white/95 backdrop-blur transition-shadow duration-300 dark:border-slate-800 dark:bg-slate-900/95 ${
-        scrolled ? 'shadow-[0_4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]' : ''
+        scrolled
+          ? "shadow-[0_4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+          : ""
       }`}
     >
       <div className="mx-auto flex h-[72px] w-full max-w-[1358px] items-center justify-between px-5 sm:px-8 lg:h-[78px] lg:px-[72px]">
         <Link href="#home" className="flex items-center gap-2.5">
-          <Image src="/Asset/easykos-logo.svg" alt="EasyKos" width={150} height={44} priority />
+          <div className="relative h-11 w-36">
+            <Image
+              src="/Asset/easykos-logo.svg"
+              alt="EasyKos"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </Link>
 
         <nav className="hidden items-center gap-10 md:flex">
           {navItems.map((item) => {
-            const isActive = activeSection === item.href.replace('#', '');
+            const isActive = activeSection === item.href.replace("#", "");
             return (
               <a
                 key={item.label}
                 href={item.href}
                 className={`group relative text-[15px] font-semibold transition-colors hover:text-[#BA6054] dark:hover:text-[#e07b6d] ${
-                  isActive ? 'text-[#BA6054] dark:text-[#e07b6d]' : 'text-slate-700 dark:text-slate-300'
+                  isActive
+                    ? "text-[#BA6054] dark:text-[#e07b6d]"
+                    : "text-slate-700 dark:text-slate-300"
                 }`}
               >
                 {item.label}
                 <span
                   className={`absolute -bottom-1.5 left-0 h-[2px] rounded-full bg-[#BA6054] transition-all duration-300 dark:bg-[#e07b6d] ${
-                    isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    isActive ? "w-full" : "w-0 group-hover:w-full"
                   }`}
                 />
               </a>
@@ -129,14 +141,16 @@ export default function Header() {
         <div className="animate-slide-down border-t border-slate-100 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900 md:hidden">
           <div className="flex flex-col gap-3">
             {navItems.map((item) => {
-              const isActive = activeSection === item.href.replace('#', '');
+              const isActive = activeSection === item.href.replace("#", "");
               return (
                 <a
                   key={item.label}
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={`text-sm font-semibold transition hover:text-[#BA6054] dark:hover:text-[#e07b6d] ${
-                    isActive ? 'text-[#BA6054] dark:text-[#e07b6d]' : 'text-slate-700 dark:text-slate-300'
+                    isActive
+                      ? "text-[#BA6054] dark:text-[#e07b6d]"
+                      : "text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {item.label}
