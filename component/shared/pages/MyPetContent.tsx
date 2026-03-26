@@ -208,10 +208,18 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
     try {
       const result = await api.myTupai.check(user.id);
-      setTupai(result?.success ? result.data : null);
+      if (result?.success) {
+        setTupai(result.data);
+        return;
+      }
+
+      if (result?.message === "Belum ada tupai") {
+        setTupai(null);
+      } else {
+        console.warn("Pet check failed, keeping current state:", result?.message);
+      }
     } catch (error: any) {
       console.error("Error fetching pet:", error);
-      setTupai(null);
     } finally {
       setLoading(false);
     }
