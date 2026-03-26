@@ -195,9 +195,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <button
                 onClick={() => setUseCoins(!useCoins)}
                 disabled={!isEligibleForDiscount}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  useCoins ? "bg-orange-500" : "bg-slate-300 dark:bg-slate-700"
-                } ${!isEligibleForDiscount ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${useCoins ? "bg-orange-500" : "bg-slate-300 dark:bg-slate-700"
+                  } ${!isEligibleForDiscount ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${useCoins ? "translate-x-6" : "translate-x-1"}`}
@@ -243,8 +242,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <option value="">-- Pilih Kamar Tersedia --</option>
               {availableRooms.map((room) => (
                 <option key={room.id} value={String(room.id)}>
-                  Kamar {room.nomor_kamar} - Rp{" "}
-                  {Number(room.harga).toLocaleString("id-ID")}
+                  Kamar {room.nomor_kamar} - Rp {Number(room.harga).toLocaleString("id-ID")}
                 </option>
               ))}
             </select>
@@ -261,11 +259,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   key={method.key}
                   type="button"
                   onClick={() => setSelectedPayment(method.key)}
-                  className={`flex h-[72px] items-center justify-center rounded-2xl border bg-white px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:bg-[#f8fafc] dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${
-                    selectedPayment === method.key
+                  className={`flex h-[72px] items-center justify-center rounded-2xl border bg-white px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:bg-[#f8fafc] dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${selectedPayment === method.key
                       ? "border-[#c35f46] shadow-[0_0_0_1px_rgba(195,95,70,0.10),0_10px_24px_rgba(195,95,70,0.12)] dark:border-[#f0b2a7]"
                       : "border-slate-200 dark:border-slate-800"
-                  }`}
+                    }`}
                 >
                   <span className="sr-only">{method.label}</span>
                   {method.key === "GoPay" ? (
@@ -306,11 +303,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <button
             onClick={handleConfirmClick}
             disabled={!selectedRoomId || !selectedPayment || isParentProcessing}
-            className={`w-full rounded-2xl py-4 text-lg font-bold transition-all shadow-lg mt-4 ${
-              !selectedRoomId || !selectedPayment || isParentProcessing
+            className={`w-full rounded-2xl py-4 text-lg font-bold transition-all shadow-lg mt-4 ${!selectedRoomId || !selectedPayment || isParentProcessing
                 ? "cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600"
                 : "bg-[#c55f4a] text-white hover:bg-[#b95643] active:scale-[0.98] dark:bg-[#e07b6d] dark:text-slate-950 dark:hover:bg-[#f0b2a7]"
-            }`}
+              }`}
           >
             {isParentProcessing ? (
               <div className="flex items-center justify-center gap-2">
