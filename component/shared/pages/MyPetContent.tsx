@@ -270,7 +270,6 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
   useEffect(() => {
     fetchTupaiStatus();
-    fetchMissions(); // Panggil misinya di sini bosku!
   }, [fetchTupaiStatus, fetchMissions]);
 
   if (loading) {
