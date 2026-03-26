@@ -66,15 +66,27 @@ const calculatePetSnapshot = (pet: any, now: number) => {
   );
 
   if (isSleeping) {
-    snapshot.level_stamina = 100;
+    const gainedStamina = Number(snapshot.level_stamina) + getElapsedMinutes(lastSleep, now) * DECAY_PER_MINUTE;
+    snapshot.level_stamina = clampPercent(gainedStamina);
+
+    if (snapshot.level_stamina >= 100 || sleepUntil.getTime() <= now) {
+      snapshot.level_stamina = 100;
+      snapshot.status = "normal";
+      return snapshot;
+    }
+
     snapshot.status = "sleeping";
     return snapshot;
   }
 
   const staminaBase = sleepUntil && sleepUntil.getTime() <= now ? sleepUntil : lastSleep;
-  snapshot.level_stamina = clampPercent(
-    Number(snapshot.level_stamina) - getElapsedMinutes(staminaBase, now) * DECAY_PER_MINUTE,
-  );
+  snapshot.level_stamina = clampPercent(Number(snapshot.level_stamina));
+
+  if (snapshot.level_stamina < 100 && staminaBase) {
+    snapshot.level_stamina = clampPercent(
+      Number(snapshot.level_stamina) - getElapsedMinutes(staminaBase, now) * DECAY_PER_MINUTE,
+    );
+  }
 
   if (snapshot.level_lapar < 30) {
     snapshot.status = "hungry";
