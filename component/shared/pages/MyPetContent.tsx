@@ -145,19 +145,10 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
     }
 
     try {
-      const result = await api.myTupai.getAll();
-      const data = result?.data || [];
-      const myPet = Array.isArray(data)
-        ? data.find((item: any) => item.users_id == user.id)
-        : null;
-      setTupai(myPet || null);
+      const result = await api.myTupai.check(user.id);
+      setTupai(result?.success ? result.data : null);
     } catch (error: any) {
       console.error("Error fetching pet:", error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server sedang sibuk, coba lagi sebentar."
-          : "Gagal memuat tupai. Periksa koneksi Anda.",
-      );
       setTupai(null);
     } finally {
       setLoading(false);

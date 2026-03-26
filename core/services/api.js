@@ -1,15 +1,10 @@
 import { createAxiosInstance } from "./axiosInstances";
 import axios from "axios";
 
-// 1. Define the config first
-export const apiConfig = {
-  mode: "PRODUCTION",
-  baseUrl: "https://easykosbackend-production.up.railway.app/api",
-};
-
-// 2. Create the instance and MANUALLY set the baseURL
+// Create the instance using the environment-aware base URL from axiosInstances.
+// Do not hardcode production here, otherwise local frontend sessions will keep
+// talking to the deployed backend and surface unrelated 503/CORS failures.
 const axiosInstance = createAxiosInstance();
-axiosInstance.defaults.baseURL = apiConfig.baseUrl; // This forces the Railway URL
 
 export default axiosInstance;
 // ======================== AUTH ENDPOINTS ========================
@@ -204,6 +199,28 @@ export const vouchers = {
 // ======================== MYPET (TUPAI) ENDPOINTS ========================
 
 export const myTupai = {
+  check: async (userId) => {
+    try {
+      const response = await axiosInstance.get(`/mytupai/check/${userId}`);
+      return response.data;
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        return {
+          success: false,
+          message: error?.response?.data?.message || "Belum ada tupai",
+          data: null,
+        };
+      }
+
+      console.warn("myTupai.check failed:", error?.message || error);
+      return {
+        success: false,
+        message: error?.message || "Network Error",
+        data: null,
+      };
+    }
+  },
+
   getAll: async () => {
     try {
       const response = await axiosInstance.get("/mytupai");
@@ -237,6 +254,10 @@ export const myTupai = {
       const response = await axiosInstance.post("/mytupai", data);
       return response.data;
     } catch (error) {
+      if (error?.response?.data) {
+        return error.response.data;
+      }
+
       console.warn("myTupai.adopt failed:", error?.message || error);
       return {
         success: false,
