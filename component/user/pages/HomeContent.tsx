@@ -194,6 +194,8 @@ export default function HomeContent() {
   const [streakCount, setStreakCount] = useState<number>(0);
   const [isClaimedToday, setIsClaimedToday] = useState<boolean>(false);
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
+  const [streakDays, setStreakDays] = useState<number>(0);
+  const [hasClaimedToday, setHasClaimedToday] = useState<boolean>(false);
 
   const user = useAppSelector((state: any) => state.user.user);
   const { totalKoin, fetchBalance } = useWallet();
@@ -218,8 +220,14 @@ export default function HomeContent() {
     if (!user?.id) return;
     try {
       const token = localStorage.getItem("token");
+
+      // 🔥 HARCODE URL SEMENTARA BIAR GAK FAILED TO FETCH
+      // (Kalau kamu lagi ngetes pakai backend lokal, ganti jadi "http://127.0.0.1:8000/api")
+      const API_BASE = "https://easykosbackend-production.up.railway.app/api";
+      //const API_BASE = "http://127.0.0.1:8000/api";
+
       const response = await fetch(
-        `${baseUrl}/daily-login/status?user_id=${user.id}`,
+        `${API_BASE}/daily-login/status?user_id=${user.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -227,20 +235,21 @@ export default function HomeContent() {
           },
         },
       );
+
       const result = await response.json();
 
       if (result.success) {
-        setStreakCount(result.data.streak_count);
-
-        const lastLogin = result.data.last_login_date;
-        const today = new Date().toISOString().split("T")[0];
-
-        setIsClaimedToday(lastLogin === today);
+        // Sesuaikan dengan state yang ada di kodinganmu
+        setStreakDays(result.data.streak_count);
+        setHasClaimedToday(
+          result.data.last_login_date ===
+            new Date().toISOString().split("T")[0],
+        );
       }
     } catch (error) {
       console.error("Gagal mengambil status streak:", error);
     }
-  }, [user, baseUrl]);
+  }, [user?.id]);
 
   const handleClaimDaily = async () => {
     if (isClaimedToday || isClaiming || !user?.id) return;

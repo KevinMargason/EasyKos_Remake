@@ -19,11 +19,21 @@ export const useKos = () => {
 
   const fetchKos = useCallback(
     async (ownerId) => {
-      setIsLoading(true);
+      // HANYA ADA INI, JANGAN ADA TULISAN setIsLoading SAMA SEKALI!
+      dispatch(setLoading(true));
+
       try {
+        // 🔥 HARCODE URL SEMENTARA BIAR GAK UNDEFINED!
+        const API_BASE = "https://easykosbackend-production.up.railway.app/api";
+        //const API_BASE = "http://127.0.0.1:8000/api";
+
+        // Logika URL: Kalau dipanggil dari dashboard owner, kasih filter. Kalau dari halaman user biasa, ambil semua.
         const url = ownerId
-          ? `${process.env.NEXT_PUBLIC_API_URL}/kos?owner_id=${ownerId}`
-          : `${process.env.NEXT_PUBLIC_API_URL}/kos`;
+          ? `${API_BASE}/kos?owner_id=${ownerId}`
+          : `${API_BASE}/kos`;
+
+        // Debugging: Biar kamu bisa lihat di browser console kalau URL-nya udah bener
+        console.log("Nembak API ke:", url);
 
         const response = await fetch(url);
         const result = await response.json();
@@ -33,12 +43,14 @@ export const useKos = () => {
           Array.isArray(result.data) ||
           Array.isArray(result)
         ) {
-          dispatch(setKosList(result.data || result));
+          // Bypass Redux Unwrap
+          const finalData = result.data || result;
+          dispatch(setKosList(finalData));
         }
       } catch (error) {
         console.error("Error fetching kos:", error);
       } finally {
-        setIsLoading(false);
+        dispatch(setLoading(false));
       }
     },
     [dispatch],
