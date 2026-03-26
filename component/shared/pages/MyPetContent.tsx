@@ -197,7 +197,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
       if (result?.success) {
         setTupai(result.data);
         toast.success("Tupai berhasil diadopsi! Selamat!");
-        fetchMissions();
+        //fetchMissions();
       } else {
         toast.error(result?.message || "Gagal mengadopsi.");
       }
