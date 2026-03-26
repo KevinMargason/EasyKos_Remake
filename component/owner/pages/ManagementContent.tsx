@@ -182,15 +182,15 @@ export default function OwnerManagementContent() {
   }
 
   return (
-    <div className="mx-auto flex max-w-[1180px] flex-col gap-6">
-      <h1 className="text-[26px] font-semibold text-slate-900 dark:text-slate-100">
+    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 px-4 sm:gap-6 sm:px-6 lg:px-8">
+      <h1 className="text-[22px] font-semibold text-slate-900 sm:text-[26px] dark:text-slate-100">
         Manajemen Properti
       </h1>
 
       {activeMenu === "home" ? (
         <>
-          <div className="grid gap-5 md:grid-cols-2">
-            <article className="relative overflow-hidden rounded-[24px] bg-white p-6 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5">
+          <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
+            <article className="relative overflow-hidden rounded-[24px] bg-white p-4 sm:p-6 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5">
               <div className="absolute right-4 top-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fef8f6] shadow-[0_10px_20px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-800">
                 <Image
                   src="/Asset/icon/icon-chart.svg"
@@ -246,7 +246,7 @@ export default function OwnerManagementContent() {
               </div>
             </article>
 
-            <article className="relative overflow-hidden rounded-[24px] bg-white p-6 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5">
+            <article className="relative overflow-hidden rounded-[24px] bg-white p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 sm:p-6 dark:bg-slate-900 dark:ring-white/5">
               <div className="absolute right-4 top-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fef8f6] shadow-[0_10px_20px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-800">
                 <Image
                   src="/Asset/icon/icon-apartment.svg"
@@ -256,7 +256,7 @@ export default function OwnerManagementContent() {
                 />
               </div>
               <div className="max-w-[360px]">
-                <h2 className="text-[28px] font-bold leading-tight text-[#c86654]">
+                <h2 className="text-[22px] font-bold leading-tight text-[#c86654] sm:text-[28px]">
                   Manajemen Kosan
                 </h2>
                 <p className="mt-3 text-[14px] font-medium text-slate-500 dark:text-slate-400">
@@ -283,15 +283,15 @@ export default function OwnerManagementContent() {
           </div>
 
           {/* Manajemen Kos Section */}
-          <section className="rounded-[24px] bg-white p-6 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5">
-            <h2 className="text-[28px] font-bold text-[#c86654]">
+          <section className="rounded-[24px] bg-white p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 sm:p-6 dark:bg-slate-900 dark:ring-white/5">
+            <h2 className="text-[22px] font-bold text-[#c86654] sm:text-[28px]">
               Manajemen Kos
             </h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="mt-6 grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-3">
               {/* Tambah Kamar Baru */}
               <button
                 onClick={() => setActiveMenu("add-room")}
-                className="glass-card group flex flex-col items-center gap-4 rounded-[18px] border border-[#e1c2b7] p-6 text-center transition hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)] dark:border-slate-700/80 dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
+                className="glass-card group flex flex-col items-center gap-4 rounded-[18px] border border-[#e1c2b7] p-4 text-center transition hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)] sm:p-6 dark:border-slate-700/80 dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
               >
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#fef8f6] ring-1 ring-[#e6b3a8] dark:bg-slate-800 dark:ring-slate-600">
                   <Plus size={20} className="text-[#c86654]" />
@@ -309,7 +309,7 @@ export default function OwnerManagementContent() {
               {/* Perbarui Status Kamar */}
               <button
                 onClick={() => setActiveMenu("update-status")}
-                className="glass-card group flex flex-col items-center gap-4 rounded-[18px] border border-[#e1c2b7] p-6 text-center transition hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)] dark:border-slate-700/80 dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
+                className="glass-card group flex flex-col items-center gap-4 rounded-[18px] border border-[#e1c2b7] p-4 text-center transition hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)] sm:p-6 dark:border-slate-700/80 dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
               >
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#fef8f6] ring-1 ring-[#e6b3a8] dark:bg-slate-800 dark:ring-slate-600">
                   <Edit3 size={20} className="text-[#c86654]" />
@@ -327,7 +327,7 @@ export default function OwnerManagementContent() {
               {/* Riwayat Penghuni */}
               <button
                 onClick={() => setActiveMenu("resident-history")}
-                className="glass-card group flex flex-col items-center gap-4 rounded-[18px] border border-[#e1c2b7] p-6 text-center transition hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)] dark:border-slate-700/80 dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
+                className="glass-card group flex flex-col items-center gap-4 rounded-[18px] border border-[#e1c2b7] p-4 text-center transition hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)] sm:p-6 dark:border-slate-700/80 dark:hover:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
               >
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#fef8f6] ring-1 ring-[#e6b3a8] dark:bg-slate-800 dark:ring-slate-600">
                   <History size={20} className="text-[#c86654]" />

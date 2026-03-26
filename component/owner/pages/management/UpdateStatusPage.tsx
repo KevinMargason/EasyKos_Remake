@@ -183,10 +183,10 @@ export default function UpdateStatusPage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1180px]">
+    <div className="w-full">
       <button
         onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        className="mb-4 flex items-center gap-2 text-slate-600 transition hover:text-slate-900 sm:mb-6 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ChevronLeft size={20} />
         <span>Kembali</span>
@@ -194,15 +194,15 @@ export default function UpdateStatusPage({
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-[24px] bg-white p-8 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5"
+        className="rounded-[24px] bg-white p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 sm:p-6 lg:p-8 dark:bg-slate-900 dark:ring-white/5"
       >
-        <h2 className="text-[28px] font-bold text-[#c86654]">
+        <h2 className="text-[20px] font-bold text-[#c86654] sm:text-[24px] lg:text-[28px]">
           Memperbarui Status Kos
         </h2>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-[1fr_2fr] lg:grid-cols-3">
+        <div className="mt-6 grid gap-3 sm:gap-4 md:grid-cols-[1fr_2fr] lg:grid-cols-3">
           <div>
-            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="mb-3 text-sm font-semibold text-slate-900 sm:mb-4 sm:text-base dark:text-slate-100">
               Daftar Kamar Kos
             </h3>
             <div className="space-y-2">
@@ -395,7 +395,7 @@ export default function UpdateStatusPage({
           </div>
         </div>
 
-        <div className="mt-12 flex gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:gap-4 lg:mt-12">
           {/* TOMBOL HAPUS MUNCUL KALAU KOS SUDAH DIPILIH */}
           {selectedKos && (
             <button

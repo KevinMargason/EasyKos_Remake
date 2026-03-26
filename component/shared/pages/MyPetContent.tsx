@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { Edit3, MoonStar, Sparkles, Utensils, Ticket } from "lucide-react"; // Tambahin Ticket buat voucher
+import { Edit3, MoonStar, Sparkles, Utensils, Ticket, Check, Clock, Zap } from "lucide-react"; // Tambahin Ticket buat voucher
 import { toast } from "sonner";
 import { useAppSelector } from "@/core/store/hooks";
 import { getFullGreeting } from "@/lib/greetings";
@@ -33,7 +33,7 @@ const rewardCards = [
 ];
 
 const ACTION_THRESHOLD = 70;
-const DECAY_PER_MINUTE = 20;
+const DECAY_PER_MINUTE = 25;
 const FEED_GAIN_PERCENT = 25;
 
 
@@ -96,17 +96,24 @@ const calculatePetSnapshot = (pet: any, now: number) => {
   const sleepUntil = toDate(pet.tidur_sampai);
   const isSleeping = snapshot.status === "sleeping" && !!sleepUntil && sleepUntil.getTime() > now;
 
-  snapshot.level_lapar = clampPercent(
-    Number(snapshot.level_lapar) - getElapsedMinutes(lastMeal, now) * DECAY_PER_MINUTE,
-  );
-
+  // Jika sedang tidur: stamina BERTAMBAH, hunger BERKURANG
   if (isSleeping) {
+    // Stamina naik saat tidur
     const gainedStamina = Number(snapshot.level_stamina) + getElapsedMinutes(lastSleep, now) * DECAY_PER_MINUTE;
     snapshot.level_stamina = clampPercent(gainedStamina);
 
+    // Hunger tetap berkurang saat tidur
+    snapshot.level_lapar = clampPercent(
+      Number(snapshot.level_lapar) - getElapsedMinutes(lastMeal, now) * DECAY_PER_MINUTE,
+    );
+
+    // Jika sudah full stamina atau waktu tidur habis, bangun
     if (snapshot.level_stamina >= 100 || sleepUntil.getTime() <= now) {
       snapshot.level_stamina = 100;
       snapshot.status = "normal";
+      // Reset terakhir_tidur ke sekarang agar decay tidak langsung besar
+      snapshot.terakhir_tidur = new Date(now).toISOString();
+      snapshot.tidur_sampai = null; // Clear sleep end time
       return snapshot;
     }
 
@@ -114,15 +121,17 @@ const calculatePetSnapshot = (pet: any, now: number) => {
     return snapshot;
   }
 
-  const staminaBase = sleepUntil && sleepUntil.getTime() <= now ? sleepUntil : lastSleep;
-  snapshot.level_stamina = clampPercent(Number(snapshot.level_stamina));
+  // Normal state: kedua stat BERKURANG seiring waktu
+  snapshot.level_lapar = clampPercent(
+    Number(snapshot.level_lapar) - getElapsedMinutes(lastMeal, now) * DECAY_PER_MINUTE,
+  );
 
-  if (snapshot.level_stamina < 100 && staminaBase) {
-    snapshot.level_stamina = clampPercent(
-      Number(snapshot.level_stamina) - getElapsedMinutes(staminaBase, now) * DECAY_PER_MINUTE,
-    );
-  }
+  const staminaBase = lastSleep || lastMeal;
+  snapshot.level_stamina = clampPercent(
+    Number(snapshot.level_stamina) - getElapsedMinutes(staminaBase, now) * DECAY_PER_MINUTE,
+  );
 
+  // Update status berdasarkan stat values
   if (snapshot.level_lapar >= 100 && snapshot.level_stamina >= 100) {
     snapshot.status = "happy";
   } else if (snapshot.level_lapar < 30) {
@@ -222,6 +231,125 @@ function RewardCard({
       </div>
       <div className="shrink-0 rounded-full bg-[#fbf0ed] px-4 py-2 text-sm font-semibold text-[#dd6f5d] dark:bg-[#2f1d18] dark:text-[#f0b2a7]">
         {price}
+      </div>
+    </div>
+  );
+}
+
+function MissionCard({
+  misi,
+  onClaim,
+  isLoading,
+}: {
+  misi: any;
+  onClaim: (id: number) => void;
+  isLoading: boolean;
+}) {
+  const userProgress = misi.user_status;
+  const progress = userProgress ? userProgress.progress_level : 0;
+  const target = misi.target_level || 3;
+  const isCompleted = userProgress?.status === "completed";
+  const isClaimed = userProgress?.status === "claimed";
+  const progressPercent = Math.min((progress / target) * 100, 100);
+
+  const getMissionIcon = () => {
+    const iconClass = "w-5 h-5";
+    if (misi.nama?.toLowerCase().includes("makan")) return <Utensils className={iconClass} />;
+    if (misi.nama?.toLowerCase().includes("tidur")) return <MoonStar className={iconClass} />;
+    return <Zap className={iconClass} />;
+  };
+
+  const getStatusColor = () => {
+    if (isClaimed) return "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900/30";
+    if (isCompleted) return "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900/30";
+    return "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800";
+  };
+
+  const getIconColor = () => {
+    if (isClaimed) return "text-green-500 dark:text-green-400";
+    if (isCompleted) return "text-yellow-500 dark:text-yellow-400";
+    return "text-slate-600 dark:text-slate-400";
+  };
+
+  return (
+    <div
+      className={`flex flex-col gap-3 rounded-2xl border p-4 shadow-sm transition hover:shadow-md ${getStatusColor()}`}
+    >
+      {/* Header dengan Icon dan Status */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1">
+          <div
+            className={`shrink-0 rounded-full p-2.5 ${
+              isClaimed
+                ? "bg-green-100 dark:bg-green-900/40"
+                : isCompleted
+                  ? "bg-yellow-100 dark:bg-yellow-900/40"
+                  : "bg-slate-100 dark:bg-slate-800"
+            }`}
+          >
+            <div className={getIconColor()}>{getMissionIcon()}</div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="font-bold text-slate-950 dark:text-white text-sm md:text-base">
+              {misi.nama}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {progress}/{target} Selesai
+            </p>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        {isClaimed && (
+          <div className="flex items-center gap-1 rounded-full bg-green-500 px-3 py-1.5 text-xs font-bold text-white">
+            <Check size={14} />
+            <span>Tuntas</span>
+          </div>
+        )}
+      </div>
+
+      {/* Progress Bar */}
+      <div className="space-y-1.5">
+        <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              isClaimed
+                ? "bg-green-500"
+                : isCompleted
+                  ? "bg-yellow-400"
+                  : "bg-[#dd6f5d] dark:bg-[#f0b2a7]"
+            }`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Reward dan Action */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="text-xs sm:text-sm font-semibold text-yellow-600 dark:text-yellow-400">
+          {misi.coin ? `+${misi.coin}🪙` : "+"}
+          {misi.xp ? ` +${misi.xp}⭐` : ""}
+        </div>
+
+        {!isClaimed && isCompleted ? (
+          <button
+            onClick={() => onClaim(userProgress.id)}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 px-4 py-1.5 text-xs font-bold text-slate-950 shadow-sm hover:shadow-md transition hover:from-yellow-500 hover:to-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse md:text-sm"
+          >
+            <Zap size={14} className="mt-px" />
+            Klaim
+          </button>
+        ) : isClaimed ? (
+          <div className="text-xs font-semibold text-green-600 dark:text-green-400">
+            ✓ Diklaim
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+            <Clock size={13} />
+            <span>Berlangsung</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -477,7 +605,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
         <div className="flex items-center gap-3 self-start xl:self-auto">
           <MetricChip
             iconSrc="/Asset/icon/icon-fire.svg"
-            label={`${petLevel} Level`} // 🔥 Ganti ke Level bosku!
+            label={`${petLevel} Hari`}
             textClassName="text-orange-600 dark:text-orange-400"
             chipClassName="hover:bg-orange-50 dark:hover:bg-orange-900/30 cursor-pointer shadow-sm hover:shadow-md border border-orange-200 bg-white text-[#e48a44] dark:border-orange-900/30 dark:bg-slate-900 dark:text-[#f0b2a7]"
           />
@@ -540,12 +668,6 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                       <h2 className="text-[28px] font-bold text-slate-950 dark:text-white">
                         Peliharaanmu
                       </h2>
-                      <button
-                        className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                        aria-label="Edit pet name"
-                      >
-                        <Edit3 size={14} />
-                      </button>
                     </div>
                     <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                       {visibleTupai.nama || `Tupai ${displayName}`}
@@ -586,61 +708,34 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Sparkles
-            size={18}
+            size={20}
             className="text-yellow-500 dark:text-yellow-400"
           />
           <h3 className="text-[22px] font-semibold text-slate-950 dark:text-white">
             Misi Harian Tupai
           </h3>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {missions.map((misi, index) => {
-            const userProgress = misi.user_status;
-            const progress = userProgress ? userProgress.progress_level : 0;
-            const target = 3; // Asumsi target misi = 3x (sesuai backend)
-            const isCompleted = userProgress?.status === "completed";
-            const isClaimed = userProgress?.status === "claimed";
-
-            return (
-              <div
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {missions.length > 0 ? (
+            missions.map((misi, index) => (
+              <MissionCard
                 key={index}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition hover:border-yellow-200 hover:shadow-md"
-              >
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white">
-                    {misi.nama}
-                  </h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Progres:{" "}
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      {progress}/{target}
-                    </span>
-                  </p>
-                  <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mt-1">
-                    Hadiah: +{misi.coin} Koin & +{misi.xp} EXP
-                  </p>
-                </div>
-
-                {isClaimed ? (
-                  <span className="text-sm font-bold text-green-500 dark:text-green-400">
-                    Tuntas ✓
-                  </span>
-                ) : isCompleted ? (
-                  <button
-                    onClick={() => handleClaimMission(userProgress.id)}
-                    disabled={isActionLoading}
-                    className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-bold text-slate-900 hover:bg-yellow-500 transition animate-pulse"
-                  >
-                    Klaim Koin 🔥
-                  </button>
-                ) : (
-                  <span className="text-sm font-medium text-slate-400">
-                    Sedang Berlangsung...
-                  </span>
-                )}
-              </div>
-            );
-          })}
+                misi={misi}
+                onClaim={handleClaimMission}
+                isLoading={isActionLoading}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <Sparkles
+                size={40}
+                className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
+              />
+              <p className="text-slate-500 dark:text-slate-400">
+                Tidak ada misi hari ini. Coba lagi besok!
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

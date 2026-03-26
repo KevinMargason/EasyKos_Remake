@@ -255,10 +255,10 @@ export default function AddRoomPage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1180px]">
+    <div className="w-full">
       <button
         onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        className="mb-4 flex items-center gap-2 text-slate-600 transition hover:text-slate-900 sm:mb-6 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ChevronLeft size={20} />
         <span>Kembali</span>
@@ -266,13 +266,13 @@ export default function AddRoomPage({
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-[24px] bg-white p-8 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5"
+        className="rounded-[24px] bg-white p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 sm:p-6 lg:p-8 dark:bg-slate-900 dark:ring-white/5"
       >
-        <h2 className="text-[28px] font-bold text-[#c86654]">
+        <h2 className="text-[20px] font-bold text-[#c86654] sm:text-[24px] lg:text-[28px]">
           Formulir Properti Baru - Kos
         </h2>
 
-        <div className="mt-8 grid gap-8 md:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:gap-6 lg:gap-8 md:grid-cols-2">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               Informasi Kos
