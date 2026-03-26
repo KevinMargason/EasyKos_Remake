@@ -28,20 +28,21 @@ export default function OwnerManagementContent() {
   const API_BASE = "https://easykosbackend-production.up.railway.app/api";
 
   const loadData = useCallback(async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      await Promise.all([
-        fetchKos(user?.id), // <--- Isi ID di sini bosku!
-        fetchRooms(),
-        fetchPayments(),
-      ]);
+      await Promise.all([fetchKos(user.id), fetchRooms(), fetchPayments()]);
     } catch (error) {
       console.error("Gagal load data:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchKos, fetchRooms, fetchPayments]);
+  }, [user?.id, fetchKos, fetchRooms, fetchPayments]);
 
   const fetchStreakStatus = useCallback(async () => {
     if (!user?.id) return;
@@ -70,11 +71,12 @@ export default function OwnerManagementContent() {
   }, [user?.id]);
 
   useEffect(() => {
+    loadData();
     if (user?.id) {
       fetchStreakStatus();
       if (fetchBalance) fetchBalance(user.id);
     }
-  }, [user?.id, fetchStreakStatus, fetchBalance]);
+  }, [user?.id]);
 
   type AmenityKey =
     | "wifi"

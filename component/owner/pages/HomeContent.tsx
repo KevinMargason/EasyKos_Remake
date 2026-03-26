@@ -100,27 +100,30 @@ export default function OwnerHomeContent() {
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
+
     try {
-      setIsLoading(true);
+      // Hilangkan setIsLoading(true) di sini kalau mau ngetes apakah datanya muncul
+      // setIsLoading(true);
+
       await Promise.all([
         fetchKos(user?.id),
         fetchRooms(),
         fetchPayments(),
-        fetchStreakStatus(), // Ambil status streak sekalian
-        fetchBalance ? fetchBalance(user.id) : Promise.resolve(), // Ambil saldo koin
+        fetchStreakStatus(),
+        fetchBalance ? fetchBalance(user.id) : Promise.resolve(),
       ]);
     } catch (error) {
       console.error("Gagal load data:", error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // ✅ Pastikan ini terpanggil
     }
   }, [
+    user?.id,
     fetchKos,
     fetchRooms,
     fetchPayments,
     fetchStreakStatus,
     fetchBalance,
-    user?.id,
   ]);
 
   useEffect(() => {
