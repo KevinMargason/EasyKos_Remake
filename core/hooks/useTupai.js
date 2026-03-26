@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/core/store/hooks';
 import * as apiService from '@/core/services/api';
-import { unwrapApiData, unwrapApiList } from '@/core/utils/apiResponse';
+import { unwrapApiData } from '@/core/utils/apiResponse';
 import {
   setTupai,
-  setAllTupai,
-  updateTupaiAfterAction,
   adoptTupai,
   setLoading,
   setError,
@@ -16,30 +14,25 @@ export const useTupai = () => {
   const state = useAppSelector(state => state.tupai);
 
   const fetchAllTupai = useCallback(async () => {
-    try {
-      dispatch(setLoading(true));
-      const response = await apiService.myTupai.getAll();
-      const payload = unwrapApiList(response);
-      dispatch(setAllTupai(payload));
-      if (payload.length > 0) {
-        dispatch(setTupai(payload[0]));
-      }
-    } catch (error) {
-      dispatch(setError(error?.message || 'Gagal mengambil data tupai'));
-      throw error;
+    dispatch(setLoading(true));
+    const payload = state.tupai ? [state.tupai] : [];
+    dispatch({ type: 'tupai/setAllTupai', payload });
+    if (state.tupai) {
+      dispatch(setTupai(state.tupai));
     }
+    dispatch(setLoading(false));
+    return { success: true, data: payload };
   }, [dispatch]);
 
   const fetchTupaiDetail = useCallback(async (id) => {
-    try {
-      dispatch(setLoading(true));
-      const response = await apiService.myTupai.getDetail(id);
-      dispatch(setTupai(unwrapApiData(response)));
-    } catch (error) {
-      dispatch(setError(error?.message || 'Gagal mengambil detail tupai'));
-      throw error;
+    dispatch(setLoading(true));
+    const currentTupai = state.tupai && String(state.tupai.id) === String(id) ? state.tupai : null;
+    if (currentTupai) {
+      dispatch(setTupai(currentTupai));
     }
-  }, [dispatch]);
+    dispatch(setLoading(false));
+    return { success: true, data: currentTupai };
+  }, [dispatch, state.tupai]);
 
   const adoptNewTupai = useCallback(async (data) => {
     try {
@@ -54,34 +47,55 @@ export const useTupai = () => {
   }, [dispatch]);
 
   const feedTupai = useCallback(async (id) => {
-    try {
-      dispatch(setLoading(true));
-      const response = await apiService.myTupai.feed(id);
-      dispatch(updateTupaiAfterAction({
-        tupai: unwrapApiData(response),
-        action: 'feed',
-      }));
-      return response;
-    } catch (error) {
-      dispatch(setError(error?.message || 'Gagal memberi makan tupai'));
-      throw error;
+    dispatch(setLoading(true));
+    const currentTupai = state.tupai && String(state.tupai.id) === String(id) ? state.tupai : null;
+
+    if (!currentTupai) {
+      dispatch(setLoading(false));
+      return { success: false, message: 'Tupai tidak ditemukan' };
     }
-  }, [dispatch]);
+
+    const nextTupai = {
+      ...currentTupai,
+      level_lapar: Math.min(100, Number(currentTupai.level_lapar || 0) + 30),
+      xp: Number(currentTupai.xp || 0) + 10,
+      terakhir_makan: new Date().toISOString(),
+      status: 'normal',
+    };
+
+    dispatch(setTupai(nextTupai));
+    dispatch({
+      type: 'tupai/updateTupaiAfterAction',
+      payload: { tupai: nextTupai, action: 'feed' },
+    });
+    dispatch(setLoading(false));
+    return { success: true, data: nextTupai };
+  }, [dispatch, state.tupai]);
 
   const sleepTupai = useCallback(async (id) => {
-    try {
-      dispatch(setLoading(true));
-      const response = await apiService.myTupai.sleep(id);
-      dispatch(updateTupaiAfterAction({
-        tupai: unwrapApiData(response),
-        action: 'sleep',
-      }));
-      return response;
-    } catch (error) {
-      dispatch(setError(error?.message || 'Gagal membuat tupai tidur'));
-      throw error;
+    dispatch(setLoading(true));
+    const currentTupai = state.tupai && String(state.tupai.id) === String(id) ? state.tupai : null;
+
+    if (!currentTupai) {
+      dispatch(setLoading(false));
+      return { success: false, message: 'Tupai tidak ditemukan' };
     }
-  }, [dispatch]);
+
+    const nextTupai = {
+      ...currentTupai,
+      status: 'sleeping',
+      terakhir_tidur: new Date().toISOString(),
+      tidur_sampai: new Date(Date.now() + 60 * 60000).toISOString(),
+    };
+
+    dispatch(setTupai(nextTupai));
+    dispatch({
+      type: 'tupai/updateTupaiAfterAction',
+      payload: { tupai: nextTupai, action: 'sleep' },
+    });
+    dispatch(setLoading(false));
+    return { success: true, data: nextTupai };
+  }, [dispatch, state.tupai]);
 
   return {
     ...state,

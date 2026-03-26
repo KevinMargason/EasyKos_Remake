@@ -37,9 +37,25 @@ export const useWallet = () => {
     }
   }, [dispatch]);
 
+  const spendCoins = useCallback(async (amount) => {
+    const koinAmount = Number(amount) || 0;
+
+    if (koinAmount <= 0) {
+      return { success: false, message: 'Jumlah koin tidak valid' };
+    }
+
+    if ((state.totalKoin || 0) < koinAmount) {
+      return { success: false, message: 'Koin tidak cukup' };
+    }
+
+    dispatch(updateBalance({ koinChange: -koinAmount }));
+    return { success: true, message: 'Koin berhasil dikurangi' };
+  }, [dispatch, state.totalKoin]);
+
   return {
     ...state,
     fetchBalance,
     redeemVoucher,
+    spendCoins,
   };
 };

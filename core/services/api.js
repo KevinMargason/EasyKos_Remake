@@ -199,56 +199,6 @@ export const vouchers = {
 // ======================== MYPET (TUPAI) ENDPOINTS ========================
 
 export const myTupai = {
-  check: async (userId) => {
-    try {
-      const response = await axiosInstance.get(`/mytupai/check/${userId}`);
-      return response.data;
-    } catch (error) {
-      if (error?.response?.status === 404) {
-        return {
-          success: false,
-          message: error?.response?.data?.message || "Belum ada tupai",
-          data: null,
-        };
-      }
-
-      console.warn("myTupai.check failed:", error?.message || error);
-      return {
-        success: false,
-        message: error?.message || "Network Error",
-        data: null,
-      };
-    }
-  },
-
-  getAll: async () => {
-    try {
-      const response = await axiosInstance.get("/mytupai");
-      return response.data;
-    } catch (error) {
-      console.warn("myTupai.getAll failed:", error?.message || error);
-      return {
-        success: false,
-        message: error?.message || "Network Error",
-        data: [],
-      };
-    }
-  },
-
-  getDetail: async (id) => {
-    try {
-      const response = await axiosInstance.get(`/mytupai/${id}`);
-      return response.data;
-    } catch (error) {
-      console.warn("myTupai.getDetail failed:", error?.message || error);
-      return {
-        success: false,
-        message: error?.message || "Network Error",
-        data: null,
-      };
-    }
-  },
-
   adopt: async (data) => {
     try {
       const response = await axiosInstance.post("/mytupai", data);
@@ -259,32 +209,6 @@ export const myTupai = {
       }
 
       console.warn("myTupai.adopt failed:", error?.message || error);
-      return {
-        success: false,
-        message: error?.message || "Network Error",
-      };
-    }
-  },
-
-  feed: async (id) => {
-    try {
-      const response = await axiosInstance.post(`/mytupai/${id}/feed`);
-      return response.data;
-    } catch (error) {
-      console.warn("myTupai.feed failed:", error?.message || error);
-      return {
-        success: false,
-        message: error?.message || "Network Error",
-      };
-    }
-  },
-
-  sleep: async (id) => {
-    try {
-      const response = await axiosInstance.post(`/mytupai/${id}/sleep`);
-      return response.data;
-    } catch (error) {
-      console.warn("myTupai.sleep failed:", error?.message || error);
       return {
         success: false,
         message: error?.message || "Network Error",

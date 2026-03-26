@@ -33,7 +33,9 @@ const rewardCards = [
 ];
 
 const ACTION_THRESHOLD = 70;
-const DECAY_PER_MINUTE = 5;
+const DECAY_PER_MINUTE = 20;
+const FEED_GAIN_PERCENT = 25;
+
 
 const getPetCacheKey = (userId: number | string) => `mytupai-cache-${userId}`;
 
@@ -121,7 +123,9 @@ const calculatePetSnapshot = (pet: any, now: number) => {
     );
   }
 
-  if (snapshot.level_lapar < 30) {
+  if (snapshot.level_lapar >= 100 && snapshot.level_stamina >= 100) {
+    snapshot.status = "happy";
+  } else if (snapshot.level_lapar < 30) {
     snapshot.status = "hungry";
   } else if (snapshot.level_stamina < 30) {
     snapshot.status = "exhausted";
@@ -225,47 +229,24 @@ function RewardCard({
 
 export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   const user = useAppSelector((state: any) => state.user.user);
-  const { totalKoin, fetchBalance } = useWallet();
+  const { totalKoin, fetchBalance, spendCoins } = useWallet();
   const [tupai, setTupai] = useState<any>(null);
   const [missions, setMissions] = useState<any[]>([]); // 🔥 State buat misi
   const [loading, setLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
 
-  const fetchTupaiStatus = useCallback(async () => {
+  const loadCachedTupai = useCallback(() => {
     if (!user?.id) {
       setTupai(null);
       setLoading(false);
-      return;
+      return null;
     }
 
-    try {
-      const result = await api.myTupai.check(user.id);
-      if (result?.success) {
-        setTupai(result.data);
-        writeCachedPet(user.id, result.data);
-        return;
-      }
-
-      if (result?.message === "Belum ada tupai") {
-        setTupai(null);
-        clearCachedPet(user.id);
-      } else {
-        const cachedPet = readCachedPet(user.id);
-        if (cachedPet) {
-          setTupai(cachedPet);
-        }
-        console.warn("Pet check failed, keeping current state:", result?.message);
-      }
-    } catch (error: any) {
-      console.error("Error fetching pet:", error);
-      const cachedPet = readCachedPet(user.id);
-      if (cachedPet) {
-        setTupai(cachedPet);
-      }
-    } finally {
-      setLoading(false);
-    }
+    const cachedPet = readCachedPet(user.id);
+    setTupai(cachedPet);
+    setLoading(false);
+    return cachedPet;
   }, [user?.id]);
 
   const fetchMissions = useCallback(async () => {
@@ -323,7 +304,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
     if (!currentTupai?.id || isActionLoading) return;
 
-    if (action === "feed" && (currentTupai.status === "sleeping" || currentTupai.level_lapar >= ACTION_THRESHOLD)) {
+    if (action === "feed" && (currentTupai.status === "sleeping" || currentTupai.level_lapar >= 100)) {
       toast.error("Tupai masih kenyang, belum perlu makan.");
       return;
     }
@@ -336,28 +317,58 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
     setIsActionLoading(true);
 
     try {
-      const result =
-        action === "feed"
-          ? await api.myTupai.feed(currentTupai.id)
-          : await api.myTupai.sleep(currentTupai.id);
+      const now = Date.now();
+      const nowIso = new Date(now).toISOString();
 
-      if (result?.success) {
-        setTupai(result.data);
-        writeCachedPet(user.id, result.data);
-        await fetchTupaiStatus();
-        toast.success(result.message || "Aksi berhasil dilakukan.");
-        fetchMissions();
-        if (fetchBalance) await fetchBalance(user.id);
+      let nextTupai = currentTupai;
+      let successMessage = "Tupai sekarang tidur.";
+
+      if (action === "feed") {
+        if (spendCoins) {
+          const spendResult = await spendCoins(10);
+          if (!spendResult?.success) {
+            toast.error(spendResult?.message || "Koin tidak cukup.");
+            return;
+          }
+        }
+
+        const nextLapar = Math.min(100, Number(currentTupai.level_lapar) + FEED_GAIN_PERCENT);
+        const nextStamina = clampPercent(currentTupai.level_stamina);
+        successMessage = nextLapar >= 100 ? "Tupai kenyang!" : "Tupai sudah makan.";
+
+        nextTupai = {
+          ...currentTupai,
+          level_lapar: nextLapar,
+          level_stamina: nextStamina,
+          xp: Number(currentTupai.xp || 0) + 10,
+          terakhir_makan: nowIso,
+          status:
+            nextLapar >= 100 && nextStamina >= 100
+              ? "happy"
+              : nextLapar < 30
+                ? "hungry"
+                : nextStamina < 30
+                  ? "exhausted"
+                  : "normal",
+        };
       } else {
-        toast.error(result?.message || "Gagal melakukan aksi.");
+        const stamina = clampPercent(currentTupai.level_stamina);
+        const sleepMinutes =  Math.max(1, Math.ceil((100 - stamina) / DECAY_PER_MINUTE));;
+
+        nextTupai = {
+          ...currentTupai,
+          status: "sleeping",
+          terakhir_tidur: nowIso,
+          tidur_sampai: new Date(now + sleepMinutes * 60000).toISOString(),
+        };
       }
+
+      setTupai(nextTupai);
+      writeCachedPet(user.id, nextTupai);
+      toast.success(successMessage);
     } catch (error: any) {
       console.error(error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server sedang sibuk, coba lagi nanti."
-          : "Gagal melakukan aksi. Cek jaringan.",
-      );
+      toast.error("Gagal memperbarui tupai secara lokal.");
     } finally {
       setIsActionLoading(false);
     }
@@ -371,7 +382,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
       if (result?.success) {
         toast.success(`Berhasil klaim! +${result.reward?.coins ?? 0} Koin 🔥`);
         await fetchMissions();
-        await fetchTupaiStatus();
+        loadCachedTupai();
         if (fetchBalance) await fetchBalance(user.id);
       } else {
         toast.error(result?.message || "Gagal klaim hadiah.");
@@ -391,13 +402,8 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   useEffect(() => {
     if (!user?.id) return;
 
-    const cachedPet = readCachedPet(user.id);
-    if (cachedPet) {
-      setTupai(cachedPet);
-    }
-
-    fetchTupaiStatus();
-  }, [fetchTupaiStatus, user?.id]);
+    loadCachedTupai();
+  }, [loadCachedTupai, user?.id]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -406,16 +412,6 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const syncTimer = window.setInterval(() => {
-      fetchTupaiStatus();
-    }, 60000);
-
-    return () => window.clearInterval(syncTimer);
-  }, [fetchTupaiStatus, user?.id]);
 
   if (loading) {
     return (
@@ -431,12 +427,29 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   const petLevel = Math.max(1, Number(visibleTupai?.level) || 1);
   const stamina = clampPercent(visibleTupai?.level_stamina);
   const hunger = clampPercent(visibleTupai?.level_lapar);
-  const canFeed = !!visibleTupai && visibleTupai.status !== "sleeping" && hunger < ACTION_THRESHOLD;
+  const canFeed = !!visibleTupai && visibleTupai.status !== "sleeping" && hunger < 100;
   const canSleep = !!visibleTupai && visibleTupai.status !== "sleeping" && stamina < ACTION_THRESHOLD;
-  const petImage =
-    visibleTupai?.status === "sleeping"
-      ? "/Asset/squirrel/squirrel-exhausted-light.svg"
-      : "/Asset/squirrel/squirrel-normal.svg";
+  const petImage = (() => {
+    if (!visibleTupai) return "/Asset/squirrel/squirrel-normal.svg";
+
+    if (visibleTupai.status === "sleeping") {
+      return "/Asset/squirrel/squirrel-exhausted-light.svg";
+    }
+
+    if (hunger < 30) {
+      return "/Asset/squirrel/squirrel-hungry.svg";
+    }
+
+    if (stamina < 30) {
+      return "/Asset/squirrel/squirrel-exhausted-light.svg";
+    }
+
+    if (hunger >= 100 && stamina >= 100) {
+      return "/Asset/squirrel/squirrel-happy.svg";
+    }
+
+    return "/Asset/squirrel/squirrel-normal.svg";
+  })();
   const pageLabel = mode === "owner" ? "My Pet Owner" : "My Pet";
 
   return (
