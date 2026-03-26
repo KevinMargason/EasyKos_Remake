@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { useAppSelector } from "@/core/store/hooks";
 import { getFullGreeting } from "@/lib/greetings";
 import { useWallet } from "@/core/hooks/useWallet";
-import { api } from "@/core/services/api";
 
 type MyPetContentProps = {
   mode?: "user" | "owner";
@@ -70,9 +69,7 @@ function MetricChip({
     <div
       className={`glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition ${chipClassName}`}
     >
-      <div className="relative h-[18px] w-[18px] shrink-0">
-        <Image src={iconSrc} alt="Icon chip" fill className="object-contain" />
-      </div>
+      <Image src={iconSrc} alt="Icon chip" width={18} height={18} />
       <span>{label}</span>
     </div>
   );
@@ -137,6 +134,8 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   const [loading, setLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
+  const API_BASE = "https://easykosbackend-production.up.railway.app/api";
+
   const fetchTupaiStatus = useCallback(async () => {
     if (!user?.id) {
       setTupai(null);
@@ -145,20 +144,17 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
     }
 
     try {
-      const result = await api.myTupai.getAll();
-      const data = result?.data || [];
-      const myPet = Array.isArray(data)
-        ? data.find((item: any) => item.users_id == user.id)
-        : null;
-      setTupai(myPet || null);
-    } catch (error: any) {
+      const res = await fetch(`${API_BASE}/mytupai?users_id=${user.id}`);
+      const result = await res.json();
+
+      if (result.success && result.data.length > 0) {
+        const myPet = result.data.find((item: any) => item.users_id == user.id);
+        setTupai(myPet || null);
+      } else {
+        setTupai(null);
+      }
+    } catch (error) {
       console.error("Error fetching pet:", error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server sedang sibuk, coba lagi sebentar."
-          : "Gagal memuat tupai. Periksa koneksi Anda.",
-      );
-      setTupai(null);
     } finally {
       setLoading(false);
     }
@@ -167,17 +163,14 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   const fetchMissions = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const result = await api.missions.getAll(user.id);
-      const missionsData = result?.data || [];
-      setMissions(Array.isArray(missionsData) ? missionsData : []);
-    } catch (error: any) {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/misi?users_id=${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await res.json();
+      if (result.success) setMissions(result.data);
+    } catch (error) {
       console.error("Error fetching missions:", error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server misi sedang down. Coba lagi nanti."
-          : "Gagal memuat misi. Pastikan backend bisa diakses.",
-      );
-      setMissions([]);
     }
   }, [user?.id]);
 
@@ -189,25 +182,24 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
     setIsActionLoading(true);
     try {
-      const result = await api.myTupai.adopt({
-        users_id: user.id,
-        nama: `Tupai ${user.name || displayName}`,
+      const res = await fetch(`${API_BASE}/mytupai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          users_id: user.id,
+          nama: `Tupai ${user.name || displayName}`,
+        }),
       });
-
-      if (result?.success) {
+      const result = await res.json();
+      if (result.success) {
         setTupai(result.data);
         toast.success("Tupai berhasil diadopsi! Selamat!");
-        fetchMissions();
+        fetchMissions(); // Ambil misi setelah adopsi
       } else {
-        toast.error(result?.message || "Gagal mengadopsi.");
+        toast.error(result.message || "Gagal mengadopsi.");
       }
-    } catch (error: any) {
-      console.error("Adopt error:", error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server sedang sibuk, coba lagi nanti."
-          : "Gagal mengadopsi. Coba lagi nanti.",
-      );
+    } catch (e) {
+      toast.error("Gagal mengadopsi. Coba lagi nanti.");
     } finally {
       setIsActionLoading(false);
     }
@@ -218,26 +210,30 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
     setIsActionLoading(true);
 
     try {
-      const result =
-        action === "feed"
-          ? await api.myTupai.feed(tupai.id)
-          : await api.myTupai.sleep(tupai.id);
+      const token = localStorage.getItem("token");
 
-      if (result?.success) {
+      const res = await fetch(`${API_BASE}/mytupai/${tupai.id}/${action}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
         setTupai(result.data);
         toast.success(result.message || "Aksi berhasil dilakukan.");
-        fetchMissions();
-        if (fetchBalance) await fetchBalance(user.id);
+        fetchMissions(); // Progress misi update, refresh daftar misi!
+        if (fetchBalance) await fetchBalance(user.id); // Refresh saldo koin
       } else {
-        toast.error(result?.message || "Gagal melakukan aksi.");
+        toast.error(result.message || "Gagal melakukan aksi.");
       }
-    } catch (error: any) {
-      console.error(error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server sedang sibuk, coba lagi nanti."
-          : "Gagal melakukan aksi. Cek jaringan.",
-      );
+    } catch (e) {
+      console.error(e);
+      toast.error("Gagal melakukan aksi. Cek jaringan.");
     } finally {
       setIsActionLoading(false);
     }
@@ -246,23 +242,27 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   const handleClaimMission = async (misiUserId: number) => {
     setIsActionLoading(true);
     try {
-      const result = await api.missions.claim({ misi_user_id: misiUserId });
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/misi/claim`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ misi_user_id: misiUserId }),
+      });
+      const result = await res.json();
 
-      if (result?.success) {
-        toast.success(`Berhasil klaim! +${result.reward?.coins ?? 0} Koin 🔥`);
-        await fetchMissions();
-        await fetchTupaiStatus();
-        if (fetchBalance) await fetchBalance(user.id);
+      if (result.success) {
+        toast.success(`Berhasil klaim! +${result.reward.coin} Koin 🔥`);
+        fetchMissions(); // Refresh daftar misi
+        fetchTupaiStatus(); // Refresh status pet (barangkali level naik)
+        if (fetchBalance) await fetchBalance(user.id); // Refresh saldo koin di pojok
       } else {
-        toast.error(result?.message || "Gagal klaim hadiah.");
+        toast.error(result.message || "Gagal klaim hadiah.");
       }
-    } catch (error: any) {
-      console.error(error);
-      toast.error(
-        error?.response?.status === 503
-          ? "Server klaim misi sedang sibuk. Coba lagi nanti."
-          : "Terjadi kesalahan jaringan.",
-      );
+    } catch (e) {
+      toast.error("Terjadi kesalahan jaringan.");
     } finally {
       setIsActionLoading(false);
     }
@@ -409,6 +409,8 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                   disabled={isActionLoading || tupai.status === "sleeping"}
                   className="bg-[#fff2ef] text-[#dd6f5d] hover:bg-[#fde6e1] dark:bg-[#2f1d18] dark:text-[#f0b2a7] dark:hover:bg-[#3a241e]"
                 />
+                <Utensils size={16} />
+                <span>Feed</span>
                 <ActionButton
                   label="Sleep"
                   icon={MoonStar}
