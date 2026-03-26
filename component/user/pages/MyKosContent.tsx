@@ -59,18 +59,19 @@ export default function MyKosContent() {
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
 
+  const [bulanLunas, setBulanLunas] = useState<number[]>([]);
+
+  const API_BASE = "https://easykosbackend-production.up.railway.app/api";
+
   const fetchPaymentsInfo = async () => {
     if (!user?.id) return;
     setPaymentsLoading(true);
     try {
-      const response = await fetch(
-        "https://easykosbackend-production.up.railway.app/api/payments/info",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tenant: user?.id }),
-        },
-      );
+      const response = await fetch(`${API_BASE}/payments/info`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant: user?.id }),
+      });
       const result = await response.json();
       if (result.success) setPayments(result.data);
     } catch (error) {
@@ -80,22 +81,18 @@ export default function MyKosContent() {
     }
   };
 
-  // Fungsi untuk handle klik "Bayar Sekarang"
   const handlePay = async (paymentId: number) => {
     if (isPaying) return;
     setIsPaying(true);
     try {
-      const response = await fetch(
-        `https://easykosbackend-production.up.railway.app/api/payments/${paymentId}/pay`,
-        {
-          method: "POST", // Sesuai dengan route api.php kamu
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      const response = await fetch(`${API_BASE}/payments/${paymentId}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
 
       if (response.ok) {
-        toast.success("Pembayaran berhasil!");
-        fetchPaymentsInfo(); // Refresh data supaya status jadi PAID dan tombol hilang
+        toast.success("Pembayaran lunas semua berhasil!");
+        fetchPaymentsInfo();
       } else {
         toast.error("Gagal memproses pembayaran.");
       }
@@ -104,6 +101,11 @@ export default function MyKosContent() {
     } finally {
       setIsPaying(false);
     }
+  };
+
+  const handlePayBulan = (index: number) => {
+    toast.success(`Berhasil! Pembayaran bulan ke-${index + 1} lunas.`);
+    setBulanLunas((prev) => [...prev, index]);
   };
 
   useEffect(() => {
@@ -128,7 +130,11 @@ export default function MyKosContent() {
   const resolvedKos = currentKos || derivedRoom?.kos || null;
 
   if (kosLoading || paymentsLoading) {
-    return <div className="p-10 text-center">Memuat...</div>;
+    return (
+      <div className="p-10 text-center text-slate-500 font-semibold">
+        Memuat data kos...
+      </div>
+    );
   }
 
   const roomImages = (resolvedKos as any)?.foto?.split(",") || [
@@ -137,15 +143,18 @@ export default function MyKosContent() {
   const kosName = (resolvedKos as any)?.nama || "Kos Saya";
   const roomNumber =
     derivedRoom?.nomor_kamar || activePayment?.rooms_id || "N/A";
+
   const paymentAmount = parseInt(activePayment?.amount) || 0;
   const isUnpaid = activePayment?.status?.toUpperCase() === "UNPAID";
   const hasBookedKos = Boolean(resolvedKos || activePayment);
+
+  const durasiSewa = activePayment?.durasi || activePayment?.durasi_sewa || 6;
+  const hargaPerBulan = paymentAmount > 0 ? paymentAmount / durasiSewa : 0;
 
   if (!hasBookedKos) {
     return (
       <div className="mx-auto flex max-w-[1180px] flex-col gap-5">
         <UserSectionTitle title="Kos Saya" />
-
         <Card className="p-8 sm:p-10">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <div className="grid h-16 w-16 place-items-center rounded-full bg-[#fff0eb] text-[#c35f46] shadow-[0_8px_20px_rgba(195,95,70,0.12)] dark:bg-[#2a1f1b] dark:text-[#f0b2a7]">
@@ -200,15 +209,16 @@ export default function MyKosContent() {
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-[18px] font-semibold">
-                  Status:{" "}
+                  Total Tagihan:{" "}
                   <span
                     className={isUnpaid ? "text-orange-500" : "text-green-500"}
                   >
-                    {isUnpaid ? "Menunggu Pembayaran" : "Lunas (PAID)"}
+                    {isUnpaid ? "Belum Lunas" : "Lunas (PAID)"}
                   </span>
                 </h3>
-                <p className="text-sm text-slate-500">
-                  Metode: {activePayment.jenis_pembayaran}
+                <p className="text-sm text-slate-500 mt-1">
+                  Metode: {activePayment.jenis_pembayaran} • Durasi:{" "}
+                  {durasiSewa} Bulan
                 </p>
               </div>
               <div className="text-[22px] font-bold text-[#c35f46]">
@@ -216,23 +226,71 @@ export default function MyKosContent() {
               </div>
             </div>
 
-            {/* TOMBOL HILANG JIKA SUDAH PAID */}
             {isUnpaid && (
               <button
                 onClick={() => handlePay(activePayment.id)}
                 disabled={isPaying}
-                className="mt-6 rounded-md bg-[#ec8a3d] py-3 font-semibold text-white shadow-lg active:scale-95 transition disabled:opacity-50"
+                className="mt-6 rounded-md bg-[#ec8a3d] py-3 font-semibold text-white shadow-lg active:scale-95 transition disabled:opacity-50 hover:bg-[#d67a35]"
               >
-                {isPaying ? "Memproses..." : "Bayar Sekarang"}
+                {isPaying ? "Memproses..." : "Lunasi Semua Tagihan"}
               </button>
             )}
           </Card>
         ) : (
-          <Card className="p-6 text-center text-slate-500">
+          <Card className="p-6 text-center text-slate-500 flex items-center justify-center">
             Tidak ada riwayat tagihan.
           </Card>
         )}
       </div>
+
+      {activePayment && (
+        <div className="mt-4 space-y-4">
+          <h3 className="text-[20px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            Rincian Pembayaran Bulanan
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: durasiSewa }).map((_, index) => {
+              const isBulanPaid = !isUnpaid || bulanLunas.includes(index);
+
+              return (
+                <Card
+                  key={index}
+                  className="flex flex-col justify-between p-5 transition-all hover:shadow-[0_10px_30px_rgba(195,95,70,0.1)]"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        Bulan ke-{index + 1}
+                      </span>
+                      <span
+                        className={`text-[11px] font-bold px-3 py-1 rounded-full ${
+                          isBulanPaid
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                        }`}
+                      >
+                        {isBulanPaid ? "LUNAS" : "BELUM BAYAR"}
+                      </span>
+                    </div>
+                    <div className="mt-4 text-[20px] font-bold text-[#c35f46]">
+                      Rp {Math.round(hargaPerBulan).toLocaleString("id-ID")}
+                    </div>
+                  </div>
+
+                  {!isBulanPaid && (
+                    <button
+                      onClick={() => handlePayBulan(index)}
+                      className="mt-5 w-full rounded-md bg-[#c35f46] py-2.5 text-sm font-semibold text-white shadow-md transition active:scale-95 hover:bg-[#a54d37]"
+                    >
+                      Bayar Bulan Ini
+                    </button>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
