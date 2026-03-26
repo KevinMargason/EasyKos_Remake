@@ -32,10 +32,59 @@ const rewardCards = [
   },
 ];
 
+const ACTION_THRESHOLD = 70;
+const DECAY_PER_MINUTE = 5;
+
+const toDate = (value: unknown) => {
+  if (!value) return null;
+  const date = new Date(value as string);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 const clampPercent = (value: unknown) => {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) return 0;
   return Math.max(0, Math.min(100, numericValue));
+};
+
+const getElapsedMinutes = (from: Date | null, now: number) => {
+  if (!from) return 0;
+  return Math.max(0, Math.floor((now - from.getTime()) / 60000));
+};
+
+const calculatePetSnapshot = (pet: any, now: number) => {
+  if (!pet) return null;
+
+  const snapshot = { ...pet };
+  const lastMeal = toDate(pet.terakhir_makan);
+  const lastSleep = toDate(pet.terakhir_tidur);
+  const sleepUntil = toDate(pet.tidur_sampai);
+  const isSleeping = snapshot.status === "sleeping" && !!sleepUntil && sleepUntil.getTime() > now;
+
+  snapshot.level_lapar = clampPercent(
+    Number(snapshot.level_lapar) - getElapsedMinutes(lastMeal, now) * DECAY_PER_MINUTE,
+  );
+
+  if (isSleeping) {
+    snapshot.level_stamina = 100;
+    snapshot.status = "sleeping";
+    return snapshot;
+  }
+
+  const staminaBase = sleepUntil && sleepUntil.getTime() <= now ? sleepUntil : lastSleep;
+  snapshot.level_stamina = clampPercent(
+    Number(snapshot.level_stamina) - getElapsedMinutes(staminaBase, now) * DECAY_PER_MINUTE,
+  );
+
+  if (snapshot.level_lapar < 30) {
+    snapshot.status = "hungry";
+  } else if (snapshot.level_stamina < 30) {
+    snapshot.status = "exhausted";
+  } else {
+    snapshot.status = "normal";
+  }
+
+  return snapshot;
 };
 
 function StatProgress({ label, value }: { label: string; value: number }) {
@@ -136,6 +185,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   const [missions, setMissions] = useState<any[]>([]); // 🔥 State buat misi
   const [loading, setLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [clock, setClock] = useState(() => Date.now());
 
   const fetchTupaiStatus = useCallback(async () => {
     if (!user?.id) {
@@ -205,17 +255,31 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   };
 
   const handleInteract = async (action: "feed" | "sleep") => {
-    if (!tupai?.id || isActionLoading) return;
+    const currentTupai = calculatePetSnapshot(tupai, Date.now());
+
+    if (!currentTupai?.id || isActionLoading) return;
+
+    if (action === "feed" && (currentTupai.status === "sleeping" || currentTupai.level_lapar >= ACTION_THRESHOLD)) {
+      toast.error("Tupai masih kenyang, belum perlu makan.");
+      return;
+    }
+
+    if (action === "sleep" && (currentTupai.status === "sleeping" || currentTupai.level_stamina >= ACTION_THRESHOLD)) {
+      toast.error("Tupai masih segar, belum perlu tidur.");
+      return;
+    }
+
     setIsActionLoading(true);
 
     try {
       const result =
         action === "feed"
-          ? await api.myTupai.feed(tupai.id)
-          : await api.myTupai.sleep(tupai.id);
+          ? await api.myTupai.feed(currentTupai.id)
+          : await api.myTupai.sleep(currentTupai.id);
 
       if (result?.success) {
         setTupai(result.data);
+        await fetchTupaiStatus();
         toast.success(result.message || "Aksi berhasil dilakukan.");
         fetchMissions();
         if (fetchBalance) await fetchBalance(user.id);
@@ -263,6 +327,24 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
     fetchTupaiStatus();
   }, [fetchTupaiStatus, fetchMissions]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setClock(Date.now());
+    }, 15000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const syncTimer = window.setInterval(() => {
+      fetchTupaiStatus();
+    }, 60000);
+
+    return () => window.clearInterval(syncTimer);
+  }, [fetchTupaiStatus, user?.id]);
+
   if (loading) {
     return (
       <div className="mx-auto max-w-[1200px] p-6 text-center font-semibold text-slate-600 dark:text-slate-300">
@@ -273,11 +355,14 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
   const greeting = getFullGreeting(user?.name || "");
   const displayName = user?.name || "Pengguna";
-  const petLevel = Math.max(1, Number(tupai?.level) || 1);
-  const stamina = clampPercent(tupai?.level_stamina);
-  const hunger = clampPercent(tupai?.level_lapar);
+  const visibleTupai = calculatePetSnapshot(tupai, clock);
+  const petLevel = Math.max(1, Number(visibleTupai?.level) || 1);
+  const stamina = clampPercent(visibleTupai?.level_stamina);
+  const hunger = clampPercent(visibleTupai?.level_lapar);
+  const canFeed = !!visibleTupai && visibleTupai.status !== "sleeping" && hunger < ACTION_THRESHOLD;
+  const canSleep = !!visibleTupai && visibleTupai.status !== "sleeping" && stamina < ACTION_THRESHOLD;
   const petImage =
-    tupai?.status === "sleeping"
+    visibleTupai?.status === "sleeping"
       ? "/Asset/squirrel/squirrel-exhausted-light.svg"
       : "/Asset/squirrel/squirrel-normal.svg";
   const pageLabel = mode === "owner" ? "My Pet Owner" : "My Pet";
@@ -321,7 +406,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
       </header>
 
       <section className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 xl:p-8">
-        {!tupai ? (
+        {!visibleTupai ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center gap-5 text-center">
             <div className="relative h-44 w-44 opacity-75">
               <Image
@@ -378,7 +463,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                       </button>
                     </div>
                     <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                      {tupai.nama || `Tupai ${displayName}`}
+                      {visibleTupai.nama || `Tupai ${displayName}`}
                     </p>
                   </div>
                 </div>
@@ -396,14 +481,14 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                   label="Feed (10 Koin)"
                   icon={Utensils}
                   onClick={() => handleInteract("feed")}
-                  disabled={isActionLoading || tupai.status === "sleeping"}
+                    disabled={isActionLoading || !canFeed}
                   className="bg-[#fff2ef] text-[#dd6f5d] hover:bg-[#fde6e1] dark:bg-[#2f1d18] dark:text-[#f0b2a7] dark:hover:bg-[#3a241e]"
                 />
                 <ActionButton
                   label="Sleep"
                   icon={MoonStar}
                   onClick={() => handleInteract("sleep")}
-                  disabled={isActionLoading || tupai.status === "sleeping"}
+                    disabled={isActionLoading || !canSleep}
                   className="bg-[#92a0bf] text-slate-950 hover:bg-[#8291af] dark:bg-[#6f7b97] dark:text-slate-950 dark:hover:bg-[#8792ab]"
                 />
               </div>
