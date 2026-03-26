@@ -707,10 +707,13 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
       {/* 🔥 SECTION MISI HARIAN TUPAI (Dinamis dari Backend!) 🔥 */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles
-            size={20}
-            className="text-yellow-500 dark:text-yellow-400"
+          <Image
+            src="/Asset/icon/icon-chart.svg"
+            alt="Misi Icon"
+            width={24}
+            height={24}
           />
+
           <h3 className="text-[22px] font-semibold text-slate-950 dark:text-white">
             Misi Harian Tupai
           </h3>
@@ -727,8 +730,11 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <Sparkles
-                size={40}
+              <Image
+                src="/Asset/icon/icon-chart.svg"
+                alt="Misi Icon"
+                width={40}
+                height={40}
                 className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
               />
               <p className="text-slate-500 dark:text-slate-400">
@@ -741,7 +747,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
       <section className="space-y-4 pb-8">
         <div className="flex items-center gap-2">
-          <Ticket size={18} className="text-[#dd6f5d] dark:text-[#f0b2a7]" />
+          <Image src="/Asset/icon/icon-voucher.svg" alt="Hadiah Icon" width={24} height={24} />
           <h3 className="text-[22px] font-semibold text-slate-950 dark:text-white">
             Tukar Koin & Dapatkan Hadiah Voucher!
           </h3>

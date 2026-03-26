@@ -49,6 +49,11 @@ export default function RegisterPage() {
     setStep('form');
   };
 
+  const handleRoleSwitch = (role: RoleType) => {
+    dispatch(setRole(role));
+    setFormData({ ...formData, role });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -129,9 +134,9 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[linear-gradient(225deg,#f5c9c2_0%,#fae4e1_30%,#fdf3f1_65%,#ffffff_95%)] px-4 py-10 dark:bg-[linear-gradient(225deg,#2d1512_0%,#1e1a2e_40%,#111827_70%,#0f172a_100%)] sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[980px] items-center justify-center">
-        <div className="glass-card animate-fade-in-up w-full max-w-[640px] rounded-[20px] px-7 py-7 sm:px-8 sm:py-8">
+        <div className="glass-card animate-fade-in-up w-full max-w-[800px] rounded-[20px] px-8 py-12 sm:px-16 sm:py-14">
           {step === 'role' && (
-            <div className="animate-fade-in py-4 sm:py-8">
+            <div className="animate-fade-in">
               <Link
                 href={ROUTES.HOME}
                 className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
@@ -139,7 +144,8 @@ export default function RegisterPage() {
                 <ArrowLeft size={16} />
                 Kembali ke beranda
               </Link>
-              <div className="mx-auto mt-4 grid max-w-[500px] grid-cols-2 gap-4 sm:gap-6">
+              <h1 className="mt-3 text-[34px] font-bold leading-none text-[#BA6054] sm:text-[44px] md:text-[48px]">Daftar</h1>
+              <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6">
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('tenant')}
@@ -168,11 +174,11 @@ export default function RegisterPage() {
               </div>
 
               {/* Login Link */}
-              <div className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
+              <div className="mt-8 text-center text-[17px] text-[#244454] dark:text-slate-400">
                 Sudah punya akun?{' '}
                 <Link
                   href={AUTH_ROUTES.LOGIN}
-                  className="font-medium text-[#BA6054] transition hover:text-[#a05246] dark:hover:text-[#f0b2a7]"
+                  className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]"
                 >
                   Masuk di sini
                 </Link>
@@ -181,22 +187,40 @@ export default function RegisterPage() {
           )}
 
           {step === 'form' && (
-            <div className="animate-fade-in space-y-6 py-4 sm:py-8">
-              <div>
+            <div className="animate-fade-in">
+              {/* Role Tabs */}
+              <div className="flex border-b border-[#d4d4d8] dark:border-slate-700">
                 <button
                   type="button"
-                  onClick={() => setStep('role')}
-                  className="inline-flex items-center gap-1.5 text-[15px] text-[#7e6a66] transition hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]"
+                  onClick={() => handleRoleSwitch('tenant')}
+                  className={`flex-1 py-4 font-medium text-[20px] text-center transition-colors duration-200 ${
+                    formData.role === 'tenant'
+                      ? 'border-b-2 border-[#BA6054] text-[#BA6054]'
+                      : 'text-[#7e6a66] hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]'
+                  }`}
                 >
-                  <ArrowLeft size={16} />
-                  Ubah pilihan
+                  Cari Kos
                 </button>
-                <h1 className="mt-4 text-[28px] font-bold leading-tight text-slate-900 dark:text-slate-100">
+                <button
+                  type="button"
+                  onClick={() => handleRoleSwitch('owner')}
+                  className={`flex-1 py-4 font-medium text-[20px] text-center transition-colors duration-200 ${
+                    formData.role === 'owner'
+                      ? 'border-b-2 border-[#BA6054] text-[#BA6054]'
+                      : 'text-[#7e6a66] hover:text-[#BA6054] dark:text-slate-400 dark:hover:text-[#e07b6d]'
+                  }`}
+                >
+                  Pemilik Kos
+                </button>
+              </div>
+
+              <div className="mt-8">
+                <h1 className="text-[34px] font-bold leading-none text-[#BA6054] sm:text-[44px] md:text-[48px]">
                   Daftar sebagai {isOwner ? 'Pemilik Kos' : 'Pencari Kos'}
                 </h1>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                 {error && (
                   <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
                     {error}
@@ -211,7 +235,7 @@ export default function RegisterPage() {
 
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="text-[25px] font-medium text-[#1f1f1f] dark:text-slate-200">
                     Nama Lengkap
                   </label>
                   <input
@@ -220,13 +244,13 @@ export default function RegisterPage() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Masukkan nama lengkap Anda"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                    className="mt-1 w-full border-0 border-b bg-transparent pb-2 text-[25px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
                   />
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="text-[25px] font-medium text-[#1f1f1f] dark:text-slate-200">
                     Email
                   </label>
                   <input
@@ -235,13 +259,13 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="example@email.com"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                    className="mt-1 w-full border-0 border-b bg-transparent pb-2 text-[25px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
                   />
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="text-[25px] font-medium text-[#1f1f1f] dark:text-slate-200">
                     Nomor HP (10-13 digit)
                   </label>
                   <input
@@ -250,54 +274,54 @@ export default function RegisterPage() {
                     value={formData.no_hp}
                     onChange={handleChange}
                     placeholder="08123456789"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                    className="mt-1 w-full border-0 border-b bg-transparent pb-2 text-[25px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:border-b focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500 border-[#b9b9b9] focus:border-[#BA6054] dark:border-slate-600 dark:focus:border-[#e07b6d]"
                   />
                 </div>
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Password (minimum 8 karakter)
+                  <label className="text-[25px] font-medium text-[#1f1f1f] dark:text-slate-200">
+                    Password
                   </label>
-                  <div className="relative">
+                  <div className="mt-1 flex items-center border-0 border-b pb-2 border-[#b9b9b9] dark:border-slate-600">
                     <input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Masukkan password"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 pr-12 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                      className="w-full bg-transparent text-[25px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                      className="text-[#101827] dark:text-slate-400"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={26} /> : <Eye size={26} />}
                     </button>
                   </div>
                 </div>
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="text-[25px] font-medium text-[#1f1f1f] dark:text-slate-200">
                     Konfirmasi Password
                   </label>
-                  <div className="relative">
+                  <div className="mt-1 flex items-center border-0 border-b pb-2 border-[#b9b9b9] dark:border-slate-600">
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Ulangi password"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 pr-12 text-slate-900 placeholder-slate-500 transition focus:border-[#BA6054] focus:outline-none focus:ring-1 focus:ring-[#BA6054] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                      className="w-full bg-transparent text-[25px] text-[#1f1f1f] placeholder:text-[#b7b7b7] transition-colors duration-200 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                      className="text-[#101827] dark:text-slate-400"
                     >
-                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showConfirmPassword ? <EyeOff size={26} /> : <Eye size={26} />}
                     </button>
                   </div>
                 </div>
@@ -306,17 +330,17 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-lg bg-[#BA6054] px-6 py-3 text-center font-semibold text-white transition hover:bg-[#a05246] disabled:opacity-50 dark:hover:bg-[#c97161]"
+                  className="mt-8 h-[54px] w-full rounded-full bg-[linear-gradient(to_right,#E2B0A9_0%,#BA6054_100%)] text-[26px] font-medium text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:shadow-[0_12px_28px_rgba(186,96,84,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:h-[61px] sm:text-[36px] md:text-[28px]"
                 >
-                  {loading ? 'Mendaftar...' : 'Daftar'}
+                  {loading ? 'mendaftar...' : 'daftar'}
                 </button>
 
                 {/* Login Link */}
-                <div className="text-center text-sm text-slate-600 dark:text-slate-400">
+                <div className="mt-6 text-center text-[20px] text-[#244454] dark:text-slate-400">
                   Sudah punya akun?{' '}
                   <Link
                     href={AUTH_ROUTES.LOGIN}
-                    className="font-medium text-[#BA6054] transition hover:text-[#a05246] dark:hover:text-[#f0b2a7]"
+                    className="font-medium text-[#BA6054] hover:opacity-75 dark:text-[#e07b6d]"
                   >
                     Masuk di sini
                   </Link>

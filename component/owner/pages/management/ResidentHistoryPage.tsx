@@ -179,7 +179,7 @@ export default function ResidentHistoryPage({
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto sm:overflow-x-visible">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-pulse text-slate-500">
@@ -195,25 +195,25 @@ export default function ResidentHistoryPage({
                     </div>
                   </div>
                 ) : (
-                  <table className="min-w-[600px] w-full border-collapse text-sm sm:min-w-[800px] lg:min-w-[920px]">
+                  <table className="min-w-[600px] w-full border-collapse text-xs sm:text-sm sm:min-w-full">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700">
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                        <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100 sm:px-4">
                           PERIODE
                         </th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                        <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100 sm:px-4">
                           NOMOR KAMAR
                         </th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                        <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100 sm:px-4">
                           NAMA PENGHUNI
                         </th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                        <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100 sm:px-4">
                           TANGGAL MASUK
                         </th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                        <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100 sm:px-4">
                           TANGGAL KELUAR
                         </th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                        <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100 sm:px-4">
                           STATUS
                         </th>
                       </tr>
@@ -228,24 +228,24 @@ export default function ResidentHistoryPage({
                             key={idx}
                             className="border-b border-slate-200 dark:border-slate-700"
                           >
-                            <td className="px-4 py-3 text-slate-700 dark:text-slate-400">
+                            <td className="px-2 py-3 text-slate-700 dark:text-slate-400 sm:px-4">
                               {resident?.periode || "-"}
                             </td>
-                            <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                            <td className="px-2 py-3 font-medium text-slate-900 dark:text-slate-100 sm:px-4">
                               {resident?.nomor || "-"}
                             </td>
-                            <td className="px-4 py-3 text-slate-700 dark:text-slate-400">
+                            <td className="px-2 py-3 text-slate-700 dark:text-slate-400 sm:px-4">
                               {resident?.nama || "-"}
                             </td>
-                            <td className="px-4 py-3 text-slate-700 dark:text-slate-400">
+                            <td className="px-2 py-3 text-slate-700 dark:text-slate-400 sm:px-4">
                               {resident?.tanggalMasuk || "-"}
                             </td>
-                            <td className="px-4 py-3 text-slate-700 dark:text-slate-400">
+                            <td className="px-2 py-3 text-slate-700 dark:text-slate-400 sm:px-4">
                               {resident?.tanggalKeluar || "-"}
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-3 sm:px-4">
                               <span
-                                className={`rounded px-3 py-1 text-xs font-semibold ${
+                                className={`rounded px-2 py-1 text-xs font-semibold sm:px-3 ${
                                   isAktif
                                     ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
                                     : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
