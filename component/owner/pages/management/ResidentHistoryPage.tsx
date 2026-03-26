@@ -30,6 +30,12 @@ export default function ResidentHistoryPage({
   const [residents, setResidents] = useState<Resident[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (!selectedKos && kosList && kosList.length > 0) {
+      setSelectedKos(kosList[0].value);
+    }
+  }, [selectedKos, kosList]);
+
   // Load residents from API when selectedKos changes
   useEffect(() => {
     const loadResidents = async () => {
@@ -40,12 +46,12 @@ export default function ResidentHistoryPage({
 
       try {
         setIsLoading(true);
-        // Aman pakai String() supaya gak meledak kalau selectedKos bentuknya angka
         const kosIdMatch = String(selectedKos).match(/(\d+)$/);
         const kosId = kosIdMatch ? kosIdMatch[1] : selectedKos;
 
-        // Pastikan endpoint api.residents.getByKos ini benar-benar ada ya di backend-mu!
         const response = await api.residents.getByKos(kosId);
+
+        console.log("🔴 DATA DARI LARAVEL UNTUK KOS ID", kosId, ":", response);
 
         if (response && Array.isArray(response)) {
           setResidents(response);

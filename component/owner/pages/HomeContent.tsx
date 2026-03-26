@@ -103,7 +103,7 @@ export default function OwnerHomeContent() {
       try {
         setIsLoading(true);
         await Promise.all([
-          fetchKos(),
+          fetchKos(user.id),
           fetchRooms(),
           fetchPayments(),
           fetchBalance(user.id),
