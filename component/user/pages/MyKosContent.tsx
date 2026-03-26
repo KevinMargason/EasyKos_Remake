@@ -58,7 +58,6 @@ export default function MyKosContent() {
   const [payments, setPayments] = useState<any[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
-
   const [bulanLunas, setBulanLunas] = useState<number[]>([]);
 
   const API_BASE = "https://easykosbackend-production.up.railway.app/api";
@@ -81,42 +80,19 @@ export default function MyKosContent() {
     }
   };
 
-  const handlePay = async (paymentId: number) => {
-    if (isPaying) return;
-    setIsPaying(true);
-    try {
-      const response = await fetch(`${API_BASE}/payments/${paymentId}/pay`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        toast.success("Pembayaran lunas semua berhasil!");
-        fetchPaymentsInfo();
-      } else {
-        toast.error("Gagal memproses pembayaran.");
-      }
-    } catch (error) {
-      toast.error("Terjadi kesalahan koneksi.");
-    } finally {
-      setIsPaying(false);
-    }
-  };
-
-  const handlePayBulan = (index: number) => {
-    toast.success(`Berhasil! Pembayaran bulan ke-${index + 1} lunas.`);
-    setBulanLunas((prev) => [...prev, index]);
-  };
-
-  useEffect(() => {
-    fetchCurrentKos();
-    fetchRooms();
-    fetchPaymentsInfo();
-  }, [user?.id]);
-
   const activePayment = useMemo(() => {
     return payments && payments.length > 0 ? payments[0] : null;
   }, [payments]);
+
+  // Kembalikan state yang lunas dari LocalStorage
+  useEffect(() => {
+    if (activePayment?.id) {
+      const saved = localStorage.getItem(`paid_months_${activePayment.id}`);
+      if (saved) {
+        setBulanLunas(JSON.parse(saved));
+      }
+    }
+  }, [activePayment?.id]);
 
   const derivedRoom = useMemo(() => {
     if (!activePayment?.rooms_id) return null;
@@ -128,6 +104,80 @@ export default function MyKosContent() {
   }, [activePayment, roomsList]);
 
   const resolvedKos = currentKos || derivedRoom?.kos || null;
+
+  const paymentAmount = parseInt(activePayment?.amount) || 0;
+  const hargaKosAsli =
+    parseInt(
+      (resolvedKos as any)?.harga ||
+        (resolvedKos as any)?.harga_per_bulan ||
+        derivedRoom?.harga,
+    ) || 0;
+
+  let durasiSewa = 1;
+  const durasiDariDB =
+    activePayment?.durasi ||
+    activePayment?.durasi_sewa ||
+    activePayment?.lama_sewa ||
+    activePayment?.jumlah_bulan;
+
+  if (durasiDariDB) {
+    durasiSewa = Number(durasiDariDB);
+  } else if (paymentAmount > 0 && hargaKosAsli > 0) {
+    // Trik Matematika: Total Tagihan / Harga Asli Kos Per Bulan
+    durasiSewa = Math.round(paymentAmount / hargaKosAsli);
+  }
+
+  if (durasiSewa < 1 || !isFinite(durasiSewa)) durasiSewa = 1;
+
+  const hargaPerBulan = paymentAmount > 0 ? paymentAmount / durasiSewa : 0;
+
+  const handlePay = async (paymentId: number) => {
+    if (isPaying) return;
+    setIsPaying(true);
+    try {
+      const response = await fetch(`${API_BASE}/payments/${paymentId}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        toast.success("Pembayaran lunas semua!");
+        fetchPaymentsInfo();
+      } else {
+        toast.error("Gagal memproses pembayaran.");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan koneksi.");
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const handlePayBulan = async (index: number) => {
+    const newBulanLunas = [...bulanLunas, index];
+    setBulanLunas(newBulanLunas);
+
+    if (activePayment?.id) {
+      localStorage.setItem(
+        `paid_months_${activePayment.id}`,
+        JSON.stringify(newBulanLunas),
+      );
+    }
+
+    toast.success(`Berhasil! Pembayaran bulan ke-${index + 1} diproses.`);
+
+    // Cek apakah ini bulan terakhir yang dibayar?
+    if (newBulanLunas.length >= durasiSewa && activePayment?.id) {
+      toast.info("Semua cicilan selesai!");
+      await handlePay(activePayment.id);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentKos();
+    fetchRooms();
+    fetchPaymentsInfo();
+  }, [user?.id]);
 
   if (kosLoading || paymentsLoading) {
     return (
@@ -144,12 +194,8 @@ export default function MyKosContent() {
   const roomNumber =
     derivedRoom?.nomor_kamar || activePayment?.rooms_id || "N/A";
 
-  const paymentAmount = parseInt(activePayment?.amount) || 0;
   const isUnpaid = activePayment?.status?.toUpperCase() === "UNPAID";
   const hasBookedKos = Boolean(resolvedKos || activePayment);
-
-  const durasiSewa = activePayment?.durasi || activePayment?.durasi_sewa || 6;
-  const hargaPerBulan = paymentAmount > 0 ? paymentAmount / durasiSewa : 0;
 
   if (!hasBookedKos) {
     return (
@@ -232,7 +278,7 @@ export default function MyKosContent() {
                 disabled={isPaying}
                 className="mt-6 rounded-md bg-[#ec8a3d] py-3 font-semibold text-white shadow-lg active:scale-95 transition disabled:opacity-50 hover:bg-[#d67a35]"
               >
-                {isPaying ? "Memproses..." : "Lunasi Semua Tagihan"}
+                {isPaying ? "Memproses..." : "Lunasi Semua Tagihan Sekaligus"}
               </button>
             )}
           </Card>
@@ -244,7 +290,7 @@ export default function MyKosContent() {
       </div>
 
       {activePayment && (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4 pb-10">
           <h3 className="text-[20px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
             Rincian Pembayaran Bulanan
           </h3>
