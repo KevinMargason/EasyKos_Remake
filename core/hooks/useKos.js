@@ -17,30 +17,33 @@ export const useKos = () => {
   const dispatch = useAppDispatch();
   const state = useAppSelector((state) => state.kos);
 
-  const fetchKos = useCallback(async (ownerId) => {
-    setIsLoading(true);
-    try {
-      // Kalau dikasih ownerId, tambahin di URL. Kalau nggak, ambil semua.
-      const url = ownerId
-        ? `${process.env.NEXT_PUBLIC_API_URL}/kos?owner_id=${ownerId}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/kos`;
+  const fetchKos = useCallback(
+    async (ownerId) => {
+      setIsLoading(true);
+      try {
+        const url = ownerId
+          ? `${process.env.NEXT_PUBLIC_API_URL}/kos?owner_id=${ownerId}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/kos`;
 
-      const response = await fetch(url);
-      const result = await response.json();
+        const response = await fetch(url);
+        const result = await response.json();
 
-      if (
-        result.success ||
-        Array.isArray(result.data) ||
-        Array.isArray(result)
-      ) {
-        setKosList(result.data || result);
+        if (
+          result.success ||
+          Array.isArray(result.data) ||
+          Array.isArray(result)
+        ) {
+          dispatch(setKosList(result.data || result));
+        }
+      } catch (error) {
+        console.error("Error fetching kos:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching kos:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [dispatch],
+  );
+
   const fetchKosDetail = useCallback(
     async (id) => {
       try {
