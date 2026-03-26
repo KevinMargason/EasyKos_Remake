@@ -366,7 +366,7 @@ export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
                   key={facility}
                   className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 >
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#fff0eb] text-[#c55f4a] dark:bg-[#29374f] dark:text-[#f0b2a7]">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl text-[#c55f4a] dark:text-[#f0b2a7]">
                     <Image
                       src={
                         facilityIcons[facility] || "/Asset/icon/icon-bed.svg"

@@ -64,6 +64,24 @@ export default function AddRoomPage({
 
   const [photos, setPhotos] = useState<File[]>([]);
 
+  const formatValidationErrors = (errors: Record<string, unknown>) => {
+    if (!errors || typeof errors !== "object") return "";
+
+    return Object.entries(errors)
+      .flatMap(([field, messages]) => {
+        if (Array.isArray(messages)) {
+          return messages.map((message) => `${field}: ${String(message)}`);
+        }
+
+        if (typeof messages === "string") {
+          return [`${field}: ${messages}`];
+        }
+
+        return [`${field}: Validasi tidak valid`];
+      })
+      .join("\n");
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -133,6 +151,7 @@ export default function AddRoomPage({
       );
       const hargaKamar = parseInt(formData.hargaKamar.replace(/\D/g, ""), 10);
       if (Number.isNaN(hargaKamar)) throw new Error("Harga Kamar tidak valid");
+      if (!user?.id) throw new Error("User belum terdeteksi, silakan login ulang");
 
       // BIKIN KOS DULU
       const kosPayload = new FormData();
@@ -142,6 +161,7 @@ export default function AddRoomPage({
       kosPayload.append("region_idregion", selectedRegion);
       kosPayload.append("jumlah_kamar", formData.jumlahKamar.toString()); // Update jumlah kamar kos
       kosPayload.append("rating", "0");
+      kosPayload.append("users_id", String(user.id));
 
       if (formData.peraturan.trim())
         kosPayload.append("peraturan", formData.peraturan.trim());
@@ -158,8 +178,13 @@ export default function AddRoomPage({
         body: kosPayload,
       });
       const kosDataRes = await kosRes.json();
-      if (!kosRes.ok)
-        throw new Error(kosDataRes.message || "Gagal membuat properti Kos");
+      if (!kosRes.ok) {
+        throw {
+          status: kosRes.status,
+          data: kosDataRes,
+          message: kosDataRes.message || "Gagal membuat properti Kos",
+        };
+      }
 
       const kosId = kosDataRes.data?.id || kosDataRes.id;
 
@@ -190,11 +215,15 @@ export default function AddRoomPage({
       });
 
       const roomDataRes = await roomRes.json();
-      if (!roomRes.ok)
-        throw new Error(
-          roomDataRes.message ||
+      if (!roomRes.ok) {
+        throw {
+          status: roomRes.status,
+          data: roomDataRes,
+          message:
+            roomDataRes.message ||
             "Kos berhasil dibuat, tapi gagal menyimpan Kamar/Foto",
-        );
+        };
+      }
 
       await Promise.all([
         fetchKos(),
@@ -208,16 +237,17 @@ export default function AddRoomPage({
       onBack();
     } catch (error: any) {
       console.error("❌ Submit error:", error);
-      if (error.response?.status === 422) {
-        const validationErrors =
-          error.response?.data?.errors || error.response?.data?.message;
-        const errorMsg =
-          typeof validationErrors === "string"
-            ? validationErrors
-            : JSON.stringify(validationErrors, null, 2);
-        toast.error(`Validasi gagal:\n${errorMsg}`);
+      if (error?.status === 422) {
+        const validationErrors = error?.data?.errors;
+        const errorMsg = formatValidationErrors(validationErrors);
+
+        toast.error(
+          errorMsg
+            ? `Validasi gagal:\n${errorMsg}`
+            : `Validasi gagal: ${error?.data?.message || error?.message || "Data tidak valid"}`,
+        );
       } else {
-        toast.error(error.message || "Gagal menambahkan kos");
+        toast.error(error?.message || "Gagal menambahkan kos");
       }
     } finally {
       setIsLoading(false);
