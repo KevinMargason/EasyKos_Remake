@@ -331,7 +331,7 @@ export default function AddRoomPage({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Wilayah/Region
+                  Wilayah
                 </label>
                 <select
                   value={selectedRegion}

@@ -71,7 +71,7 @@ export default function UpdateStatusPage({
     }
 
     const confirmDelete = window.confirm(
-      "🚨 PERINGATAN BOLO: Apakah Anda yakin ingin menghapus Kos ini beserta seluruh kamarnya? Tindakan ini tidak dapat dibatalkan!",
+      "🚨 PERINGATAN: Apakah Anda yakin ingin menghapus Kos ini beserta seluruh kamarnya? Tindakan ini tidak dapat dibatalkan!",
     );
     if (!confirmDelete) return;
 
@@ -96,7 +96,7 @@ export default function UpdateStatusPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Gagal menghapus Kos");
 
-      toast.success("Kos dan seluruh kamarnya berhasil dibumihanguskan! 🗑️🔥");
+      toast.success("Kos dan seluruh kamarnya berhasil dihapus!");
 
       // Refresh data setelah dihapus
       await Promise.all([fetchKos(), fetchRooms()]);
@@ -197,7 +197,7 @@ export default function UpdateStatusPage({
         className="rounded-[24px] bg-white p-8 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/5"
       >
         <h2 className="text-[28px] font-bold text-[#c86654]">
-          Update Status Kos
+          Memperbarui Status Kos
         </h2>
 
         <div className="mt-8 grid gap-4 md:grid-cols-[1fr_2fr] lg:grid-cols-3">

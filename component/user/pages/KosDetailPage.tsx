@@ -119,7 +119,7 @@ export default function KosDetailPage({ kos, onBack }: KosDetailPageProps) {
         setAvailableRooms(emptyRooms);
       }
     } catch (error) {
-      console.error("Fetch rooms error:", error);
+      console.error("Gagal Mengambil Data Kamar:", error);
     }
   };
 

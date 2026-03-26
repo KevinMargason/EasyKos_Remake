@@ -416,7 +416,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   if (loading) {
     return (
       <div className="mx-auto max-w-[1200px] p-6 text-center font-semibold text-slate-600 dark:text-slate-300">
-        Memuat My Pet...
+        Memuat Peliharaan Saya...
       </div>
     );
   }
@@ -507,7 +507,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
               </h2>
               <p className="mt-2 max-w-xl text-slate-500 dark:text-slate-400">
                 Kamu belum memiliki tupai. Adopsi sekarang untuk mulai
-                petualangan dan mengumpulkan koin reward.
+                petualangan dan mengumpulkan koin hadiah.
               </p>
             </div>
             <button
@@ -538,7 +538,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-[28px] font-bold text-slate-950 dark:text-white">
-                        Your Pet
+                        Peliharaanmu
                       </h2>
                       <button
                         className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -611,7 +611,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                     {misi.nama}
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Progress:{" "}
+                    Progres:{" "}
                     <span className="font-bold text-slate-900 dark:text-white">
                       {progress}/{target}
                     </span>
@@ -635,7 +635,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
                   </button>
                 ) : (
                   <span className="text-sm font-medium text-slate-400">
-                    In Progress...
+                    Sedang Berlangsung...
                   </span>
                 )}
               </div>
@@ -648,7 +648,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
         <div className="flex items-center gap-2">
           <Ticket size={18} className="text-[#dd6f5d] dark:text-[#f0b2a7]" />
           <h3 className="text-[22px] font-semibold text-slate-950 dark:text-white">
-            Tukar Koin & Dapatkan Reward Voucher!
+            Tukar Koin & Dapatkan Hadiah Voucher!
           </h3>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

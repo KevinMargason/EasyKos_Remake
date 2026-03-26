@@ -285,7 +285,7 @@ export default function HomeContent() {
         toast.error(result.message || "Gagal klaim koin hari ini.");
       }
     } catch (error) {
-      console.error("Error claim daily:", error);
+      console.error("Error mengklaim harian:", error);
       toast.error("Terjadi kesalahan jaringan");
     } finally {
       setIsClaiming(false);

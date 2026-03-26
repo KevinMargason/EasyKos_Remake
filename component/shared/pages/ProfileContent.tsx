@@ -52,8 +52,8 @@ const editProfileSchema = Yup.object({
     .max(255, "Nama maksimal 255 karakter")
     .required("Nama harus diisi"),
   no_hp: Yup.string()
-    .matches(/^(\+62|0)[0-9]{9,12}$/, "Nomor HP tidak valid")
-    .required("Nomor HP harus diisi"),
+    .matches(/^(\+62|0)[0-9]{9,12}$/, "Nomor Ponsel tidak valid")
+    .required("Nomor Ponsel harus diisi"),
   email: Yup.string().email("Email tidak valid").required("Email harus diisi"),
 });
 
@@ -179,7 +179,7 @@ export default function ProfileContent() {
       <div className="mx-auto flex max-w-[980px] flex-col gap-5">
         <UserSectionTitle title="Profil" />
         <p className="text-center text-slate-500">
-          Silakan login terlebih dahulu untuk melihat profil Anda
+          Silakan masuk terlebih dahulu untuk melihat profil Anda
         </p>
       </div>
     );
@@ -515,7 +515,7 @@ export default function ProfileContent() {
                             className="mx-auto mb-2 text-[#c35f46]"
                           />
                           <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                            E-Wallet
+                            Dompet Digital
                           </p>
                         </button>
                       </div>
@@ -677,7 +677,7 @@ export default function ProfileContent() {
                       <>
                         <div>
                           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Tipe E-Wallet
+                            Tipe Dompet Digital
                           </label>
                           <select
                             value={ewalletForm.ewallet_type}

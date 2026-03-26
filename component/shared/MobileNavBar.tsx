@@ -8,17 +8,17 @@ import { ROUTES } from '@/lib/routes';
 const userNavItems: Array<{ label: string; href: string; icon: string }> = [
 	{ label: 'Beranda', href: ROUTES.USER.HOME, icon: '/Asset/icon/icon-house2.svg' },
 	{ label: 'Kos Saya', href: ROUTES.USER.MYKOS, icon: '/Asset/icon/icon-apartment.svg' },
-	{ label: 'Chat', href: ROUTES.USER.CHAT, icon: '/Asset/icon/icon-chat2.svg' },
+	{ label: 'Obrolan', href: ROUTES.USER.CHAT, icon: '/Asset/icon/icon-chat2.svg' },
 	{ label: 'Profil', href: ROUTES.USER.PROFILE, icon: '/Asset/icon/icon-profile.svg' },
-	{ label: 'My Pet', href: ROUTES.USER.MYPET, icon: '/Asset/icon/icon-squirrel.svg' },
+	{ label: 'Peliharaan Saya', href: ROUTES.USER.MYPET, icon: '/Asset/icon/icon-squirrel.svg' },
 ];
 
 const ownerNavItems: Array<{ label: string; href: string; icon: string }> = [
 	{ label: 'Beranda', href: ROUTES.OWNER.HOME, icon: '/Asset/icon/icon-house2.svg' },
 	{ label: 'Manajemen', href: ROUTES.OWNER.MANAGEMENT, icon: '/Asset/icon/icon-apartment.svg' },
-	{ label: 'Chat', href: ROUTES.OWNER.CHAT, icon: '/Asset/icon/icon-chat2.svg' },
+	{ label: 'Obrolan', href: ROUTES.OWNER.CHAT, icon: '/Asset/icon/icon-chat2.svg' },
 	{ label: 'Profil', href: ROUTES.OWNER.PROFILE, icon: '/Asset/icon/icon-profile.svg' },
-	{ label: 'Peliharaan', href: ROUTES.OWNER.MYPET, icon: '/Asset/icon/icon-squirrel.svg' },
+	{ label: 'Peliharaan Saya', href: ROUTES.OWNER.MYPET, icon: '/Asset/icon/icon-squirrel.svg' },
 ];
 
 type MobileNavBarProps = {
@@ -39,15 +39,15 @@ export default function MobileNavBar({ role = 'tenant' }: MobileNavBarProps) {
 							if (role === 'owner') {
 								if (label === 'Beranda') return 'sidebar-home';
 								if (label === 'Manajemen') return 'sidebar-management';
-								if (label === 'Chat') return 'sidebar-chat';
+								if (label === 'Obrolan') return 'sidebar-chat';
 								if (label === 'Profil') return 'sidebar-profile';
-								if (label === 'Peliharaan') return 'sidebar-mypet';
+								if (label === 'Peliharaan Saya') return 'sidebar-mypet';
 							} else {
 								if (label === 'Beranda') return 'sidebar-home';
 								if (label === 'Kos Saya') return 'sidebar-mykos';
-								if (label === 'Chat') return 'sidebar-chat';
+								if (label === 'Obrolan') return 'sidebar-chat';
 								if (label === 'Profil') return 'sidebar-profile';
-								if (label === 'My Pet') return 'sidebar-mypet';
+								if (label === 'Peliharaan Saya') return 'sidebar-mypet';
 							}
 							return '';
 						};

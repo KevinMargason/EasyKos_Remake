@@ -148,7 +148,7 @@ export default function OwnerHomeContent() {
         ?.filter((inv: any) => {
           const paymentDateSource = inv.tanggal_bayar || inv.updated_at;
           const paymentDate =
-            String(inv.status || "").toUpperCase() === "PAID" &&
+            String(inv.status || "").toUpperCase() === "LUNAS" &&
             paymentDateSource
               ? new Date(paymentDateSource)
               : null;
@@ -161,8 +161,8 @@ export default function OwnerHomeContent() {
     const pendingCount =
       invoices?.filter(
         (inv: any) =>
-          String(inv.status || "").toUpperCase() === "UNPAID" ||
-          String(inv.status || "").toLowerCase() === "pending",
+          String(inv.status || "").toUpperCase() === "BELUM LUNAS" ||
+          String(inv.status || "").toLowerCase() === "Menunggu Konfirmasi",
       ).length || 0;
 
     const totalRooms =

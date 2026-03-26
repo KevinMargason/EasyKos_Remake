@@ -11,15 +11,15 @@ import { ROUTES } from '@/lib/routes';
 const userSidebarItems: Array<{ label: string; href: string; icon: string; activeIconClassName: string }> = [
 	{ label: 'Beranda', href: ROUTES.USER.HOME, icon: '/Asset/icon/icon-house2.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 	{ label: 'Kos Saya', href: ROUTES.USER.MYKOS, icon: '/Asset/icon/icon-apartment.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
-	{ label: 'Chat', href: ROUTES.USER.CHAT, icon: '/Asset/icon/icon-chat2.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
+	{ label: 'Obrolan', href: ROUTES.USER.CHAT, icon: '/Asset/icon/icon-chat2.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 	{ label: 'Profil', href: ROUTES.USER.PROFILE, icon: '/Asset/icon/icon-profile.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
-	{ label: 'My Pet', href: ROUTES.USER.MYPET, icon: '/Asset/icon/icon-squirrel.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
+	{ label: 'Peliharaan Saya', href: ROUTES.USER.MYPET, icon: '/Asset/icon/icon-squirrel.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 ];
 
 const ownerSidebarItems: Array<{ label: string; href: string; icon: string; activeIconClassName: string }> = [
 	{ label: 'Beranda', href: ROUTES.OWNER.HOME, icon: '/Asset/icon/icon-house2.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 	{ label: 'Manajemen', href: ROUTES.OWNER.MANAGEMENT, icon: '/Asset/icon/icon-apartment.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
-	{ label: 'Chat', href: ROUTES.OWNER.CHAT, icon: '/Asset/icon/icon-chat2.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
+	{ label: 'Obrolan', href: ROUTES.OWNER.CHAT, icon: '/Asset/icon/icon-chat2.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 	{ label: 'Profil', href: ROUTES.OWNER.PROFILE, icon: '/Asset/icon/icon-profile.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 	{ label: 'Peliharaan Saya', href: ROUTES.OWNER.MYPET, icon: '/Asset/icon/icon-squirrel.svg', activeIconClassName: 'brightness-0 saturate-100 invert-[42%] sepia-[68%] saturate-[1650%] hue-rotate-[337deg] brightness-[97%] contrast-[92%]' },
 ];
@@ -58,15 +58,15 @@ export default function UserSidebar({ role = 'tenant' }: UserSidebarProps) {
 						if (role === 'owner') {
 							if (label === 'Beranda') return 'sidebar-home';
 							if (label === 'Manajemen') return 'sidebar-management';
-							if (label === 'Chat') return 'sidebar-chat';
+							if (label === 'Obrolan') return 'sidebar-chat';
 							if (label === 'Profil') return 'sidebar-profile';
 							if (label === 'Peliharaan Saya') return 'sidebar-mypet';
 						} else {
 							if (label === 'Beranda') return 'sidebar-home';
 							if (label === 'Kos Saya') return 'sidebar-mykos';
-							if (label === 'Chat') return 'sidebar-chat';
+							if (label === 'Obrolan') return 'sidebar-chat';
 							if (label === 'Profil') return 'sidebar-profile';
-							if (label === 'My Pet') return 'sidebar-mypet';
+							if (label === 'Peliharaan Saya') return 'sidebar-mypet';
 						}
 						return '';
 					};
