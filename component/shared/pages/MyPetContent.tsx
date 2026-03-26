@@ -35,6 +35,39 @@ const rewardCards = [
 const ACTION_THRESHOLD = 70;
 const DECAY_PER_MINUTE = 5;
 
+const getPetCacheKey = (userId: number | string) => `mytupai-cache-${userId}`;
+
+const readCachedPet = (userId: number | string) => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const cached = window.localStorage.getItem(getPetCacheKey(userId));
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedPet = (userId: number | string, pet: any) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(getPetCacheKey(userId), JSON.stringify(pet));
+  } catch {
+    // Ignore storage quota or serialization issues.
+  }
+};
+
+const clearCachedPet = (userId: number | string) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(getPetCacheKey(userId));
+  } catch {
+    // Ignore storage cleanup issues.
+  }
+};
+
 const toDate = (value: unknown) => {
   if (!value) return null;
   const date = new Date(value as string);
@@ -210,16 +243,26 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
       const result = await api.myTupai.check(user.id);
       if (result?.success) {
         setTupai(result.data);
+        writeCachedPet(user.id, result.data);
         return;
       }
 
       if (result?.message === "Belum ada tupai") {
         setTupai(null);
+        clearCachedPet(user.id);
       } else {
+        const cachedPet = readCachedPet(user.id);
+        if (cachedPet) {
+          setTupai(cachedPet);
+        }
         console.warn("Pet check failed, keeping current state:", result?.message);
       }
     } catch (error: any) {
       console.error("Error fetching pet:", error);
+      const cachedPet = readCachedPet(user.id);
+      if (cachedPet) {
+        setTupai(cachedPet);
+      }
     } finally {
       setLoading(false);
     }
@@ -257,6 +300,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
       if (result?.success) {
         setTupai(result.data);
+        writeCachedPet(user.id, result.data);
         toast.success("Tupai berhasil diadopsi! Selamat!");
         //fetchMissions();
       } else {
@@ -299,6 +343,7 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
 
       if (result?.success) {
         setTupai(result.data);
+        writeCachedPet(user.id, result.data);
         await fetchTupaiStatus();
         toast.success(result.message || "Aksi berhasil dilakukan.");
         fetchMissions();
@@ -344,8 +389,15 @@ export default function MyPetContent({ mode = "user" }: MyPetContentProps) {
   };
 
   useEffect(() => {
+    if (!user?.id) return;
+
+    const cachedPet = readCachedPet(user.id);
+    if (cachedPet) {
+      setTupai(cachedPet);
+    }
+
     fetchTupaiStatus();
-  }, [fetchTupaiStatus, fetchMissions]);
+  }, [fetchTupaiStatus, user?.id]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
