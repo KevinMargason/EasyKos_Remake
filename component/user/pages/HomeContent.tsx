@@ -11,6 +11,7 @@ import KosDetailPage from "./KosDetailPage";
 import { useAppSelector } from "@/core/store/hooks";
 import { useWallet } from "@/core/hooks/useWallet";
 import { useKos } from "@/core/hooks/useKos";
+import { toast } from "sonner";
 
 const filters = [
   "Semua",
@@ -191,11 +192,10 @@ export default function HomeContent() {
   const [activeKosId, setActiveKosId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [streakCount, setStreakCount] = useState<number>(0);
-  const [isClaimedToday, setIsClaimedToday] = useState<boolean>(false);
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   const [streakDays, setStreakDays] = useState<number>(0);
   const [hasClaimedToday, setHasClaimedToday] = useState<boolean>(false);
+  const API_BASE = "https://easykosbackend-production.up.railway.app/api";
 
   const user = useAppSelector((state: any) => state.user.user);
   const { totalKoin, fetchBalance } = useWallet();
@@ -220,12 +220,6 @@ export default function HomeContent() {
     if (!user?.id) return;
     try {
       const token = localStorage.getItem("token");
-
-      // 🔥 HARCODE URL SEMENTARA BIAR GAK FAILED TO FETCH
-      // (Kalau kamu lagi ngetes pakai backend lokal, ganti jadi "http://127.0.0.1:8000/api")
-      const API_BASE = "https://easykosbackend-production.up.railway.app/api";
-      //const API_BASE = "http://127.0.0.1:8000/api";
-
       const response = await fetch(
         `${API_BASE}/daily-login/status?user_id=${user.id}`,
         {
@@ -236,28 +230,30 @@ export default function HomeContent() {
         },
       );
 
-      const result = await response.json();
+      const contentType = response.headers.get("content-type");
 
-      if (result.success) {
-        // Sesuaikan dengan state yang ada di kodinganmu
-        setStreakDays(result.data.streak_count);
-        setHasClaimedToday(
-          result.data.last_login_date ===
-            new Date().toISOString().split("T")[0],
-        );
+      if (contentType && contentType.includes("application/json")) {
+        const result = await response.json();
+        if (result.success) {
+          setStreakDays(result.data.streak_count);
+          setHasClaimedToday(
+            result.data.last_login_date ===
+              new Date().toISOString().split("T")[0],
+          );
+        }
       }
     } catch (error) {
-      console.error("Gagal mengambil status streak:", error);
+      console.error("Gagal status streak:", error);
     }
   }, [user?.id]);
 
   const handleClaimDaily = async () => {
-    if (isClaimedToday || isClaiming || !user?.id) return;
+    if (hasClaimedToday || isClaiming || !user?.id) return;
 
     setIsClaiming(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${baseUrl}/daily-login/claim`, {
+      const response = await fetch(`${API_BASE}/daily-login/claim`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -270,20 +266,27 @@ export default function HomeContent() {
       const result = await response.json();
 
       if (result.success) {
-        setStreakCount(result.data.streak_hari_ini);
-        setIsClaimedToday(true);
+        setStreakDays(
+          result.data.streak_count || result.data.hari.streak_hari_ini,
+        );
+        setHasClaimedToday(true);
 
         if (fetchBalance) {
-          await fetchBalance();
+          await fetchBalance(user.id);
         }
+        toast.success(
+          `Koin harian berhasil diklaim! Streak kamu sekarang ${result.data.streak_count} hari.`,
+        );
 
-        alert(`Berhasil Klaim! Kamu dapat ${result.data.koin_didapat} Koin 🔥`);
+        toast.info(
+          `Berhasil Klaim! Kamu dapat ${result.data.koin_didapat} Koin 🔥`,
+        );
       } else {
-        alert(result.message || "Gagal klaim koin hari ini.");
+        toast.error(result.message || "Gagal klaim koin hari ini.");
       }
     } catch (error) {
       console.error("Error claim daily:", error);
-      alert("Terjadi kesalahan jaringan");
+      toast.error("Terjadi kesalahan jaringan");
     } finally {
       setIsClaiming(false);
     }
@@ -298,8 +301,12 @@ export default function HomeContent() {
   }, [fetchKos, fetchRooms, fetchFasilitas, fetchAturan, fetchStreakStatus]);
 
   useEffect(() => {
-    void loadHomeData();
-  }, [loadHomeData]);
+    fetchStreakStatus();
+    loadHomeData();
+    if (fetchBalance) {
+      fetchBalance(user?.id);
+    }
+  }, [user?.id, fetchStreakStatus, fetchBalance, loadHomeData]);
 
   const activeFasilitas = useMemo(() => {
     if (!Array.isArray(fasilitas)) return [];
@@ -548,12 +555,13 @@ export default function HomeContent() {
             </div>
 
             <div className="flex items-center gap-3 self-start sm:pt-1">
+              {/* Tombol Streak Interaktif */}
               <button
                 onClick={handleClaimDaily}
-                disabled={isClaimedToday || isClaiming}
+                disabled={hasClaimedToday || isClaiming}
                 className={`glass-chip inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-[15px] font-semibold transition ${
-                  isClaimedToday
-                    ? "opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-800"
+                  hasClaimedToday
+                    ? "bg-orange-100 border border-orange-300 shadow-inner cursor-not-allowed"
                     : "hover:bg-orange-50 dark:hover:bg-orange-900/30 cursor-pointer shadow-sm hover:shadow-md"
                 }`}
               >
@@ -562,19 +570,19 @@ export default function HomeContent() {
                   alt="Streak"
                   width={18}
                   height={18}
-                  className={!isClaimedToday ? "animate-pulse" : "grayscale"}
+                  className={!hasClaimedToday ? "animate-pulse" : "grayscale"}
                 />
                 <span
                   className={
-                    isClaimedToday
+                    hasClaimedToday
                       ? "text-slate-500"
                       : "text-orange-600 dark:text-orange-400"
                   }
                 >
                   {isClaiming
                     ? "Mengklaim..."
-                    : isClaimedToday
-                      ? `${streakCount} Hari`
+                    : hasClaimedToday
+                      ? `${streakDays} Hari`
                       : "Klaim Koin!"}
                 </span>
               </button>
